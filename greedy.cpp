@@ -8,7 +8,6 @@
 
 struct KMer {
 	std::string value;
-
 	size_t length() { return value.size(); }
 };
 
@@ -18,12 +17,7 @@ struct KMerSet {
 	int k;
 };
 
-struct UnionEvent {
-	int firstIndex;
-	int secondIndex;
-	int overlapLength;
-};
-
+/// Convert the given basic nucleotide to int so it can be used for indexing in AC.
 int NucleotideToInt (char c) {
     switch (c) {
         case 'A': return 0;
@@ -36,18 +30,26 @@ int NucleotideToInt (char c) {
 
 constexpr int INVALID_STATE = -1;
 struct ACState {
+    // List of k-mers whose prefix this state is.
     std::vector<int> supporters;
+    // Indexes of the states longer by the corresponding nucleotide.
     int forwardEdges[4] =  {INVALID_STATE, INVALID_STATE, INVALID_STATE, INVALID_STATE};
+    // Where to go if searching failed.
     int backwardEdge = 0;
+    // Length of the corresponding string.
     int depth = 0;
+    // Index of the state in the automaton's *states* list.
     int id = 0;
 };
 
 struct ACAutomaton {
     std::vector<ACState> states;
+    // Indices of the states where i-th k-mer ends.
     std::vector<int> endStateIndices;
+    // Reversed BFS order.
     std::vector<int> reversedOrdering;
 
+    /// Append a new state and return its ID.
     int AddState(int depth) {
         ACState newState;
         newState.depth = depth;
@@ -56,6 +58,7 @@ struct ACAutomaton {
         return states.size() - 1;
     }
 
+    /// Generate the trie from the given k-mers and set *endStateIndices*.
     void ConstructTrie(std::vector<KMer> kMers) {
         endStateIndices = std::vector<int>(kMers.size());
         // Initialize the root.
@@ -66,6 +69,7 @@ struct ACAutomaton {
             int state = 0;
             for (char c : kMers[i].value) {
                 int index = NucleotideToInt(c);
+                // If the next state does not yet exist, create it.
                 if (states[state].forwardEdges[index] == INVALID_STATE) {
                     int newState =  AddState(states[state].depth + 1);
                     states[state].forwardEdges[index] = newState;
@@ -76,6 +80,7 @@ struct ACAutomaton {
             endStateIndices[i] = state;
         }
 
+        // Create a forward edge from the root to itself so that the AC Step always finds a valid forward edge.
         for (int i = 0; i < 4; ++i) {
             if (states[0].forwardEdges[i] == INVALID_STATE) {
                 states[0].forwardEdges[i] = 0;
@@ -83,6 +88,7 @@ struct ACAutomaton {
         }
     }
 
+    /// Do one step of the AC algorithm from the given state with a nucleotide with a given index.
     int Step (int state, int index) {
         while (states[state].forwardEdges[index] == INVALID_STATE) {
             state = states[state].backwardEdge;
@@ -90,6 +96,8 @@ struct ACAutomaton {
         return states[state].forwardEdges[index];
     }
 
+    /// Construct the fail edges for the trie that already had been created.
+    /// Also construct the reversed BFS ordering.
     void ConstructBackwardEdges () {
         reversedOrdering = std::vector<int> (states.size(), 0);
         std::queue<int> q;
@@ -113,6 +121,7 @@ struct ACAutomaton {
         }
     }
 
+    /// Construct the Aho-Corasick automaton.
     void Construct (std::vector<KMer> kMers) {
         ConstructTrie(kMers);
         ConstructBackwardEdges();
@@ -125,22 +134,45 @@ struct OverlapEdge {
     int overlapLength;
 };
 
+/// Greedily find the approximate hamiltonian path with longest overlaps.
 std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &kMers) {
     ACAutomaton automaton;
     automaton.Construct(kMers);
     std::vector<bool> forbidden(kMers.size(), false);
-    std::vector<std::list<int>> incidentKMers(kMers.size());
+    std::vector<std::list<int>> incidentKMers(automaton.states.size());
     std::vector<OverlapEdge> hamiltonianPath;
+    std::vector<int> first(kMers.size());
+    std::vector<int> last(kMers.size());
+    for (int i = 0; i < kMers.size(); ++i) {
+        first[i] = last[i] = i;
+        incidentKMers[automaton.states[automaton.endStateIndices[i]].backwardEdge].push_back(i);
+    }
     for (int s : automaton.reversedOrdering) {
-        // TODO: implement the kMer algorithm.
+        if (incidentKMers[s].empty()) continue;
+        for (int j : automaton.states[s].supporters) {
+            if (forbidden[j]) continue;
+            auto i = incidentKMers[s].begin();
+            if (first[*i] == j) {
+                if (incidentKMers[s].size() == 1) continue;
+                i++;
+            }
+            hamiltonianPath.push_back(OverlapEdge{*i, j, automaton.states[s].depth});
+            forbidden[j] = true;
+            incidentKMers[s].erase(i);
+            first[last[j]] = first[*i];
+            last[first[*i]] = last[j];
+        }
+        incidentKMers[automaton.states[s].backwardEdge].merge(incidentKMers[s]);
     }
     return hamiltonianPath;
 }
 
+/// Return the suffix of the given kMer without the first *overlap* chars.
 std::string Suffix(KMer kMer, int overlap) {
     return kMer.value.substr(overlap, kMer.length() - overlap);
 }
 
+/// Construct the superstring from the given hamiltonian path in the overlap graph.
 KMerSet SuperstringFromPath(std::vector<OverlapEdge> &hamiltonianPath, std::vector<KMer> &kMers, int k) {
     std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{-1,-1});
     std::vector<bool> isStart(kMers.size(), true);
@@ -149,6 +181,7 @@ KMerSet SuperstringFromPath(std::vector<OverlapEdge> &hamiltonianPath, std::vect
         isStart[edge.secondIndex] = false;
     }
 
+    // Find the vertex in the overlap graph with in-degree 0.
     int start = 0;
     for (; isStart[start] == false; ++start);
 
