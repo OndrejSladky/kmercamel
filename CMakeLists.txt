@@ -7,7 +7,8 @@ add_subdirectory(googletest)
 include_directories(googletest/googletest/include)
 
 add_executable(kmery
-        greedy_unittest.cpp
+        #unittest.cpp
+        main.cpp
         )
 
 target_link_libraries(kmery gtest gtest_main)

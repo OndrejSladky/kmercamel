@@ -6,16 +6,7 @@
 #include <list>
 #include <sstream>
 
-struct KMer {
-	std::string value;
-	size_t length() { return value.size(); }
-};
-
-struct KMerSet {
-	std::string superstring;
-	std::vector<bool> mask;
-	int k;
-};
+#include "models.h"
 
 /// Convert the given basic nucleotide to int so it can be used for indexing in AC.
 int NucleotideToInt (char c) {
@@ -150,6 +141,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &kMers) {
     for (int s : automaton.reversedOrdering) {
         if (incidentKMers[s].empty()) continue;
         for (int j : automaton.states[s].supporters) {
+            if (incidentKMers[s].empty()) continue;
             if (forbidden[j]) continue;
             auto i = incidentKMers[s].begin();
             if (first[*i] == j) {
@@ -158,9 +150,9 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &kMers) {
             }
             hamiltonianPath.push_back(OverlapEdge{*i, j, automaton.states[s].depth});
             forbidden[j] = true;
-            incidentKMers[s].erase(i);
             first[last[j]] = first[*i];
             last[first[*i]] = last[j];
+            incidentKMers[s].erase(i);
         }
         incidentKMers[automaton.states[s].backwardEdge].merge(incidentKMers[s]);
     }
