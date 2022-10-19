@@ -1,4 +1,5 @@
 #include "greedy.cpp"
+#include "generalized_simplitigs.cpp"
 #include "kmers.cpp"
 
 #include <iostream>
@@ -19,7 +20,7 @@ void WriteResult(KMerSet result, std::vector<KMer> kMers, std::string data, std:
 int main(int argc, char **argv) {
     std::string path;
     int k;
-    try {
+   try {
         path = argv[1];
         k = std::stoi(argv[2]);
     } catch (std::exception) {
@@ -29,7 +30,7 @@ int main(int argc, char **argv) {
     auto data = bioio::read_fasta(path);
     for (auto record : data) {
         auto kMers = ConstructKMers(record.sequence, k);
-        auto result = Greedy(kMers);
+        auto result = GreedyGeneralizedSimplitigs(kMers, k, 3);
         WriteResult(result, kMers, record.sequence, record.name);
         return 0;
     }

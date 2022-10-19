@@ -1,5 +1,6 @@
 #include "kmers_unittest.cpp"
 #include "greedy_unittest.cpp"
+#include "generalized_simplitigs_unittest.cpp"
 
 #include "gtest/gtest.h"
 
