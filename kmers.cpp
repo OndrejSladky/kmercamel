@@ -7,7 +7,7 @@
 /// This runs in O(k*data.size) expected time.
 std::vector<KMer> ConstructKMers(std::string data, int k) {
     std::unordered_set<std::string> uniqueKMers;
-    for (int i = 0; i <= data.size() - k; ++i) {
+    for (int i = 0; i <= ((int)data.size()) - k; ++i) {
         uniqueKMers.insert(data.substr(i, k));
     }
     std::vector<KMer> result;

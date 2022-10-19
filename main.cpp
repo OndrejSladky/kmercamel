@@ -4,31 +4,33 @@
 #include <iostream>
 #include <string>
 
-constexpr int k = 20;
+#include "bioio.hpp"
 
-std::string ReadData() {
-    std::string result;
-    std::cin >> result;
-    return result;
-}
 
-void WriteResult(KMerSet result, std::vector<KMer> kMers, std::string data) {
-    std::cout << result.superstring << std::endl;
-    for (auto x : result.mask) {
-        std::cout << x;
-    }
-    std::cout << std::endl;
+void WriteResult(KMerSet result, std::vector<KMer> kMers, std::string data, std::string name) {
+    std::cout << "name:                       " << name << std::endl;
     std::cout << "superstring length:         " << result.superstring.length() << std::endl;
     std::cout << "k-mers count:               " << kMers.size() << std::endl;
     std::cout << "length of scanned sequence: " << data.length() << std::endl;
     std::cout << "coefficient:                " << result.superstring.length() / (double)kMers.size() << std::endl;
-
+    std::cout << "========================================="  << std::endl;
 }
 
-int main() {
-    auto data = ReadData();
-    auto kMers = ConstructKMers(data, k);
-    auto result = Greedy(kMers);
-    WriteResult(result, kMers, data);
-    return 0;
+int main(int argc, char **argv) {
+    std::string path;
+    int k;
+    try {
+        path = argv[1];
+        k = std::stoi(argv[2]);
+    } catch (std::exception) {
+        std::cerr << "Expected usage: ./kmers path_to_fasta k" << std::endl;
+        return 1;
+    };
+    auto data = bioio::read_fasta(path);
+    for (auto record : data) {
+        auto kMers = ConstructKMers(record.sequence, k);
+        auto result = Greedy(kMers);
+        WriteResult(result, kMers, record.sequence, record.name);
+        return 0;
+    }
 }

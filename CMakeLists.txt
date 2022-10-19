@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 14)
 add_subdirectory(googletest)
 include_directories(googletest/googletest/include)
 
-add_executable(kmery
+add_executable(kmers
         #unittest.cpp
         main.cpp
         )
 
-target_link_libraries(kmery gtest gtest_main)
+target_link_libraries(kmers gtest gtest_main)
