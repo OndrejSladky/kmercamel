@@ -200,7 +200,7 @@ KMerSet SuperstringFromPath(std::vector<OverlapEdge> &hamiltonianPath, std::vect
 }
 
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm.
-/// This runs in O(n).
+/// This runs in O(n k), where n is the number of k-mers.
 KMerSet Greedy(std::vector<KMer> &kMers) {
 	if (kMers.size() == 0) {
 		throw new std::invalid_argument("input cannot be empty");
