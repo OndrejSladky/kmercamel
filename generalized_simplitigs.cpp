@@ -1,4 +1,5 @@
 #include "models.h"
+
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -44,6 +45,7 @@ void NextGeneralizedSimplitig(std::unordered_set<std::string> &kMers, std::strin
                 simplitig += ext;
                 for (int i = 0; i < d_r - 1; ++i) simplitigMask.push_back(0);
                 simplitigMask.push_back(1);
+                d_r = 1;
             }
         } else {
             auto extension = Extension(simplitig, kMers, k, d_l, false);
@@ -53,8 +55,9 @@ void NextGeneralizedSimplitig(std::unordered_set<std::string> &kMers, std::strin
             } else {
                 kMers.erase(extension.second);
                 simplitig = ext + simplitig;
-                for (int i = 0; i < d_r - 1; ++i) simplitigMask.push_front(0);
+                for (int i = 0; i < d_l - 1; ++i) simplitigMask.push_front(0);
                 simplitigMask.push_front(1);
+                d_l = 1;
             }
         }
     }
@@ -72,4 +75,3 @@ KMerSet GreedyGeneralizedSimplitigs(std::vector<KMer> kMers, int k, int d_max) {
     while(!remainingKMers.empty()) NextGeneralizedSimplitig(remainingKMers, superstring, mask, k, d_max);
     return KMerSet{superstring, mask, k};
 }
-
