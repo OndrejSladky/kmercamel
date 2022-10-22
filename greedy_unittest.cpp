@@ -86,11 +86,11 @@ namespace {
     TEST(ACAutomatonTest, ConstructTrie) {
         ACAutomaton a;
         std::vector<ACState> wantStates = {
-                ACState{std::vector<int>{0, 1}, 1, 0, 0, 0, 0, 0, 0},
-                ACState{std::vector<int>{0, 1}, -1, 2, -1, -1, 0, 1, 1},
-                ACState{std::vector<int>{0, 1}, -1, -1, 4, 3, 0, 2, 2},
-                ACState{std::vector<int>{0}, -1, -1, -1, -1, 0, 3, 3},
-                ACState{std::vector<int>{1}, -1, -1, -1, -1, 0, 3, 4},
+                ACState{std::list<int>{0, 1}, 1, 0, 0, 0, 0, 0, 0},
+                ACState{std::list<int>{0, 1}, -1, 2, -1, -1, 0, 1, 1},
+                ACState{std::list<int>{0, 1}, -1, -1, 4, 3, 0, 2, 2},
+                ACState{std::list<int>{0}, -1, -1, -1, -1, 0, 3, 3},
+                ACState{std::list<int>{1}, -1, -1, -1, -1, 0, 3, 4},
         };
         std::vector<int> wantEndStateIndices = {3, 4};
 
@@ -114,18 +114,18 @@ namespace {
         ACAutomaton a;
         // Trie representing ["ACT", "ACA"].
         a.states = {
-                ACState{std::vector<int>{0, 1}, 1, 0, 0, 0, 0, 0, 0},
-                ACState{std::vector<int>{0, 1}, -1, 2, -1, -1, 0, 1, 1},
-                ACState{std::vector<int>{0, 1}, 4, -1, -1, 3, 0, 2, 2},
-                ACState{std::vector<int>{0}, -1, -1, -1, -1, 0, 3, 3},
-                ACState{std::vector<int>{1}, -1, -1, -1, -1, 0, 3, 4},
+                ACState{std::list<int>{0, 1}, 1, 0, 0, 0, 0, 0, 0},
+                ACState{std::list<int>{0, 1}, -1, 2, -1, -1, 0, 1, 1},
+                ACState{std::list<int>{0, 1}, 4, -1, -1, 3, 0, 2, 2},
+                ACState{std::list<int>{0}, -1, -1, -1, -1, 0, 3, 3},
+                ACState{std::list<int>{1}, -1, -1, -1, -1, 0, 3, 4},
         };
         std::vector<ACState> wantStates = {
-                ACState{std::vector<int>{0, 1}, 1, 0, 0, 0, 0, 0, 0},
-                ACState{std::vector<int>{0, 1}, -1, 2, -1, -1, 0, 1, 1},
-                ACState{std::vector<int>{0, 1}, 4, -1, -1, 3, 0, 2, 2},
-                ACState{std::vector<int>{0}, -1, -1, -1, -1, 0, 3, 3},
-                ACState{std::vector<int>{1}, -1, -1, -1, -1, 1, 3, 4},
+                ACState{std::list<int>{0, 1}, 1, 0, 0, 0, 0, 0, 0},
+                ACState{std::list<int>{0, 1}, -1, 2, -1, -1, 0, 1, 1},
+                ACState{std::list<int>{0, 1}, 4, -1, -1, 3, 0, 2, 2},
+                ACState{std::list<int>{0}, -1, -1, -1, -1, 0, 3, 3},
+                ACState{std::list<int>{1}, -1, -1, -1, -1, 1, 3, 4},
         };
         std::vector<int> wantReversedOrdering = {3,4,2,1,0};
 

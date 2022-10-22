@@ -1,3 +1,5 @@
+#ifndef GREEDY_CPP
+#define GREEDY_CPP
 #include <string>
 #include <vector>
 #include <iostream>
@@ -22,7 +24,7 @@ int NucleotideToInt (char c) {
 constexpr int INVALID_STATE = -1;
 struct ACState {
     // List of k-mers whose prefix this state is.
-    std::vector<int> supporters;
+    std::list<int> supporters;
     // Indexes of the states longer by the corresponding nucleotide.
     int forwardEdges[4] =  {INVALID_STATE, INVALID_STATE, INVALID_STATE, INVALID_STATE};
     // Where to go if searching failed.
@@ -207,3 +209,4 @@ KMerSet Greedy(std::vector<KMer> &kMers) {
     auto hamiltonianPath = OverlapHamiltonianPath(kMers);
     return SuperstringFromPath(hamiltonianPath, kMers, k);
 }
+#endif //GREEDY_CPP
