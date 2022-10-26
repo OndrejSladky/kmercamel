@@ -1,6 +1,5 @@
 cmake-build-debug/
 googletest/
 .idea/
-bioio.hpp
 *.fa
 
