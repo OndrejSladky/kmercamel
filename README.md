@@ -25,10 +25,11 @@ As the first argument pass the path to the fasta file.
 
 Additionally you can pass other arguments:
 
-- `-k` -- the size of one k-mer. Default 13.
-- `-a` -- the algortihm which should be run. Either `greedy` for global GREEDY, `pseudosimplitigs` or `pseudosimplitigsAC` for greedily computing pseudosimplitigs.
+- `-k value_of_k` - the size of one k-mer. Default 13.
+- `-a algorithm` - the algortihm which should be run. Either `greedy` for global GREEDY, `pseudosimplitigs` or `pseudosimplitigsAC` for greedily computing pseudosimplitigs.
 - The latter uses Aho-Corasick automaton. Default `greedy`.
-- `-d` -- d_max used in pseudosimplitigs. Default 5.
+- `-d value_of_d` - d_max used in pseudosimplitigs. Default 5.
+- `-s` - if provided do not print the resulting superstring, but rather stats about it. If not print the superstring - capital letters indicate that at given position, a k-mer starts.
 
 For example:
 

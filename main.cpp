@@ -8,14 +8,26 @@
 
 #include "bioio.hpp"
 
+void WriteSuperstring(KMerSet result, std::string name) {
+    std::cout << name << std::endl;
+    std::string superstring = "";
+    for (int i = 0; i < result.superstring.length(); ++i) {
+        superstring += result.mask[i] ? result.superstring[i] : std::tolower(result.superstring[i]);
+    }
+    std::cout << superstring << std::endl;
+}
 
-void WriteResult(KMerSet result, std::vector<KMer> kMers, std::string data, std::string name) {
+void WriteStats(KMerSet result, std::vector<KMer> kMers, std::string data, std::string name) {
     std::cout << "name:                       " << name << std::endl;
     std::cout << "superstring length:         " << result.superstring.length() << std::endl;
     std::cout << "k-mers count:               " << kMers.size() << std::endl;
     std::cout << "length of scanned sequence: " << data.length() << std::endl;
     std::cout << "coefficient:                " << result.superstring.length() / (double)kMers.size() << std::endl;
     std::cout << "========================================="  << std::endl;
+}
+
+bool HasFlag(char **begin, char **end, std::string param) {
+    return std::find(begin, end, param) != end;
 }
 
 std::string GetFlag(char **begin, char **end, std::string param, std::string def) {
@@ -40,11 +52,13 @@ int main(int argc, char **argv) {
     int k;
     int d_max;
     std::string algorithm;
+    bool printStats = false;
     try {
         path = argv[1];
         k = GetFlagAsInt(argv, argv + argc, "-k", 13);
         d_max = GetFlagAsInt(argv, argv + argc, "-d", 5);
         algorithm = GetFlag(argv, argv + argc, "-a", "greedy");
+        printStats = HasFlag(argv, argv + argc, "-s");
     } catch (std::exception) {
         Help();
         return 1;
@@ -63,7 +77,10 @@ int main(int argc, char **argv) {
             Help();
             return 1;
         }
-        WriteResult(result, kMers, record.sequence, record.name);
+        if (printStats)
+            WriteStats(result, kMers, record.sequence, record.name);
+        else
+            WriteSuperstring(result, record.name);
         return 0;
     }
 }
