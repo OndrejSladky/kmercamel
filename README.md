@@ -16,17 +16,8 @@ First clone the repo:
 git clone https://github.com/GordonHoklinder/k-mers
 ```
 
-Then download the dependend fasta reader:
+Compile the program by running `make`.
 
-```
-wget https://raw.githubusercontent.com/dancooke/bioio/master/bioio.hpp
-```
-
-Compile the program:
-
-```
-g++ main.cpp -o kmers
-```
 
 ## How to run
 
