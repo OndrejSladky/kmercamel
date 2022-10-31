@@ -38,11 +38,12 @@ std::pair<long long, long long> LeftExtension(long long first, std::unordered_se
 /// Find the next generalized simplitig.
 /// Update the provided superstring and the mask.
 /// Also remove the used k-mers from kMers.
-void NextGeneralizedSimplitig(std::unordered_set<long long> &kMers, std::string &superstring, std::vector<bool> &mask, int k, int d_max) {
+void NextGeneralizedSimplitig(std::unordered_set<long long> &kMers, std::string &superstring, std::vector<bool> &mask, int k, int d_max, bool complements) {
     long long last, first;
     last = first = *kMers.begin();
     std::string simplitig = NumberToKMer(last, k);
     kMers.erase(last);
+    if (complements) kMers.erase(ReverseComplement(last, k));
     std::deque<bool> simplitigMask {1};
     int d_l = 1, d_r = 1;
     while (d_l <= d_max || d_r <= d_max) {
@@ -55,6 +56,7 @@ void NextGeneralizedSimplitig(std::unordered_set<long long> &kMers, std::string 
             } else {
                 // Extend the simplitig to the right.
                 kMers.erase(extension.second);
+                if (complements) kMers.erase(ReverseComplement(extension.second, k));
                 simplitig += NumberToKMer(ext, d_r);
                 for (int i = 0; i < d_r - 1; ++i) simplitigMask.push_back(0);
                 simplitigMask.push_back(1);
@@ -70,6 +72,7 @@ void NextGeneralizedSimplitig(std::unordered_set<long long> &kMers, std::string 
             } else {
                 // Extend the simplitig to the left.
                 kMers.erase(extension.second);
+                if (complements) kMers.erase(ReverseComplement(extension.second, k));
                 simplitig = NumberToKMer(ext, d_l) + simplitig;
                 for (int i = 0; i < d_l - 1; ++i) simplitigMask.push_front(0);
                 simplitigMask.push_front(1);
@@ -85,12 +88,13 @@ void NextGeneralizedSimplitig(std::unordered_set<long long> &kMers, std::string 
 
 /// Compute the generalized simplitigs greedily.
 /// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses is fast for small d_max.
-KMerSet GreedyGeneralizedSimplitigs(std::vector<KMer> kMers, int k, int d_max) {
+KMerSet GreedyGeneralizedSimplitigs(std::vector<KMer> kMers, int k, int d_max, bool complements) {
     std::string superstring = "";
     std::vector<bool> mask;
 
     std::unordered_set<long long> remainingKMers;
     for (auto &&kMer : kMers) remainingKMers.insert(KMerToNumber(kMer));
-    while(!remainingKMers.empty()) NextGeneralizedSimplitig(remainingKMers, superstring, mask, k, d_max);
+    if (complements) for (auto &&kMer : kMers) remainingKMers.insert(ReverseComplement(KMerToNumber(kMer), k));
+    while(!remainingKMers.empty()) NextGeneralizedSimplitig(remainingKMers, superstring, mask, k, d_max, complements);
     return KMerSet{superstring, mask, k};
 }

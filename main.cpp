@@ -37,6 +37,7 @@ void Help() {
     std::cerr << "  -d d_value       - integer value for d_max" << std::endl;
     std::cerr << "  -k k_value       - integer value for k" << std::endl;
     std::cerr << "  -s               - if given print statistics instead of superstring" << std::endl;
+    std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
     std::cerr << "Example usage:       ./kmers -p path_to_fasta -k 13 -d 5 -a greedy" << std::endl;
     std::cerr << "Possible algorithms: greedy greedyAC pseudosimplitigs pseudosimplitigsAC" << std::endl;
@@ -48,9 +49,10 @@ int main(int argc, char **argv) {
     int d_max = 5;
     std::string algorithm = "greedy";
     bool printStats = false;
+    bool complements = false;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "p:k:d:a:sh"))  != -1) {
+        while ((opt = getopt(argc, argv, "p:k:d:a:shc"))  != -1) {
             switch(opt) {
                 case  'p':
                     path = optarg;
@@ -66,6 +68,9 @@ int main(int argc, char **argv) {
                     break;
                 case  's':
                     printStats = true;
+                    break;
+                case  'c':
+                    complements = true;
                     break;
                 case 'h':
                     Help();
@@ -91,7 +96,7 @@ int main(int argc, char **argv) {
         else if (algorithm == "greedy")
             result = Greedy(kMers);
         else if (algorithm == "pseudosimplitigs")
-            result = GreedyGeneralizedSimplitigs(kMers, k, d_max);
+            result = GreedyGeneralizedSimplitigs(kMers, k, d_max, complements);
         else if (algorithm == "pseudosimplitigsAC")
             result = GreedyGeneralizedSimplitigsAC(kMers, k, d_max);
         else {

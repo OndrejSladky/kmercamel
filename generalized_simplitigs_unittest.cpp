@@ -63,6 +63,7 @@ namespace {
             std::vector<bool> mask;
             int k;
             int d_max;
+            bool complements;
             std::string wantSuperstring;
             std::unordered_set<long long> wantKMers;
             std::vector<bool> wantMask;
@@ -70,12 +71,15 @@ namespace {
         std::vector<TestCase> tests = {
                 // Behavior of the unordered_set.begin() is not specified. It may happen that it takes "ATTT" first and then this test fails.
                 // {ACAA, ATTT, AACA}
-                {"GGGG", {0b00010000, 0b00111111, 0b00000100}, {1,0,0, 0}, 4, 2,
+                {"GGGG", {0b00010000, 0b00111111, 0b00000100}, {1,0,0, 0}, 4, 2, false,
                  "GGGGAACAA", {0b00111111}, {1,0,0,0,1,1,0,0, 0}},
+                // {ACAA, ATTT, TGTT, AAAT, TTGT, AACA}
+                {"GGGG", {0b00010000, 0b00111111, 0b11101111, 0b00000011, 0b11111011, 0b00000100}, {1,0,0, 0}, 4, 2, true,
+                        "GGGGAACAAAT", {}, {1,0,0,0, 1,1,0,1,0,0, 0}},
         };
 
         for (auto t: tests) {
-            NextGeneralizedSimplitig(t.kMers, t.superstring, t.mask, t.k, t.d_max);
+            NextGeneralizedSimplitig(t.kMers, t.superstring, t.mask, t.k, t.d_max, t.complements);
 
             EXPECT_EQ(t.wantSuperstring, t.superstring);
             EXPECT_EQ(t.wantMask, t.mask);
@@ -88,21 +92,24 @@ namespace {
             std::vector<KMer> kMers;
             int k;
             int d_max;
+            bool complements;
             std::string wantSuperstring;
             std::vector<bool> wantMask;
         };
         std::vector<TestCase> tests = {
                 // Behavior of the unordered_set.begin() is not specified. It may happen that it takes "CCCC" first and then this test fails.
-                { {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3,
+                { {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3, false,
                  "AACAATTTCCCC", {1,1,0,0,1, 0,0,0, 1, 0,0,0}},
-                { {KMer{"GCT"}, KMer{"TAA"}, KMer{"AAA"}}, 3, 2,
+                { {KMer{"GCT"}, KMer{"TAA"}, KMer{"AAA"}}, 3, 2, false,
                         "GCTAAA", {1,0, 1,1, 0,0}},
-                { {KMer{"TAA"}, KMer{"AAA"}, KMer{"GCT"}}, 3, 2,
+                { {KMer{"TAA"}, KMer{"AAA"}, KMer{"GCT"}}, 3, 2, false,
                         "GCTAAA", {1,0, 1,1, 0,0}},
+                { {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3, true,
+                        "ATTTGTTGGGG", {1,0,1, 1,0,0,0, 1, 0,0,0}},
         };
 
         for (auto t: tests) {
-            auto gotResult = GreedyGeneralizedSimplitigs(t.kMers, t.k, t.d_max);
+            auto gotResult = GreedyGeneralizedSimplitigs(t.kMers, t.k, t.d_max, t.complements);
 
             EXPECT_EQ(t.wantSuperstring, gotResult.superstring);
             EXPECT_EQ(t.wantMask, gotResult.mask);
