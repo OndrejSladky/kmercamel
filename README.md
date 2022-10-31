@@ -21,15 +21,15 @@ Compile the program by running `make`.
 
 ## How to run
 
-As the first argument pass the path to the fasta file.
+The program has the following arguments:
 
-Additionally you can pass other arguments:
-
+- `-p path_to_fasta` - the path to fasta file. This is a required argument.
 - `-k value_of_k` - the size of one k-mer. Default 13.
 - `-a algorithm` - the algortihm which should be run. Either `greedy` for global GREEDY, `pseudosimplitigs` or `pseudosimplitigsAC` for greedily computing pseudosimplitigs.
 - The latter uses Aho-Corasick automaton. Default `greedy`.
 - `-d value_of_d` - d_max used in pseudosimplitigs. Default 5.
 - `-s` - if provided do not print the resulting superstring, but rather stats about it. If not print the superstring - capital letters indicate that at given position, a k-mer starts.
+- `-h` - print help.
 
 For example:
 

@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <string>
+#include "unistd.h"
 
 #include "bioio.hpp"
 
@@ -26,44 +27,58 @@ void WriteStats(KMerSet result, std::vector<KMer> kMers, std::string data, std::
     std::cout << "========================================="  << std::endl;
 }
 
-bool HasFlag(char **begin, char **end, std::string param) {
-    return std::find(begin, end, param) != end;
-}
-
-std::string GetFlag(char **begin, char **end, std::string param, std::string def) {
-    auto flag = std::find(begin, end, param);
-    if (flag != end && ++flag != end) return *flag;
-    return def;
-}
-
-int GetFlagAsInt(char **begin, char **end, std::string param, int def) {
-    auto ret = GetFlag(begin, end, param, "");
-    if (ret == "") return def;
-    return std::stoi(ret);
-}
-
 void Help() {
-    std::cerr << "Example usage:       ./kmers path_to_fasta -k 13 -d 5 -a greedy" << std::endl;
+    std::cerr << "Accepted arguments:" << std::endl;
+    std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
+    std::cerr << "  -a algortihm     - the algorithm to be run" << std::endl;
+    std::cerr << "  -d d_value       - integer value for d_max" << std::endl;
+    std::cerr << "  -k k_value       - integer value for k" << std::endl;
+    std::cerr << "  -s               - if given print statistics instead of superstring" << std::endl;
+    std::cerr << "  -h               - print help" << std::endl;
+    std::cerr << "Example usage:       ./kmers -p path_to_fasta -k 13 -d 5 -a greedy" << std::endl;
     std::cerr << "Possible algorithms: greedy pseudosimplitigs pseudosimplitigsAC" << std::endl;
 }
 
 int main(int argc, char **argv) {
     std::string path;
-    int k;
-    int d_max;
-    std::string algorithm;
+    int k = 13;
+    int d_max = 5;
+    std::string algorithm = "greedy";
     bool printStats = false;
+    int opt;
     try {
-        path = argv[1];
-        k = GetFlagAsInt(argv, argv + argc, "-k", 13);
-        d_max = GetFlagAsInt(argv, argv + argc, "-d", 5);
-        algorithm = GetFlag(argv, argv + argc, "-a", "greedy");
-        printStats = HasFlag(argv, argv + argc, "-s");
+        while ((opt = getopt(argc, argv, "p:k:d:a:sh"))  != -1) {
+            switch(opt) {
+                case  'p':
+                    path = optarg;
+                    break;
+                case  'k':
+                    k = std::stoi(optarg);
+                    break;
+                case  'd':
+                    d_max = std::stoi(optarg);
+                    break;
+                case  'a':
+                    algorithm = optarg;
+                    break;
+                case  's':
+                    printStats = true;
+                    break;
+                case 'h':
+                    Help();
+                    return 0;
+            }
+        }
     } catch (std::exception) {
         Help();
         return 1;
     };
     auto data = bioio::read_fasta(path);
+    if (!data.size()) {
+        std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
+        Help();
+        return 1;
+    }
     for (auto record : data) {
         auto kMers = ConstructKMers(record.sequence, k);
         KMerSet result;
@@ -74,6 +89,7 @@ int main(int argc, char **argv) {
         else if (algorithm == "pseudosimplitigsAC")
             result = GreedyGeneralizedSimplitigsAC(kMers, k, d_max);
         else {
+            std::cerr << "Algortihm '" << algorithm << "' not supported." << std::endl;
             Help();
             return 1;
         }
