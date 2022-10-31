@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include <chrono>
 #include "unistd.h"
 
 #include "bioio.hpp"
@@ -19,12 +20,13 @@ void WriteSuperstring(KMerSet result, std::string name) {
     std::cout << superstring << std::endl;
 }
 
-void WriteStats(KMerSet result, std::vector<KMer> kMers, std::string data, std::string name) {
+void WriteStats(KMerSet result, std::vector<KMer> kMers, std::string data, std::string name, long time) {
     std::cout << "name:                       " << name << std::endl;
     std::cout << "superstring length:         " << result.superstring.length() << std::endl;
     std::cout << "k-mers count:               " << kMers.size() << std::endl;
     std::cout << "length of scanned sequence: " << data.length() << std::endl;
     std::cout << "coefficient:                " << result.superstring.length() / (double)kMers.size() << std::endl;
+    std::cout << "execution time:             " << time << " ms" << std::endl;
     std::cout << "========================================="  << std::endl;
 }
 
@@ -82,6 +84,7 @@ int main(int argc, char **argv) {
     }
     for (auto record : data) {
         auto kMers = ConstructKMers(record.sequence, k);
+        auto before = std::chrono::high_resolution_clock::now();
         KMerSet result;
         if (algorithm == "greedyAC")
             result = GreedyAC(kMers);
@@ -96,10 +99,13 @@ int main(int argc, char **argv) {
             Help();
             return 1;
         }
-        if (printStats)
-            WriteStats(result, kMers, record.sequence, record.name);
-        else
+        auto now = std::chrono::high_resolution_clock::now();
+        if (printStats) {
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - before);
+            WriteStats(result, kMers, record.sequence, record.name, duration.count());
+        } else {
             WriteSuperstring(result, record.name);
+        }
         return 0;
     }
 }
