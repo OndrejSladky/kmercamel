@@ -1,3 +1,4 @@
+#include "greedy_ac.cpp"
 #include "greedy.cpp"
 #include "generalized_simplitigs.cpp"
 #include "generalized_simplitigs_ac.cpp"
@@ -36,7 +37,7 @@ void Help() {
     std::cerr << "  -s               - if given print statistics instead of superstring" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
     std::cerr << "Example usage:       ./kmers -p path_to_fasta -k 13 -d 5 -a greedy" << std::endl;
-    std::cerr << "Possible algorithms: greedy pseudosimplitigs pseudosimplitigsAC" << std::endl;
+    std::cerr << "Possible algorithms: greedy greedyAC pseudosimplitigs pseudosimplitigsAC" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -82,7 +83,9 @@ int main(int argc, char **argv) {
     for (auto record : data) {
         auto kMers = ConstructKMers(record.sequence, k);
         KMerSet result;
-        if (algorithm == "greedy")
+        if (algorithm == "greedyAC")
+            result = GreedyAC(kMers);
+        else if (algorithm == "greedy")
             result = Greedy(kMers);
         else if (algorithm == "pseudosimplitigs")
             result = GreedyGeneralizedSimplitigs(kMers, k, d_max);
