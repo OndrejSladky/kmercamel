@@ -1,5 +1,5 @@
-#ifndef GREEDY_CPP
-#define GREEDY_CPP
+#ifndef GREEDY_AC_CPP
+#define GREEDY_AC_CPP
 #include <string>
 #include <vector>
 #include <iostream>
@@ -9,17 +9,7 @@
 #include <sstream>
 
 #include "models.h"
-
-/// Convert the given basic nucleotide to int so it can be used for indexing in AC.
-int NucleotideToInt (char c) {
-    switch (c) {
-        case 'A': return 0;
-        case 'C': return 1;
-        case 'G': return 2;
-        case 'T': return 3;
-        default: throw std::invalid_argument("cannot convert letter " + std::string(1, c) + "to int.");
-    }
-}
+#include "kmers.cpp"
 
 constexpr int INVALID_STATE = -1;
 struct ACState {
@@ -209,4 +199,4 @@ KMerSet GreedyAC(std::vector<KMer> &kMers) {
     auto hamiltonianPath = OverlapHamiltonianPathAC(kMers);
     return SuperstringFromPath(hamiltonianPath, kMers, k);
 }
-#endif //GREEDY_CPP
+#endif //GREEDY_AC_CPP

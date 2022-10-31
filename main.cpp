@@ -2,7 +2,7 @@
 #include "greedy.cpp"
 #include "generalized_simplitigs.cpp"
 #include "generalized_simplitigs_ac.cpp"
-#include "kmers.cpp"
+#include "parser.cpp"
 
 #include <iostream>
 #include <string>

@@ -3,18 +3,6 @@
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(BitSuffixTest, BitSuffix) {
-        EXPECT_EQ(0b011110, BitSuffix(0b1100011110, 3));
-        EXPECT_EQ(0b1110, BitSuffix(0b1110, 2));
-        EXPECT_EQ(0b0, BitSuffix(0b1110, 0));
-    }
-
-    TEST(BitPrefixTest, BitPrefix) {
-        EXPECT_EQ(0b110001, BitPrefix(0b1100011110, 5, 3));
-        EXPECT_EQ(0b1110, BitPrefix(0b1110, 2, 2));
-        EXPECT_EQ(0b0, BitPrefix(0b1110, 2, 0));
-    }
-
     TEST(OverlapHamiltonianPathTest, OverlapHamiltonianPath) {
         struct TestCase {
             std::vector<KMer> kMers;

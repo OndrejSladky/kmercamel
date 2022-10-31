@@ -3,44 +3,26 @@
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(NumberToKMerTest, NumberToKMer) {
+    TEST(RightExtensionTest, RightExtension) {
         struct TestCase {
-            long long encoded;
-            int d;
-            std::string wantResult;
-        };
-        std::vector<TestCase> tests = {
-                {0b1001LL, 2, "GC"},
-                {0b1011LL, 3, "AGT"},
-                {0b111LL, 1, "T"},
-        };
-
-        for (auto t: tests) {
-            std::string gotResult = NumberToKMer(t.encoded, t.d);
-
-            EXPECT_EQ(t.wantResult, gotResult);
-        }
-    }
-
-    TEST(ExtensionTest, Extension) {
-        struct TestCase {
-            std::string simplitig;
-            std::unordered_set<std::string> kMers;
+            long long last;
+            std::unordered_set<long long> kMers;
             int k;
             int d;
-            bool fromRight;
-            std::string wantExt;
-            std::string wantNext;
+            long long wantExt;
+            long long  wantNext;
         };
         std::vector<TestCase> tests = {
-                {"GACT", {"TCC", "CTA", "ACT", "CCT"}, 3, 1, true,   "A", "CTA"},
-                {"TTT", {"TCC",  "ACT", "CCT"}, 3, 2, true,   "CC", "TCC"},
-                {"TACT", {"TCC",  "ACT", "CCT"}, 3, 1, true,   "", ""},
-                {"TACG", {"TCC", "CTA", "ACT", "CCT"}, 3, 1, false,   "C", "CTA"},
+                // ACT; {TCC, CTA, ACT, CCT}; A; CTA
+                {0b000111, {0b110101, 0b011100, 0b000111, 0b010111}, 3, 1, 0b00, 0b011100},
+                // ACT; {TCC, ACT, CCT}; CC; TCC
+                {0b111111, {0b110101, 0b000111, 0b010111}, 3, 2,   0b0101, 0b110101},
+                // ACT; {TCC, ACT, CCT}
+                {0b000111, {0b110101, 0b000111, 0b010111}, 3, 1,    -1, -1},
         };
 
         for (auto t: tests) {
-            auto got = Extension(t.simplitig, t.kMers, t.k, t.d, t.fromRight);
+            auto got = RightExtension(t.last, t.kMers, t.k, t.d);
             auto gotExt = got.first;
             auto gotNext = got.second;
             EXPECT_EQ(t.wantNext, gotNext);
@@ -48,21 +30,48 @@ namespace {
         }
     }
 
+    TEST(LeftExtensionTest, LeftExtension) {
+        struct TestCase {
+            long long first;
+            std::unordered_set<long long> kMers;
+            int k;
+            int d;
+            long long wantExt;
+            long long  wantNext;
+        };
+        std::vector<TestCase> tests = {
+                // ACT; {TCC, ACT, CCT}
+                {0b000111, {0b110101, 0b000111, 0b010111}, 3, 1,    -1, -1},
+                // TAC; {TCC, CTA, ACT, CCT}; C; CTA
+                {0b110001, {0b110101, 0b011100, 0b000111, 0b010111}, 3, 1,    0b01, 0b011100},
+        };
+
+        for (auto t: tests) {
+            auto got = LeftExtension(t.first, t.kMers, t.k, t.d);
+            auto gotExt = got.first;
+            auto gotNext = got.second;
+            EXPECT_EQ(t.wantNext, gotNext);
+            EXPECT_EQ(t.wantExt, gotExt);
+        }
+    }
+
+
     TEST(NextGeneralizedSimplitigTest, NextGeneralizedSimplitig) {
         struct TestCase {
             std::string superstring;
-            std::unordered_set<std::string> kMers;
+            std::unordered_set<long long> kMers;
             std::vector<bool> mask;
             int k;
             int d_max;
             std::string wantSuperstring;
-            std::unordered_set<std::string> wantKMers;
+            std::unordered_set<long long> wantKMers;
             std::vector<bool> wantMask;
         };
         std::vector<TestCase> tests = {
                 // Behavior of the unordered_set.begin() is not specified. It may happen that it takes "ATTT" first and then this test fails.
-                {"GGGG", {"ACAA", "ATTT", "AACA"}, {1,0,0, 0}, 4, 2,
-                 "GGGGAACAA", {"ATTT"}, {1,0,0,0,1,1,0,0, 0}},
+                // {ACAA, ATTT, AACA}
+                {"GGGG", {0b00010000, 0b00111111, 0b00000100}, {1,0,0, 0}, 4, 2,
+                 "GGGGAACAA", {0b00111111}, {1,0,0,0,1,1,0,0, 0}},
         };
 
         for (auto t: tests) {

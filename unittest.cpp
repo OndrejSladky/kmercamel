@@ -1,3 +1,4 @@
+#include "parser_unittest.cpp"
 #include "kmers_unittest.cpp"
 #include "greedy_unittest.cpp"
 #include "greedy_unittest_ac.cpp"

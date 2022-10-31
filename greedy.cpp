@@ -6,24 +6,7 @@
 #include <list>
 
 #include "greedy_ac.cpp"
-
-long long KMerToNumber(KMer &kMer) {
-    long long ret = 0;
-    for (int i = kMer.length() - 1; i >= 0; --i) {
-        ret <<= 2;
-        ret |= NucleotideToInt(kMer.value[i]);
-    }
-    return ret;
-}
-
-long long BitPrefix(long long kMer, int k, int d) {
-    long long mask = -1LL ^ ((1 << ((k - d) << 1)) - 1);
-    return (kMer & mask) >> ((k - d) << 1);
-}
-
-long long BitSuffix(long long kMer, int d) {
-    return kMer & ((1 << (d << 1)) - 1);
-}
+#include "kmers.cpp"
 
 /// Greedily find the approximate hamiltonian path with longest overlaps.
 std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &input, int k) {
@@ -48,15 +31,15 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &input, int k
             long long suffix = BitSuffix(kMers[i], d);
             if (prefixes.count(suffix) == 0 || prefixes[suffix].size() == 0) continue;
             auto j = prefixes[suffix].begin();
-            if (first[*j] == i) {
+            if (first[i] == *j) {
                 if (prefixes[suffix].size() == 1) continue;
                 j++;
             }
-            hamiltonianPath.push_back(OverlapEdge{*j, i, d});
+            hamiltonianPath.push_back(OverlapEdge{i, *j, d});
             suffixForbidden[i] = true;
             prefixForbidden[*j] = true;
-            first[last[i]] = first[*j];
-            last[first[*j]] = last[i];
+            first[last[*j]] = first[i];
+            last[first[i]] = last[*j];
             prefixes[suffix].erase(j);
         }
     }

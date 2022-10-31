@@ -3,9 +3,9 @@
 | Algorithm                     | Implemented | Basic optimizations | Support for complements |
 |-------------------------------|-------------|---------------------|-------------------------|
 | GREEDY with AC                | YES         | NO                  | NO                      |
-| GREEDY with hashing           | YES         | NO                  | NO                      |
+| GREEDY with hashing           | YES         | YES                 | NO                      |
 | Pseudosimplitigs with AC      | YES         | NO                  | NO                      |
-| Pseudosimplitigs with hashing | YES         | NO                  | NO                      |
+| Pseudosimplitigs with hashing | YES         | YES                 | NO                      |
 
 
 ## How to install

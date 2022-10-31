@@ -1,77 +1,80 @@
 #include "models.h"
+#include "kmers.cpp"
 
 #include <string>
 #include <unordered_set>
 #include <vector>
 #include <deque>
 
-const char letters[4] {'A', 'C', 'G', 'T'};
 
-/// Convert the encoded KMer representation to string.
-std::string NumberToKMer(long long encoded, int length) {
-    std::string ret = "";
-    for (int i = 0; i < length; ++i) {
-        // The last two bits correspond to one nucleotide.
-        ret = letters[encoded & 3] + ret;
-        // Move to the next letter.
-        encoded >>= 2;
-    }
-    return ret;
-}
-
-/// Find the left/right extension to the provided simplitig from the kMers.
-/// This extension has k-d overlap with the given simplitig and is left or right based on the fromRight argument.
+/// Find the right extension to the provided last k-mer from the kMers.
+/// This extension has k-d overlap with the given simplitig.
 /// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
-std::pair<std::string, std::string> Extension(std::string &simplitig, std::unordered_set<std::string> &kMers, int k, int d, bool fromRight) {
+std::pair<long long, long long> RightExtension(long long last, std::unordered_set<long long> &kMers, int k, int d) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
-    for (long long i = 0; i < (1 << (2*d)); ++i) {
-        std::string ext = NumberToKMer(i, d);
-        std::string next;
-        if (fromRight) next = simplitig.substr(simplitig.length() - (k - d),k - d) + ext;
-        else next = ext + simplitig.substr(0, k - d);
+    for (long long ext = 0; ext < (1 << (d << 1)); ++ext) {
+        long long next = BitSuffix(last, k - d) << (d << 1) | ext;
         if (kMers.count(next) > 0) {
             return {ext, next};
         }
     }
-    return {"", ""};
+    return {-1, -1};
+}
+
+/// Find the left extension to the provided first k-mer from the kMers.
+/// This extension has k-d overlap with the given simplitig.
+/// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
+std::pair<long long, long long> LeftExtension(long long first, std::unordered_set<long long> &kMers, int k, int d) {
+    // Try each of the {A, C, G, T}^d possible extensions of length d.
+    for (long long ext = 0; ext < (1 << (d << 1)); ++ext) {
+        long long next = ext << ((k - d) << 1) | BitPrefix(first, k, k - d);
+        if (kMers.count(next) > 0) {
+            return {ext, next};
+        }
+    }
+    return {-1, -1};
 }
 
 /// Find the next generalized simplitig.
 /// Update the provided superstring and the mask.
 /// Also remove the used k-mers from kMers.
-void NextGeneralizedSimplitig(std::unordered_set<std::string> &kMers, std::string &superstring, std::vector<bool> &mask, int k, int d_max) {
-    std::string simplitig = *kMers.begin();
-    kMers.erase(simplitig);
+void NextGeneralizedSimplitig(std::unordered_set<long long> &kMers, std::string &superstring, std::vector<bool> &mask, int k, int d_max) {
+    long long last, first;
+    last = first = *kMers.begin();
+    std::string simplitig = NumberToKMer(last, k);
+    kMers.erase(last);
     std::deque<bool> simplitigMask {1};
     int d_l = 1, d_r = 1;
     while (d_l <= d_max || d_r <= d_max) {
         if (d_r <= d_l) {
-            auto extension = Extension(simplitig, kMers, k, d_r, true);
-            std::string ext = extension.first;
-            if (ext == "") {
+            auto extension = RightExtension(last, kMers, k, d_r);
+            long long ext = extension.first;
+            if (ext == -1) {
                 // No right extension found.
                 ++d_r;
             } else {
                 // Extend the simplitig to the right.
                 kMers.erase(extension.second);
-                simplitig += ext;
+                simplitig += NumberToKMer(ext, d_r);
                 for (int i = 0; i < d_r - 1; ++i) simplitigMask.push_back(0);
                 simplitigMask.push_back(1);
                 d_r = 1;
+                last = extension.second;
             }
         } else {
-            auto extension = Extension(simplitig, kMers, k, d_l, false);
-            std::string ext = extension.first;
-            if (ext == "") {
+            auto extension = LeftExtension(first, kMers, k, d_l);
+            long long ext = extension.first;
+            if (ext == -1) {
                 // No left extension found.
                 ++d_l;
             } else {
                 // Extend the simplitig to the left.
                 kMers.erase(extension.second);
-                simplitig = ext + simplitig;
+                simplitig = NumberToKMer(ext, d_l) + simplitig;
                 for (int i = 0; i < d_l - 1; ++i) simplitigMask.push_front(0);
                 simplitigMask.push_front(1);
                 d_l = 1;
+                first = extension.second;
             }
         }
     }
@@ -86,8 +89,8 @@ KMerSet GreedyGeneralizedSimplitigs(std::vector<KMer> kMers, int k, int d_max) {
     std::string superstring = "";
     std::vector<bool> mask;
 
-    std::unordered_set<std::string> remainingKMers;
-    for (auto &&kMer : kMers) remainingKMers.insert(kMer.value);
+    std::unordered_set<long long> remainingKMers;
+    for (auto &&kMer : kMers) remainingKMers.insert(KMerToNumber(kMer));
     while(!remainingKMers.empty()) NextGeneralizedSimplitig(remainingKMers, superstring, mask, k, d_max);
     return KMerSet{superstring, mask, k};
 }

@@ -9,33 +9,6 @@ namespace {
         EXPECT_EQ("", Suffix(KMer{"CC"}, 2));
     }
 
-    TEST(NucleotideToIntTest, NucleotideToInt) {
-        struct TestCase {
-            char nucleotide;
-            int wantResult;
-            bool wantSuccess;
-        };
-        std::vector<TestCase> tests = {
-                {'A', 0, true},
-                {'C', 1, true},
-                {'G', 2, true},
-                {'T', 3, true},
-                {'B', 0, false},
-        };
-
-        for (auto t : tests) {
-            int gotResult = 0;
-            bool gotSuccess = true;
-            try {
-                gotResult = NucleotideToInt(t.nucleotide);
-            } catch(std::invalid_argument) {
-                gotSuccess = false;
-            }
-            EXPECT_EQ(t.wantSuccess, gotSuccess);
-            if (t.wantSuccess) EXPECT_EQ(t.wantResult, gotResult);
-        }
-    }
-
     TEST(SuperstringFromPathTest, SuperstringFromPath) {
         struct TestCase {
             std::vector<OverlapEdge> path;
