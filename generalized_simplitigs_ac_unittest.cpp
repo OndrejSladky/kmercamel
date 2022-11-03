@@ -42,6 +42,8 @@ namespace {
                         "GCTAAA", {1,0, 1,1, 0,0}},
                 { {KMer{"TAA"}, KMer{"AAA"}, KMer{"GCT"}}, 3, 2,
                         "GCTAAA", {1,0, 1,1, 0,0}},
+                {{KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}, 31, 5,
+                        "TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}},
         };
 
         for (auto t: tests) {

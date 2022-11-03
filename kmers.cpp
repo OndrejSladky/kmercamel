@@ -26,12 +26,12 @@ long long KMerToNumber(KMer &kMer) {
 }
 
 long long BitPrefix(long long kMer, int k, int d) {
-    long long mask = -1LL ^ ((1 << ((k - d) << 1)) - 1);
-    return (kMer & mask) >> ((k - d) << 1);
+    long long mask = -1LL ^ ((1LL << ((k - d) << 1LL)) - 1LL);
+    return (kMer & mask) >> ((k - d) << 1LL);
 }
 
 long long BitSuffix(long long kMer, int d) {
-    return kMer & ((1 << (d << 1)) - 1);
+    return kMer & ((1LL << (d << 1LL)) - 1LL);
 }
 
 long long ReverseComplement(long long kMer, int k) {

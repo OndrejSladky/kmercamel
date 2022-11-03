@@ -106,6 +106,8 @@ namespace {
                         "GCTAAA", {1,0, 1,1, 0,0}},
                 { {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3, true,
                         "ATTTGTTGGGG", {1,0,1, 1,0,0,0, 1, 0,0,0}},
+                {{KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}, 31, 5, false,
+                 "TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}},
         };
 
         for (auto t: tests) {
