@@ -111,6 +111,6 @@ int main(int argc, char **argv) {
         } else {
             WriteSuperstring(result, record.name);
         }
-        return 0;
     }
+    return 0;
 }
