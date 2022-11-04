@@ -14,7 +14,7 @@
 constexpr int INVALID_STATE = -1;
 struct ACState {
     // List of k-mers whose prefix this state is.
-    std::list<int> supporters;
+    std::list<size_t> supporters;
     // Indexes of the states longer by the corresponding nucleotide.
     int forwardEdges[4] =  {INVALID_STATE, INVALID_STATE, INVALID_STATE, INVALID_STATE};
     // Where to go if searching failed.
@@ -46,9 +46,9 @@ struct ACAutomaton {
         endStateIndices = std::vector<int>(kMers.size());
         // Initialize the root.
         AddState(0);
-        for (int i = 0; i < kMers.size(); ++i) states[0].supporters.push_back(i);
+        for (size_t i = 0; i < kMers.size(); ++i) states[0].supporters.push_back(i);
         // TODO: make this independent of the implementation by providing iterator to KMer.
-        for (int i = 0; i < kMers.size(); ++i) {
+        for (size_t i = 0; i < kMers.size(); ++i) {
             int state = 0;
             for (char c : kMers[i].value) {
                 int index = NucleotideToInt(c);
@@ -112,8 +112,8 @@ struct ACAutomaton {
 };
 
 struct OverlapEdge {
-    int firstIndex;
-    int secondIndex;
+    size_t firstIndex;
+    size_t secondIndex;
     int overlapLength;
 };
 
@@ -122,17 +122,17 @@ std::vector<OverlapEdge> OverlapHamiltonianPathAC (std::vector<KMer> &kMers) {
     ACAutomaton automaton;
     automaton.Construct(kMers);
     std::vector<bool> forbidden(kMers.size(), false);
-    std::vector<std::list<int>> incidentKMers(automaton.states.size());
+    std::vector<std::list<size_t>> incidentKMers(automaton.states.size());
     std::vector<OverlapEdge> hamiltonianPath;
-    std::vector<int> first(kMers.size());
-    std::vector<int> last(kMers.size());
-    for (int i = 0; i < kMers.size(); ++i) {
+    std::vector<size_t> first(kMers.size());
+    std::vector<size_t> last(kMers.size());
+    for (size_t i = 0; i < kMers.size(); ++i) {
         first[i] = last[i] = i;
         incidentKMers[automaton.states[automaton.endStateIndices[i]].backwardEdge].push_back(i);
     }
     for (int s : automaton.reversedOrdering) {
         if (incidentKMers[s].empty()) continue;
-        for (int j : automaton.states[s].supporters) {
+        for (size_t j : automaton.states[s].supporters) {
             if (incidentKMers[s].empty()) continue;
             if (forbidden[j]) continue;
             auto i = incidentKMers[s].begin();
@@ -158,7 +158,7 @@ std::string Suffix(KMer kMer, int overlap) {
 
 /// Construct the superstring from the given hamiltonian path in the overlap graph.
 KMerSet SuperstringFromPath(std::vector<OverlapEdge> &hamiltonianPath, std::vector<KMer> &kMers, int k) {
-    std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{-1,-1});
+    std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
     std::vector<bool> isStart(kMers.size(), true);
     for (auto edge : hamiltonianPath) {
         edgeFrom[edge.firstIndex] = edge;
@@ -173,7 +173,7 @@ KMerSet SuperstringFromPath(std::vector<OverlapEdge> &hamiltonianPath, std::vect
     superstring << kMers[start].value;
     std::vector<bool> mask (1, 1);
 
-    while(edgeFrom[start].secondIndex != -1) {
+    while(edgeFrom[start].secondIndex != size_t(-1)) {
         superstring << Suffix(kMers[edgeFrom[start].secondIndex], edgeFrom[start].overlapLength);
         for (int i = 0; i < k - 1 - edgeFrom[start].overlapLength; ++i) mask.push_back(0);
         mask.push_back(1);

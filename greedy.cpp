@@ -15,20 +15,20 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &input, int k
     std::vector<OverlapEdge> hamiltonianPath;
     std::vector<bool> suffixForbidden(kMers.size(), false);
     std::vector<bool> prefixForbidden(kMers.size(), false);
-    std::vector<int> first(kMers.size());
-    std::vector<int> last(kMers.size());
-    for (int i = 0; i < kMers.size(); ++i) {
+    std::vector<size_t> first(kMers.size());
+    std::vector<size_t> last(kMers.size());
+    for (size_t i = 0; i < kMers.size(); ++i) {
         first[i] = last[i] = i;
         kMers[i] = KMerToNumber(input[i]);
     }
     for (int d = k - 1; d >= 0; --d) {
-        std::unordered_map<int64_t, std::list<int>> prefixes;
-        for (int i = 0 ; i < kMers.size(); ++i) if(!prefixForbidden[i]) {
+        std::unordered_map<int64_t, std::list<size_t>> prefixes;
+        for (size_t i = 0 ; i < kMers.size(); ++i) if(!prefixForbidden[i]) {
             int64_t prefix = BitPrefix(kMers[i], k, d);
-            if (prefixes.count(prefix) == 0) prefixes[prefix] = std::list<int>();
+            if (prefixes.count(prefix) == 0) prefixes[prefix] = std::list<size_t>();
             prefixes[prefix].push_back(i);
         }
-        for (int i = 0 ; i < kMers.size(); ++i) if(!suffixForbidden[i]) {
+        for (size_t i = 0 ; i < kMers.size(); ++i) if(!suffixForbidden[i]) {
             int64_t suffix = BitSuffix(kMers[i], d);
             if (prefixes.count(suffix) == 0 || prefixes[suffix].size() == 0) continue;
             auto j = prefixes[suffix].begin();

@@ -10,13 +10,13 @@
 /// Mark this k-mer forbidden and remove all the k-mers in incidentKMers which are forbidden.
 /// The latter is done in order not to increase time complexity by repeatedly iterating over forbidden k-mers.
 /// Return -1 if only forbidden k-mers were found.
-int ExtensionAC(std::vector<bool> &forbidden, std::list<int> &incidentKMers) {
+size_t ExtensionAC(std::vector<bool> &forbidden, std::list<size_t> &incidentKMers) {
     while(!incidentKMers.empty()) {
         if(forbidden[incidentKMers.front()]) {
             incidentKMers.pop_front();
         } else {
             forbidden[incidentKMers.front()] = true;
-            int ret = incidentKMers.front();
+            size_t ret = incidentKMers.front();
             incidentKMers.pop_front();
             return ret;
         }
@@ -37,11 +37,11 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max)
     // suffixes[i][j] is the state in the AC automaton given by the prefix of kMers[i] of size j.
     std::vector<std::vector<int>> prefixes(kMers.size(), std::vector<int>(k + 1, 0));
     // For each state the list of k-mers which have the given state as a suffix.
-    std::vector<std::list<int>> incidentKMers(a.states.size());
+    std::vector<std::list<size_t>> incidentKMers(a.states.size());
     // true if the given k-mer has already been used.
     std::vector<bool> forbidden(kMers.size(), false);
 
-    for (int i = 0; i < kMers.size(); ++i) {
+    for (size_t i = 0; i < kMers.size(); ++i) {
         for(int j = 0; j < k; ++j) {
             prefixes[i][j + 1] = a.states[prefixes[i][j]].forwardEdges[NucleotideToInt(kMers[i].value[j])];
         }
@@ -52,17 +52,17 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max)
         }
     }
 
-    int firstUnused = 0;
+    size_t firstUnused = 0;
     for(;;) {
         // Find the first unused k-mer.
         while(forbidden[firstUnused]) {
             ++firstUnused;
             if (firstUnused == kMers.size()) {
-                firstUnused = -1;
+                firstUnused = size_t(-1);
                 break;
             }
         }
-        if (firstUnused == -1) break;
+        if (firstUnused == size_t(-1)) break;
         auto simplitig = kMers[firstUnused].value;
         // Maintain the left and right most k-mer of the generalized simplitig.
         int firstKMer = firstUnused;
