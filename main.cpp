@@ -14,7 +14,7 @@
 void WriteSuperstring(KMerSet result, std::string name) {
     std::cout << name << std::endl;
     std::string superstring = "";
-    for (int i = 0; i < result.superstring.length(); ++i) {
+    for (size_t i = 0; i < result.superstring.length(); ++i) {
         superstring += result.mask[i] ? result.superstring[i] : std::tolower(result.superstring[i]);
     }
     std::cout << superstring << std::endl;
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
                     return 0;
             }
         }
-    } catch (std::exception) {
+    } catch (std::invalid_argument) {
         Help();
         return 1;
     };

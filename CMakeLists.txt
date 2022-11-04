@@ -7,8 +7,8 @@ add_subdirectory(googletest)
 include_directories(googletest/googletest/include)
 
 add_executable(kmers
-        #unittest.cpp
-        main.cpp
+        unittest.cpp
+        #main.cpp
         )
 
 target_link_libraries(kmers gtest gtest_main)
