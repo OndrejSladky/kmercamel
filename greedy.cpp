@@ -4,13 +4,14 @@
 #include <iostream>
 #include <unordered_map>
 #include <list>
+#include <cstdint>
 
 #include "greedy_ac.cpp"
 #include "kmers.cpp"
 
 /// Greedily find the approximate hamiltonian path with longest overlaps.
 std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &input, int k) {
-    std::vector<long long> kMers(input.size());
+    std::vector<int64_t> kMers(input.size());
     std::vector<OverlapEdge> hamiltonianPath;
     std::vector<bool> suffixForbidden(kMers.size(), false);
     std::vector<bool> prefixForbidden(kMers.size(), false);
@@ -21,14 +22,14 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &input, int k
         kMers[i] = KMerToNumber(input[i]);
     }
     for (int d = k - 1; d >= 0; --d) {
-        std::unordered_map<long long, std::list<int>> prefixes;
+        std::unordered_map<int64_t, std::list<int>> prefixes;
         for (int i = 0 ; i < kMers.size(); ++i) if(!prefixForbidden[i]) {
-            long long prefix = BitPrefix(kMers[i], k, d);
+            int64_t prefix = BitPrefix(kMers[i], k, d);
             if (prefixes.count(prefix) == 0) prefixes[prefix] = std::list<int>();
             prefixes[prefix].push_back(i);
         }
         for (int i = 0 ; i < kMers.size(); ++i) if(!suffixForbidden[i]) {
-            long long suffix = BitSuffix(kMers[i], d);
+            int64_t suffix = BitSuffix(kMers[i], d);
             if (prefixes.count(suffix) == 0 || prefixes[suffix].size() == 0) continue;
             auto j = prefixes[suffix].begin();
             if (first[i] == *j) {

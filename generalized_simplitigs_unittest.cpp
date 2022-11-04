@@ -5,12 +5,12 @@
 namespace {
     TEST(RightExtensionTest, RightExtension) {
         struct TestCase {
-            long long last;
-            std::unordered_set<long long> kMers;
+            int64_t last;
+            std::unordered_set<int64_t> kMers;
             int k;
             int d;
-            long long wantExt;
-            long long  wantNext;
+            int64_t wantExt;
+            int64_t  wantNext;
         };
         std::vector<TestCase> tests = {
                 // ACT; {TCC, CTA, ACT, CCT}; A; CTA
@@ -32,12 +32,12 @@ namespace {
 
     TEST(LeftExtensionTest, LeftExtension) {
         struct TestCase {
-            long long first;
-            std::unordered_set<long long> kMers;
+            int64_t first;
+            std::unordered_set<int64_t> kMers;
             int k;
             int d;
-            long long wantExt;
-            long long  wantNext;
+            int64_t wantExt;
+            int64_t  wantNext;
         };
         std::vector<TestCase> tests = {
                 // ACT; {TCC, ACT, CCT}
@@ -59,13 +59,13 @@ namespace {
     TEST(NextGeneralizedSimplitigTest, NextGeneralizedSimplitig) {
         struct TestCase {
             std::string superstring;
-            std::unordered_set<long long> kMers;
+            std::unordered_set<int64_t> kMers;
             std::vector<bool> mask;
             int k;
             int d_max;
             bool complements;
             std::string wantSuperstring;
-            std::unordered_set<long long> wantKMers;
+            std::unordered_set<int64_t> wantKMers;
             std::vector<bool> wantMask;
         };
         std::vector<TestCase> tests = {
