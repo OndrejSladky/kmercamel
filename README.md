@@ -40,3 +40,7 @@ For example:
 
 runs the pseudosimplitigs on the streptococcus fasta file with `k=12` and `d=7`.
 
+## Converting k-mer set superstring representation to traditional one
+
+Run `./convert_superstring`. This runs a Python script which inputs the superstring masked representaion and outputs the traditional one.
+
