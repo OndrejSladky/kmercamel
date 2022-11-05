@@ -5,15 +5,16 @@
 #include <unordered_set>
 #include <vector>
 #include <deque>
+#include <cstdint>
 
 
 /// Find the right extension to the provided last k-mer from the kMers.
 /// This extension has k-d overlap with the given simplitig.
 /// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
-std::pair<long long, long long> RightExtension(long long last, std::unordered_set<long long> &kMers, int k, int d) {
+std::pair<int64_t, int64_t> RightExtension(int64_t last, std::unordered_set<int64_t> &kMers, int k, int d) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
-    for (long long ext = 0; ext < (1 << (d << 1)); ++ext) {
-        long long next = BitSuffix(last, k - d) << (d << 1) | ext;
+    for (int64_t ext = 0; ext < (1 << (d << 1)); ++ext) {
+        int64_t next = BitSuffix(last, k - d) << (d << 1) | ext;
         if (kMers.count(next) > 0) {
             return {ext, next};
         }
@@ -24,10 +25,10 @@ std::pair<long long, long long> RightExtension(long long last, std::unordered_se
 /// Find the left extension to the provided first k-mer from the kMers.
 /// This extension has k-d overlap with the given simplitig.
 /// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
-std::pair<long long, long long> LeftExtension(long long first, std::unordered_set<long long> &kMers, int k, int d) {
+std::pair<int64_t, int64_t> LeftExtension(int64_t first, std::unordered_set<int64_t> &kMers, int k, int d) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
-    for (long long ext = 0; ext < (1 << (d << 1)); ++ext) {
-        long long next = ext << ((k - d) << 1) | BitPrefix(first, k, k - d);
+    for (int64_t ext = 0; ext < (1 << (d << 1)); ++ext) {
+        int64_t next = ext << ((k - d) << 1) | BitPrefix(first, k, k - d);
         if (kMers.count(next) > 0) {
             return {ext, next};
         }
@@ -38,8 +39,8 @@ std::pair<long long, long long> LeftExtension(long long first, std::unordered_se
 /// Find the next generalized simplitig.
 /// Update the provided superstring and the mask.
 /// Also remove the used k-mers from kMers.
-void NextGeneralizedSimplitig(std::unordered_set<long long> &kMers, std::string &superstring, std::vector<bool> &mask, int k, int d_max, bool complements) {
-    long long last, first;
+void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &superstring, std::vector<bool> &mask, int k, int d_max, bool complements) {
+    int64_t last, first;
     last = first = *kMers.begin();
     std::string simplitig = NumberToKMer(last, k);
     kMers.erase(last);
@@ -49,7 +50,7 @@ void NextGeneralizedSimplitig(std::unordered_set<long long> &kMers, std::string 
     while (d_l <= d_max || d_r <= d_max) {
         if (d_r <= d_l) {
             auto extension = RightExtension(last, kMers, k, d_r);
-            long long ext = extension.first;
+            int64_t ext = extension.first;
             if (ext == -1) {
                 // No right extension found.
                 ++d_r;
@@ -65,7 +66,7 @@ void NextGeneralizedSimplitig(std::unordered_set<long long> &kMers, std::string 
             }
         } else {
             auto extension = LeftExtension(first, kMers, k, d_l);
-            long long ext = extension.first;
+            int64_t ext = extension.first;
             if (ext == -1) {
                 // No left extension found.
                 ++d_l;
@@ -92,7 +93,7 @@ KMerSet GreedyGeneralizedSimplitigs(std::vector<KMer> kMers, int k, int d_max, b
     std::string superstring = "";
     std::vector<bool> mask;
 
-    std::unordered_set<long long> remainingKMers;
+    std::unordered_set<int64_t> remainingKMers;
     for (auto &&kMer : kMers) remainingKMers.insert(KMerToNumber(kMer));
     if (complements) for (auto &&kMer : kMers) remainingKMers.insert(ReverseComplement(KMerToNumber(kMer), k));
     while(!remainingKMers.empty()) NextGeneralizedSimplitig(remainingKMers, superstring, mask, k, d_max, complements);

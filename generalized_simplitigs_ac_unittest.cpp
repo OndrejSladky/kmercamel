@@ -6,10 +6,10 @@ namespace {
     TEST(ExtensionACTest, ExtensionAC) {
         struct TestCase {
             std::vector<bool> forbidden;
-            std::list<int> incidentKMers;
+            std::list<size_t> incidentKMers;
             int wantResult;
             std::vector<bool> wantForbidden;
-            std::list<int> wantIncidentKMers;
+            std::list<size_t> wantIncidentKMers;
         };
         std::vector<TestCase> tests = {
                 {{0,0,0}, {1, 0}, 1, {0, 1, 0}, {0}},
@@ -19,7 +19,7 @@ namespace {
         };
 
         for (auto t: tests) {
-            int gotResult = ExtensionAC(t.forbidden, t.incidentKMers);
+            size_t gotResult = ExtensionAC(t.forbidden, t.incidentKMers);
 
             EXPECT_EQ(t.wantResult, gotResult);
             EXPECT_EQ(t.wantForbidden, t.forbidden);
