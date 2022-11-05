@@ -6,10 +6,16 @@
 
 /// Create a list of unique k-mers in no particular order.
 /// This runs in O(k*data.size) expected time.
-void AddKMersFromSequence(std::unordered_set<std::string> &kMers, std::string &data, int k) {
-    if (size_t(k) > data.size()) return;
-    for (size_t i = 0; i <= data.size() - k; ++i) {
-        kMers.insert(data.substr(i, k));
+void AddKMersFromSequence(std::unordered_set<std::string> &kMers, std::string data, int k) {
+    // Convert the sequence to uppercase letters.
+    std::transform(data.begin(), data.end(), data.begin(), toupper);
+    for (size_t i = k; i <= data.size(); ++i) {
+        if (data[i-1] != 'A' && data[i-1] != 'C' && data[i-1] != 'G' && data[i-1] != 'T') {
+            // Skip this and the next k-1 k-mers.
+            i += k - 1;
+        } else {
+            kMers.insert(data.substr(i - k, k));
+        }
     }
 }
 

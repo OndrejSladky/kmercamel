@@ -22,6 +22,8 @@ namespace {
                                    {"AGAC"}, {"AGTT"}, {"GAAA"}, {"GTTT"}, {"TAAA"},
                                    {"TTAA"}, {"TTTA"}}},
                 {"ACGTA", {"ACG", "CCC"}, 3, {{"CCC"}, {"ACG"}, {"CGT"}, {"GTA"}}},
+                {"acgTa", {}, 3, {{"ACG"}, {"CGT"}, {"GTA"}}},
+                {"ACGNTTA", {}, 3, {{"ACG"}, {"TTA"}}},
         };
 
         for (auto t: tests) {
