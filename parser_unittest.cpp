@@ -7,7 +7,27 @@
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(AddKMersFromSequence, AddKMersFromSequence) {
+    TEST(ReadFastaTest, ReadFasta) {
+        int build_dir_name_length = 17;
+        std::string path = (std::string) get_current_dir_name();
+        path = path.substr(0, path.size() - build_dir_name_length) + "tests/test.fa";
+        std::vector<FastaRecord> wantResult = {
+                FastaRecord{">1", "ACCCGAAC"},
+                FastaRecord{">2", "CGTANATGC"},
+                FastaRecord{">3 with description", "ACCCGTTTAACG"},
+                FastaRecord{">4", "A"},
+        };
+
+        auto gotResult = ReadFasta(path);
+
+        EXPECT_EQ(wantResult.size(), gotResult.size());
+        for (int i = 0; i < wantResult.size(); ++i) {
+            EXPECT_EQ(wantResult[i].name, gotResult[i].name);
+            EXPECT_EQ(wantResult[i].sequence, gotResult[i].sequence);
+        }
+    }
+
+    TEST(AddKMersFromSequenceTest, AddKMersFromSequence) {
         struct TestCase {
             std::string data;
             std::unordered_set<std::string> initialKMers;
@@ -36,17 +56,17 @@ namespace {
 
     TEST(ConstructKMersTest, ConstructKMers) {
         struct TestCase {
-            std::vector<bioio::FastaRecord<std::string, std::string>> data;
+            std::vector<FastaRecord> data;
             int k;
             std::vector<KMer> wantResult;
         };
         std::vector<TestCase> tests = {
-                {{bioio::FastaRecord<std::string, std::string>{"", "AAAA"}}, 2, std::vector<KMer>{KMer{"AA"}}},
-                {{bioio::FastaRecord<std::string, std::string>{"", "GAAAAGTTTAAAAAGAC"}}, 4,
+                {{FastaRecord{"", "AAAA"}}, 2, std::vector<KMer>{KMer{"AA"}}},
+                {{FastaRecord{"", "GAAAAGTTTAAAAAGAC"}}, 4,
                         std::vector<KMer>{KMer{"AAAA"}, KMer{"AAAG"}, KMer{"AAGA"}, KMer{"AAGT"},
                                           KMer{"AGAC"}, KMer{"AGTT"}, KMer{"GAAA"}, KMer{"GTTT"}, KMer{"TAAA"},
                                           KMer{"TTAA"}, KMer{"TTTA"}}},
-                {{bioio::FastaRecord<std::string, std::string>{"", "AAAA"}, bioio::FastaRecord<std::string, std::string>{"", "CCC"}}, 2, std::vector<KMer>{KMer{"AA"}, KMer{"CC"}}},
+                {{FastaRecord{"", "AAAA"}, FastaRecord{"", "CCC"}}, 2, std::vector<KMer>{KMer{"AA"}, KMer{"CC"}}},
         };
 
         for (auto t: tests) {
