@@ -33,9 +33,9 @@ void WriteStats(KMerSet result, std::vector<KMer> kMers, std::string data, std::
 void Help() {
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
-    std::cerr << "  -a algortihm     - the algorithm to be run" << std::endl;
-    std::cerr << "  -d d_value       - integer value for d_max" << std::endl;
-    std::cerr << "  -k k_value       - integer value for k" << std::endl;
+    std::cerr << "  -a algortihm     - the algorithm to be run [greedy (default), greedyAC, pseudosimplitigs, pseudosimplitigsAC]" << std::endl;
+    std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
+    std::cerr << "  -k k_value       - integer value for k; default 13" << std::endl;
     std::cerr << "  -s               - if given print statistics instead of superstring" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
