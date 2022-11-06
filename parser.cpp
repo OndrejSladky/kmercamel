@@ -9,11 +9,13 @@
 void AddKMersFromSequence(std::unordered_set<std::string> &kMers, std::string data, int k) {
     // Convert the sequence to uppercase letters.
     std::transform(data.begin(), data.end(), data.begin(), toupper);
+    size_t possibleKMerEnd = k;
     for (size_t i = k; i <= data.size(); ++i) {
         if (data[i-1] != 'A' && data[i-1] != 'C' && data[i-1] != 'G' && data[i-1] != 'T') {
             // Skip this and the next k-1 k-mers.
-            i += k - 1;
-        } else {
+            possibleKMerEnd = i + k;
+        }
+        if (i >= possibleKMerEnd) {
             kMers.insert(data.substr(i - k, k));
         }
     }
