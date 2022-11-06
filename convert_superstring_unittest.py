@@ -13,6 +13,7 @@ class TestConvertSuperstring(unittest.TestCase):
             ("ATttCgg", 3, ["ATTT", "CGG"]),
             ("ATttCgga", 4, ["ATTTC", "CGGA"]),
             ("ATtGCtCg", 2, ["ATT", "GCT", "CG"]),
+            ("ATCGCTtGCTATACtcCACgttta", 6, ["ATCGCTTGCTA", "GCTATACTCCAC", "CACGTTTA"]),
         ]
 
         for t in tests:

@@ -37,13 +37,14 @@ def get_k(superstring: str) -> int:
 
 
 """
-Read the superstring from standard input and print the traditional representation.
+Read the superstring from standard input and print the SPSS representation.
 """
 def main():
     superstring = input().strip()
     k = get_k(superstring)
     split = split_superstring(superstring, k)
-    for s in split:
+    for i, s in enumerate(split):
+        print(f">{i+1}")
         print(s)
 
 
