@@ -33,9 +33,9 @@ void WriteStats(KMerSet result, std::vector<KMer> kMers, std::string data, std::
 void Help() {
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
+    std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
     std::cerr << "  -a algortihm     - the algorithm to be run [greedy (default), greedyAC, pseudosimplitigs, pseudosimplitigsAC]" << std::endl;
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
-    std::cerr << "  -k k_value       - integer value for k; default 13" << std::endl;
     std::cerr << "  -s               - if given print statistics instead of superstring" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
@@ -45,7 +45,7 @@ void Help() {
 
 int main(int argc, char **argv) {
     std::string path;
-    int k = 13;
+    int k = 0;
     int d_max = 5;
     std::string algorithm = "greedy";
     bool printStats = false;
@@ -84,6 +84,19 @@ int main(int argc, char **argv) {
     auto data = bioio::read_fasta(path);
     if (!data.size()) {
         std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
+        Help();
+        return 1;
+    }
+    if (k == 0) {
+        std::cerr << "Required parameter k not set." << std::endl;
+        Help();
+        return 1;
+    } else if (k < 0) {
+        std::cerr << "k must be positive." << std::endl;
+        Help();
+        return 1;
+    } else if (k > 31 && (algorithm == "greedy" || algorithm == "pseudosimplitigs")) {
+        std::cerr << "k > 31 not supported for the algorithm '" + algorithm + "'. Use its AC version instead." << std::endl;
         Help();
         return 1;
     }
