@@ -24,7 +24,7 @@ Compile the program by running `make`.
 The program has the following arguments:
 
 - `-p path_to_fasta` - the path to fasta file. This is a required argument.
-- `-k value_of_k` - the size of one k-mer. Default 13.
+- `-k value_of_k` - the size of one k-mer. This is a required argument.
 - `-a algorithm` - the algortihm which should be run. Either `greedy` or `greedyAC` for global GREEDY, `pseudosimplitigs` or `pseudosimplitigsAC` for greedily computing pseudosimplitigs.
 The versions with AC use Aho-Corasick automaton. Default `greedy`.
 - `-d value_of_d` - d_max used in pseudosimplitigs. Default 5.
