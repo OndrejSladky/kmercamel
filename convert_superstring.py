@@ -40,6 +40,8 @@ def get_k(superstring: str) -> int:
 Read the superstring from standard input and print the SPSS representation.
 """
 def main():
+    # Ignore fasta record header.
+    input()
     superstring = input().strip()
     k = get_k(superstring)
     split = split_superstring(superstring, k)
