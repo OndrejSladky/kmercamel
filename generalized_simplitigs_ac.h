@@ -1,5 +1,6 @@
+#pragma once
 #include "models.h"
-#include "greedy_ac.cpp"
+#include "greedy_ac.h"
 
 #include <string>
 #include <vector>

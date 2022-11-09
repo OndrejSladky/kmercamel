@@ -1,5 +1,4 @@
-#ifndef KMERS_CPP
-#define KMERS_CPP
+#pragma once
 #include <string>
 #include <iostream>
 #include <cstdint>
@@ -62,6 +61,3 @@ std::string NumberToKMer(int64_t encoded, int length) {
     }
     return ret;
 }
-
-
-#endif //KMERS_CPP

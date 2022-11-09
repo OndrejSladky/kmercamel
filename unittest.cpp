@@ -1,9 +1,9 @@
-#include "parser_unittest.cpp"
-#include "kmers_unittest.cpp"
-#include "greedy_unittest.cpp"
-#include "greedy_unittest_ac.cpp"
-#include "generalized_simplitigs_unittest.cpp"
-#include "generalized_simplitigs_ac_unittest.cpp"
+#include "parser_unittest.h"
+#include "kmers_unittest.h"
+#include "greedy_unittest.h"
+#include "greedy_unittest_ac.h"
+#include "generalized_simplitigs_unittest.h"
+#include "generalized_simplitigs_ac_unittest.h"
 
 #include "gtest/gtest.h"
 

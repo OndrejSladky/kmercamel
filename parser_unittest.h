@@ -1,4 +1,5 @@
-#include "parser.cpp"
+#pragma once
+#include "parser.h"
 
 #include <algorithm>
 #include <vector>
