@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 CXX=         g++
-CXXFLAGS=    -std=c++17 -O2
+CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2
 
 all: kmers
 
