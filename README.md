@@ -28,7 +28,8 @@ The program has the following arguments:
 - `-a algorithm` - the algortihm which should be run. Either `greedy` or `greedyAC` for global GREEDY, `pseudosimplitigs` or `pseudosimplitigsAC` for greedily computing pseudosimplitigs.
 The versions with AC use Aho-Corasick automaton. Default `greedy`.
 - `-d value_of_d` - d_max used in pseudosimplitigs. Default 5.
-- `-s` - if provided do not print the resulting superstring, but rather stats about it. If not print the superstring - capital letters indicate that at given position, a k-mer starts.
+- `-s` - if provided do not print the resulting superstring, but rather stats about it. If not print the an output in fasta file format with one record.
+The name includes the statistics about the superstring and the sequence is the superstring - capital letters indicate that at given position, a k-mer starts.
 - `-c` - treat k-mer and its reverse complement as equal.
 - `-h` - print help.
 
