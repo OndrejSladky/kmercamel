@@ -10,7 +10,6 @@
 #include <vector>
 #include "unistd.h"
 
-#include "bioio.hpp"
 
 void WriteSuperstring(KMerSet result) {
     std::string superstring = "";
@@ -20,7 +19,7 @@ void WriteSuperstring(KMerSet result) {
     std::cout << superstring << std::endl;
 }
 
-void WriteStats(KMerSet result, std::vector<KMer> kMers, std::vector<bioio::FastaRecord<std::string , std::string>> &data, long time) {
+void WriteStats(KMerSet result, std::vector<KMer> kMers, std::vector<FastaRecord> &data, long time) {
     size_t scanned_length = 0;
     for (auto &&record : data) {
         scanned_length += record.sequence.length();
@@ -84,7 +83,7 @@ int main(int argc, char **argv) {
         Help();
         return 1;
     };
-    auto data = bioio::read_fasta(path);
+    auto data = ReadFasta(path);
     if (!data.size()) {
         std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
         Help();
