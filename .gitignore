@@ -1,6 +1,7 @@
 cmake-build-debug/
 googletest/
 .idea/
+__pycache__/
 *.fa
 kmers
 

@@ -11,6 +11,20 @@
 #include "unistd.h"
 
 
+void WriteName(KMerSet result, std::vector<KMer> kMers, std::vector<FastaRecord> &data, long time) {
+    std::cout << ">superstring ";
+    size_t scanned_length = 0;
+    for (auto &&record : data) {
+        scanned_length += record.sequence.length();
+    }
+    std::cout << "l=" << result.superstring.length() << " ";
+    std::cout << "k=" << result.k << " ";
+    std::cout << "k_mers_cnt=" << kMers.size() << " ";
+    std::cout << "seq_l=" << scanned_length << " ";
+    std::cout << "compression_coeff=" << result.superstring.length() / (double)kMers.size() << " ";
+    std::cout << "t=" << time << "ms" << std::endl;
+}
+
 void WriteSuperstring(KMerSet result) {
     std::string superstring = "";
     for (size_t i = 0; i < result.superstring.length(); ++i) {
@@ -120,10 +134,11 @@ int main(int argc, char **argv) {
         return 1;
     }
     auto now = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - before);
     if (printStats) {
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - before);
         WriteStats(result, kMers, data, duration.count());
     } else {
+        WriteName(result, kMers, data, duration.count());
         WriteSuperstring(result);
     }
     return 0;
