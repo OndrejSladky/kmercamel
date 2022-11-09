@@ -1,4 +1,5 @@
-#include "kmers.cpp"
+#pragma once
+#include "kmers.h"
 
 #include "gtest/gtest.h"
 

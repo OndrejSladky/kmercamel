@@ -1,5 +1,6 @@
+#pragma once
 #include "models.h"
-#include "kmers.cpp"
+#include "kmers.h"
 
 #include <string>
 #include <unordered_set>

@@ -1,5 +1,4 @@
-#ifndef KMERS_MODELS_H
-#define KMERS_MODELS_H
+#pragma once
 #include <string>
 #include <vector>
 
@@ -13,5 +12,3 @@ struct KMerSet {
     std::vector<bool> mask;
     int k;
 };
-
-#endif //KMERS_MODELS_H
