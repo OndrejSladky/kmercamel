@@ -4,15 +4,21 @@ import sys
 import os
 
 
-def verify_instance(fasta_path: str, k: int, algorithm: str):
+def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool):
     with open("./bin/kmers.txt", "w") as k_mers:
-        subprocess.run(["./kmers", "-p", fasta_path, "-k", f"{k}", "-a", algorithm], stdout=k_mers)
+        args = ["./kmers", "-p", fasta_path, "-k", f"{k}", "-a", algorithm]
+        if complements:
+            args.append("-c")
+        subprocess.run(args, stdout=k_mers)
     with open("./bin/kmers.txt", "r") as k_mers:
         with open("./bin/converted.fa", "w") as converted:
             subprocess.run(["./convert_superstring.py"], stdin=k_mers, stdout=converted)
     stats = [{}, {}, {}]
     for i, path, result in [(0,"./bin/converted.fa", "converted"), (1, fasta_path, "original")]:
-        subprocess.run(["jellyfish", "count", "-m", f"{k}", "-s", "100M", "-o", f"./bin/{result}.jf", path ])
+        args = ["jellyfish", "count", "-m", f"{k}", "-s", "100M", "-o", f"./bin/{result}.jf", path]
+        if complements:
+            args.insert(2, "-C")
+        subprocess.run(args)
         with open(f"./bin/{result}_stats.txt", "w") as f:
             subprocess.run(["jellyfish", "stats", f"./bin/{result}.jf"], stdout=f)
         with open(f"./bin/{result}_stats.txt", "r") as f:
@@ -39,9 +45,15 @@ def verify_instance(fasta_path: str, k: int, algorithm: str):
 if not os.path.exists("bin"):
     os.makedirs("bin")
 path = sys.argv[1]
+print(f"Testing with support for reverse complements:")
+for a in ["pseudosimplitigs"]:
+    print(f"Testing {a}:")
+    for k in range(5, 32):
+        verify_instance(path, k, a, True)
+print(f"Testing without support for reverse complements:")
 for a in ["greedy", "greedyAC", "pseudosimplitigs", "pseudosimplitigsAC"]:
     print(f"Testing {a}:")
     for k in range(5, 32):
-        verify_instance(path, k, a)
+        verify_instance(path, k, a, False)
 
 
