@@ -1,5 +1,4 @@
-#ifndef GREEDY_AC_CPP
-#define GREEDY_AC_CPP
+#pragma once
 #include <string>
 #include <vector>
 #include <iostream>
@@ -9,7 +8,7 @@
 #include <sstream>
 
 #include "models.h"
-#include "kmers.cpp"
+#include "kmers.h"
 
 constexpr int INVALID_STATE = -1;
 struct ACState {
@@ -204,4 +203,3 @@ KMerSet GreedyAC(std::vector<KMer> &kMers) {
     auto hamiltonianPath = OverlapHamiltonianPathAC(kMers);
     return SuperstringFromPath(hamiltonianPath, kMers, k);
 }
-#endif //GREEDY_AC_CPP

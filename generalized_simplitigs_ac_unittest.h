@@ -1,4 +1,5 @@
-#include "generalized_simplitigs_ac.cpp"
+#pragma once
+#include "generalized_simplitigs_ac.h"
 
 #include "gtest/gtest.h"
 

@@ -1,3 +1,4 @@
+#pragma once
 #include "models.h"
 
 #include <vector>
@@ -6,8 +7,8 @@
 #include <list>
 #include <cstdint>
 
-#include "greedy_ac.cpp"
-#include "kmers.cpp"
+#include "greedy_ac.h"
+#include "kmers.h"
 
 /// Greedily find the approximate hamiltonian path with longest overlaps.
 /// k is the size of one k-mer and n is the number of distinct k-mers.

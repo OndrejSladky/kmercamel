@@ -1,4 +1,5 @@
-#include "greedy.cpp"
+#pragma once
+#include "greedy.h"
 
 #include "gtest/gtest.h"
 
