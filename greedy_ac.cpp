@@ -159,15 +159,20 @@ std::string Suffix(KMer kMer, int overlap) {
 /// Construct the superstring from the given hamiltonian path in the overlap graph.
 KMerSet SuperstringFromPath(std::vector<OverlapEdge> &hamiltonianPath, std::vector<KMer> &kMers, int k) {
     std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
-    std::vector<bool> isStart(kMers.size(), true);
+    std::vector<bool> isStart(kMers.size(), false);
     for (auto edge : hamiltonianPath) {
+        isStart[edge.firstIndex] = true;
         edgeFrom[edge.firstIndex] = edge;
+    }
+    for (auto edge : hamiltonianPath) {
         isStart[edge.secondIndex] = false;
     }
 
     // Find the vertex in the overlap graph with in-degree 0.
-    int start = 0;
-    for (; isStart[start] == false; ++start);
+    size_t start = 0;
+    for (; start < kMers.size() && !isStart[start]; ++start);
+    // Handle the edge case of only one k-mer.
+    start %= kMers.size();
 
     std::stringstream superstring;
     superstring << kMers[start].value;
@@ -192,8 +197,8 @@ KMerSet SuperstringFromPath(std::vector<OverlapEdge> &hamiltonianPath, std::vect
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm with Aho-Corasick automaton.
 /// This runs in O(n k), where n is the number of k-mers.
 KMerSet GreedyAC(std::vector<KMer> &kMers) {
-	if (kMers.size() == 0) {
-		throw new std::invalid_argument("input cannot be empty");
+	if (kMers.empty()) {
+		throw std::invalid_argument("input cannot be empty");
 	}
 	int k = kMers[0].length();
     auto hamiltonianPath = OverlapHamiltonianPathAC(kMers);

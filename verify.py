@@ -33,11 +33,12 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool):
             key, value = f.readline().split()
             stats[2][key] = value
 
+
     if (stats[0]["Distinct:"] != stats[1]["Distinct:"] or stats[0]["Distinct:"] != stats[2]["Distinct:"]):
         print("F")
         print(f"k={k}: expected orginal_distinct_count={stats[1]['Distinct:']}, result_distinct_count={stats[0]['Distinct:']} and merged_distinct_count={stats[2]['Distinct:']} to be equal.")
     else:
-        print(".",end="")
+        print(".", end="")
         sys.stdout.flush()
     print(f"k={k}, a={algorithm}: orig={stats[1]['Distinct:']} result={stats[0]['Distinct:']} merged={stats[2]['Distinct:']}", file=sys.stderr)
 
@@ -46,7 +47,7 @@ if not os.path.exists("bin"):
     os.makedirs("bin")
 path = sys.argv[1]
 print(f"Testing with support for reverse complements:")
-for a in ["pseudosimplitigs"]:
+for a in ["greedy", "pseudosimplitigs"]:
     print(f"Testing {a}:")
     for k in range(5, 32):
         verify_instance(path, k, a, True)

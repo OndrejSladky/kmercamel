@@ -54,23 +54,42 @@ namespace {
         }
     }
 
+    TEST(FilterKMersWithComplementTest, FilterKMersWithComplement) {
+        struct TestCase {
+            std::unordered_set<std::string> kMers;
+            std::unordered_set<std::string> wantResult;
+        };
+        std::vector<TestCase> tests = {
+                {{"AA", "TT", "AC", "GT"}, {"TT", "GT"}},
+                {{"AT", }, {"AT"}},
+                {{"GT", {"CG"} }, {"GT", "CG"}},
+        };
+
+        for (auto t: tests) {
+            auto gotResult = FilterKMersWithComplement(t.kMers);
+            EXPECT_EQ(t.wantResult, gotResult);
+        }
+    }
+
     TEST(ConstructKMersTest, ConstructKMers) {
         struct TestCase {
             std::vector<FastaRecord> data;
             int k;
             std::vector<KMer> wantResult;
+            bool complements;
         };
         std::vector<TestCase> tests = {
-                {{FastaRecord{"", "AAAA"}}, 2, std::vector<KMer>{KMer{"AA"}}},
+                {{FastaRecord{"", "AAAA"}}, 2, std::vector<KMer>{KMer{"AA"}}, false},
                 {{FastaRecord{"", "GAAAAGTTTAAAAAGAC"}}, 4,
                         std::vector<KMer>{KMer{"AAAA"}, KMer{"AAAG"}, KMer{"AAGA"}, KMer{"AAGT"},
                                           KMer{"AGAC"}, KMer{"AGTT"}, KMer{"GAAA"}, KMer{"GTTT"}, KMer{"TAAA"},
-                                          KMer{"TTAA"}, KMer{"TTTA"}}},
-                {{FastaRecord{"", "AAAA"}, FastaRecord{"", "CCC"}}, 2, std::vector<KMer>{KMer{"AA"}, KMer{"CC"}}},
+                                          KMer{"TTAA"}, KMer{"TTTA"}}, false},
+                {{FastaRecord{"", "AAAA"}, FastaRecord{"", "CCC"}}, 2, std::vector<KMer>{KMer{"AA"}, KMer{"CC"}}, false},
+                {{FastaRecord{"", "AATT"}}, 2, std::vector<KMer>{KMer{"AT"}, KMer{"TT"}}, true},
         };
 
         for (auto t: tests) {
-            auto gotResult = ConstructKMers(t.data, t.k);
+            auto gotResult = ConstructKMers(t.data, t.k, t.complements);
             // ConstructKMers does not return the kMers in any particular order.
             std::sort(gotResult.begin(), gotResult.end(), [](const KMer &a, const KMer &b) {return a.value < b.value;});
             EXPECT_EQ(t.wantResult.size(), gotResult.size());

@@ -46,6 +46,13 @@ namespace {
         }
     }
 
+    TEST(ComplementaryNucleotideTest, ComplementaryNucleotide) {
+        EXPECT_EQ('A', ComplementaryNucleotide('T'));
+        EXPECT_EQ('T', ComplementaryNucleotide('A'));
+        EXPECT_EQ('C', ComplementaryNucleotide('G'));
+        EXPECT_EQ('G', ComplementaryNucleotide('C'));
+    }
+
     TEST(NumberToKMerTest, NumberToKMer) {
         struct TestCase {
             int64_t encoded;
@@ -85,7 +92,7 @@ namespace {
         }
     }
 
-    TEST(ReverseComplementTest, ReverseComplement) {
+    TEST(ReverseComplementTest, Int) {
         struct TestCase {
             int64_t input;
             int k;
@@ -102,6 +109,24 @@ namespace {
             int64_t gotResult = ReverseComplement(t.input, t.k);
 
             EXPECT_EQ(t.wantResult, gotResult);
+        }
+    }
+
+    TEST(ReverseComplementTest, String) {
+        struct TestCase {
+            KMer input;
+            KMer wantResult;
+        };
+        std::vector<TestCase> tests = {
+                {{"CG"}, {"CG"}},
+                {{"ATT"}, {"AAT"}},
+                {{"CAC"}, {"GTG"}},
+        };
+
+        for (auto t: tests) {
+            KMer gotResult = ReverseComplement(t.input);
+
+            EXPECT_EQ(t.wantResult.value, gotResult.value);
         }
     }
 }

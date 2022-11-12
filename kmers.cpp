@@ -49,6 +49,24 @@ int64_t ReverseComplement(int64_t kMer, int k) {
     return ans;
 }
 
+/// Return the complementary nucleotide for the given one.
+char ComplementaryNucleotide(const char nucleotide) {
+    if (nucleotide == 'A') return 'T';
+    else if (nucleotide == 'T') return 'A';
+    else if (nucleotide == 'G') return 'C';
+    else if (nucleotide == 'C') return 'G';
+    throw std::invalid_argument("cannot convert letter " + std::string(1, nucleotide) + "to int.");
+}
+
+/// Compute the reverse complement of the given k-mer.
+KMer ReverseComplement(KMer &kMer) {
+    KMer ans;
+    for (int i = (int)kMer.length() - 1; i >= 0; --i) {
+        ans.value += ComplementaryNucleotide(kMer.value[i]);
+    }
+    return ans;
+}
+
 const char letters[4] {'A', 'C', 'G', 'T'};
 
 /// Convert the encoded KMer representation to string.
