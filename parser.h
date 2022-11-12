@@ -5,7 +5,7 @@
 #include <algorithm>
 
 #include "models.h"
-#include "kmers.cpp"
+#include "kmers.h"
 
 /// Record of one fasta sequence.
 struct FastaRecord {
