@@ -3,7 +3,7 @@
 | Algorithm                     | Implemented | Basic optimizations | Support for complements |
 |-------------------------------|-------------|---------------------|-------------------------|
 | GREEDY with AC                | YES         | NO                  | NO                      |
-| GREEDY with hashing           | YES         | YES                 | NO                      |
+| GREEDY with hashing           | YES         | YES                 | YES                     |
 | Pseudosimplitigs with AC      | YES         | NO                  | NO                      |
 | Pseudosimplitigs with hashing | YES         | YES                 | YES                     |
 
@@ -47,18 +47,10 @@ Run `./convert_superstring`. This runs a Python script which inputs the superstr
 
 ## How to verify
 
-First, install (jellyfish)[https://github.com/gmarcais/Jellyfish].
+First, install [jellyfish](https://github.com/gmarcais/Jellyfish).
 
 You can verify all the algortihms for `4 < k < 32` on a given fasta file by running:
 
 ```
 ./verify path_to_fasta
 ```
-
-At this point the verification is done by comparing the number of distinct k-mers in the original sequence and in the result. If you don't want to see results of the comparisons, run
-
-
-```
-./verify path_to_fasta 2> /dev/null
-```
-
