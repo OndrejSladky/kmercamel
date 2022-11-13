@@ -9,9 +9,8 @@
 
 namespace {
     TEST(ReadFastaTest, ReadFasta) {
-        int build_dir_name_length = 17;
         std::string path = (std::string) get_current_dir_name();
-        path = path.substr(0, path.size() - build_dir_name_length) + "tests/test.fa";
+        path += "/tests/test.fa";
         std::vector<FastaRecord> wantResult = {
                 FastaRecord{">1", "ACCCGAAC"},
                 FastaRecord{">2", "CGTANATGC"},

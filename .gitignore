@@ -4,6 +4,7 @@ googletest/
 __pycache__/
 *.fa
 kmers
+kmerstest
 bin/
 
 
