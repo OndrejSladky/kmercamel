@@ -47,6 +47,7 @@ Run `./convert_superstring`. This runs a Python script which inputs the superstr
 
 ## How to verify
 
+
 First, install [jellyfish](https://github.com/gmarcais/Jellyfish).
 
 You can verify all the algortihms for `4 < k < 32` on a given fasta file by running:
