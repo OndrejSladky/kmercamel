@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "models.h"
+#include "kmers.h"
 
 /// Record of one fasta sequence.
 struct FastaRecord {
@@ -54,13 +55,25 @@ void AddKMersFromSequence(std::unordered_set<std::string> &kMers, std::string da
     }
 }
 
+/// Return only the subset of k-mers where no two k-mers are complements of one another.
+/// The k-mers are chosen with no particular property.
+std::unordered_set<std::string> FilterKMersWithComplement(std::unordered_set<std::string> &kMers) {
+    std::unordered_set<std::string> ret;
+    for (auto &&x : kMers) {
+        auto kMer = KMer{x};
+        if (ret.count(ReverseComplement(kMer).value) == 0) ret.insert(x);
+    }
+    return ret;
+}
+
 /// Create a list of unique k-mers in no particular order.
 /// This runs in O(k*data.size) expected time.
-std::vector<KMer> ConstructKMers(std::vector<FastaRecord> &data, int k) {
+std::vector<KMer> ConstructKMers(std::vector<FastaRecord> &data, int k, bool complements) {
     std::unordered_set<std::string> uniqueKMers;
     for (auto &&record : data) {
         AddKMersFromSequence(uniqueKMers, record.sequence, k);
     }
+    if (complements) uniqueKMers = FilterKMersWithComplement(uniqueKMers);
     std::vector<KMer> result;
     for (auto &kMer : uniqueKMers) {
         result.push_back(KMer{kMer});

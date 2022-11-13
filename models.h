@@ -4,7 +4,7 @@
 
 struct KMer {
     std::string value;
-    size_t length(){ return value.size(); }
+    size_t length() const{ return value.size(); }
 };
 
 struct KMerSet {

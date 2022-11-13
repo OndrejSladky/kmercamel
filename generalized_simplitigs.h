@@ -91,7 +91,7 @@ void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &s
 /// Compute the generalized simplitigs greedily.
 /// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses is fast for small d_max.
 KMerSet GreedyGeneralizedSimplitigs(std::vector<KMer> kMers, int k, int d_max, bool complements) {
-    std::string superstring = "";
+    std::string superstring;
     std::vector<bool> mask;
 
     std::unordered_set<int64_t> remainingKMers;

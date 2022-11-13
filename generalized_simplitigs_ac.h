@@ -28,7 +28,7 @@ size_t ExtensionAC(std::vector<bool> &forbidden, std::list<size_t> &incidentKMer
 /// Compute the generalized simplitigs greedily using the Aho-Corasick automaton.
 /// This runs in O(n k), where n is the number of k-mers.
 KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max) {
-    std::string superstring = "";
+    std::string superstring;
     std::vector<bool> mask;
     ACAutomaton a;
     a.Construct(kMers);
@@ -66,17 +66,17 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max)
         if (firstUnused == size_t(-1)) break;
         auto simplitig = kMers[firstUnused].value;
         // Maintain the left and right most k-mer of the generalized simplitig.
-        int firstKMer = firstUnused;
-        int lastKMer = firstUnused;
+        size_t firstKMer = firstUnused;
+        size_t lastKMer = firstUnused;
         forbidden[firstUnused] = true;
         std::deque<bool> simplitigMask{1};
         int d_l = 1, d_r = 1;
         while (d_l <= d_max || d_r <= d_max) {
             if (d_r <= d_l) {
                 int state = suffixes[lastKMer][k - d_r];
-                int ext = -1;
+                size_t ext = -1;
                 if (state != -1) ext = ExtensionAC(forbidden, a.states[state].supporters);
-                if (ext == -1) {
+                if (ext == size_t(-1)) {
                     // No right extension found.
                     ++d_r;
                 } else {
@@ -89,9 +89,9 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max)
                 }
             } else {
                 int state = prefixes[firstKMer][k - d_l];
-                int ext = -1;
+                size_t ext = -1;
                 if (state != -1) ext = ExtensionAC(forbidden, incidentKMers[state]);
-                if (ext == -1) {
+                if (ext == size_t(-1)) {
                     // No left extension found.
                     ++d_l;
                 } else {

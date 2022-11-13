@@ -24,6 +24,12 @@ namespace {
                     3,
                     KMerSet{"TACGGC", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3}
                 },
+                {
+                        std::vector<OverlapEdge>{OverlapEdge{2, 1, 2},OverlapEdge{1, 3, 1}},
+                        std::vector<KMer>{KMer{"GCC"}, KMer{"ACG"}, KMer{"TAC"}, KMer{"GGC"}, KMer{"CGT"}, KMer{"GTA"}},
+                        3,
+                        KMerSet{"TACGGC", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3}
+                },
         };
 
         for (auto t : tests) {

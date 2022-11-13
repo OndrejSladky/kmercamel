@@ -93,10 +93,10 @@ int main(int argc, char **argv) {
                     return 0;
             }
         }
-    } catch (std::invalid_argument) {
+    } catch (std::invalid_argument&) {
         Help();
         return 1;
-    };
+    }
     auto data = ReadFasta(path);
     if (!data.size()) {
         std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
@@ -117,13 +117,13 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    auto kMers = ConstructKMers(data, k);
+    auto kMers = ConstructKMers(data, k, complements);
     auto before = std::chrono::high_resolution_clock::now();
     KMerSet result;
     if (algorithm == "greedyAC")
         result = GreedyAC(kMers);
     else if (algorithm == "greedy")
-        result = Greedy(kMers);
+        result = Greedy(kMers, complements);
     else if (algorithm == "pseudosimplitigs")
         result = GreedyGeneralizedSimplitigs(kMers, k, d_max, complements);
     else if (algorithm == "pseudosimplitigsAC")

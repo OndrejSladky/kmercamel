@@ -32,7 +32,7 @@ struct ACAutomaton {
     std::vector<int> reversedOrdering;
 
     /// Append a new state and return its ID.
-    int AddState(int depth) {
+    int AddState(const int depth) {
         ACState newState;
         newState.depth = depth;
         newState.id = states.size();
@@ -41,7 +41,7 @@ struct ACAutomaton {
     }
 
     /// Generate the trie from the given k-mers and set *endStateIndices*.
-    void ConstructTrie(std::vector<KMer> kMers) {
+    void ConstructTrie(const std::vector<KMer> &kMers) {
         endStateIndices = std::vector<int>(kMers.size());
         // Initialize the root.
         AddState(0);
@@ -63,15 +63,15 @@ struct ACAutomaton {
         }
 
         // Create a forward edge from the root to itself so that the AC Step always finds a valid forward edge.
-        for (int i = 0; i < 4; ++i) {
-            if (states[0].forwardEdges[i] == INVALID_STATE) {
-                states[0].forwardEdges[i] = 0;
+        for (int & forwardEdge : states[0].forwardEdges) {
+            if (forwardEdge == INVALID_STATE) {
+                forwardEdge = 0;
             }
         }
     }
 
     /// Do one step of the AC algorithm from the given state with a nucleotide with a given index.
-    int Step (int state, int index) {
+    int Step (int state, const int index) {
         while (states[state].forwardEdges[index] == INVALID_STATE) {
             state = states[state].backwardEdge;
         }
@@ -83,9 +83,9 @@ struct ACAutomaton {
     void ConstructBackwardEdges () {
         reversedOrdering = std::vector<int> (states.size(), 0);
         std::queue<int> q;
-        for (int i = 0; i < 4; ++i) {
-            if (states[0].forwardEdges[i] != 0) {
-                q.push(states[0].forwardEdges[i]);
+        for (int & forwardEdge : states[0].forwardEdges) {
+            if (forwardEdge != 0) {
+                q.push(forwardEdge);
             }
         }
         int orderingIndex = reversedOrdering.size() - 2;
@@ -104,7 +104,7 @@ struct ACAutomaton {
     }
 
     /// Construct the Aho-Corasick automaton.
-    void Construct (std::vector<KMer> kMers) {
+    void Construct (const std::vector<KMer> &kMers) {
         ConstructTrie(kMers);
         ConstructBackwardEdges();
     }
@@ -117,7 +117,7 @@ struct OverlapEdge {
 };
 
 /// Greedily find the approximate hamiltonian path with longest overlaps using the AC automaton.
-std::vector<OverlapEdge> OverlapHamiltonianPathAC (std::vector<KMer> &kMers) {
+std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMers) {
     ACAutomaton automaton;
     automaton.Construct(kMers);
     std::vector<bool> forbidden(kMers.size(), false);
@@ -151,22 +151,27 @@ std::vector<OverlapEdge> OverlapHamiltonianPathAC (std::vector<KMer> &kMers) {
 }
 
 /// Return the suffix of the given kMer without the first *overlap* chars.
-std::string Suffix(KMer kMer, int overlap) {
+std::string Suffix(const KMer &kMer, const int overlap) {
     return kMer.value.substr(overlap, kMer.length() - overlap);
 }
 
 /// Construct the superstring from the given hamiltonian path in the overlap graph.
-KMerSet SuperstringFromPath(std::vector<OverlapEdge> &hamiltonianPath, std::vector<KMer> &kMers, int k) {
+KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<KMer> &kMers, const int k) {
     std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
-    std::vector<bool> isStart(kMers.size(), true);
+    std::vector<bool> isStart(kMers.size(), false);
     for (auto edge : hamiltonianPath) {
+        isStart[edge.firstIndex] = true;
         edgeFrom[edge.firstIndex] = edge;
+    }
+    for (auto edge : hamiltonianPath) {
         isStart[edge.secondIndex] = false;
     }
 
     // Find the vertex in the overlap graph with in-degree 0.
-    int start = 0;
-    for (; isStart[start] == false; ++start);
+    size_t start = 0;
+    for (; start < kMers.size() && !isStart[start]; ++start);
+    // Handle the edge case of only one k-mer.
+    start %= kMers.size();
 
     std::stringstream superstring;
     superstring << kMers[start].value;
@@ -191,10 +196,10 @@ KMerSet SuperstringFromPath(std::vector<OverlapEdge> &hamiltonianPath, std::vect
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm with Aho-Corasick automaton.
 /// This runs in O(n k), where n is the number of k-mers.
 KMerSet GreedyAC(std::vector<KMer> &kMers) {
-	if (kMers.size() == 0) {
-		throw new std::invalid_argument("input cannot be empty");
+	if (kMers.empty()) {
+		throw std::invalid_argument("input cannot be empty");
 	}
-	int k = kMers[0].length();
+	const int k = kMers[0].length();
     auto hamiltonianPath = OverlapHamiltonianPathAC(kMers);
     return SuperstringFromPath(hamiltonianPath, kMers, k);
 }
