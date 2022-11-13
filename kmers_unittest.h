@@ -39,7 +39,7 @@ namespace {
             bool gotSuccess = true;
             try {
                 gotResult = NucleotideToInt(t.nucleotide);
-            } catch(std::invalid_argument) {
+            } catch(std::invalid_argument&) {
                 gotSuccess = false;
             }
             EXPECT_EQ(t.wantSuccess, gotSuccess);
@@ -67,7 +67,7 @@ namespace {
                 {0b111111'01111111'11111111'11111111'11111111'11111111'11111111'11111110LL, 31, "TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"},
         };
 
-        for (auto t: tests) {
+        for (auto &&t: tests) {
             std::string gotResult = NumberToKMer(t.encoded, t.d);
 
             EXPECT_EQ(t.wantResult, gotResult);
@@ -124,7 +124,7 @@ namespace {
                 {{"CAC"}, {"GTG"}},
         };
 
-        for (auto t: tests) {
+        for (auto &&t: tests) {
             KMer gotResult = ReverseComplement(t.input);
 
             EXPECT_EQ(t.wantResult.value, gotResult.value);

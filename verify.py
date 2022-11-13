@@ -4,6 +4,13 @@ import sys
 import os
 
 
+def print_help():
+    print("verify accepts a single argument - a path to the fasta file.")
+    print("verify then checks whether ./kmers outputs a superstring which contains the same set of k-mers as"
+          "the original sequence on this fasta file")
+    print("example usage: ./verify.py ./spneumoniae.fa")
+
+
 def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool) -> bool:
     """
     Check if running superstring algorithm on given fasta file produces the same set of k-mers as the original one.
@@ -16,7 +23,7 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool) 
     with open("./bin/kmers.txt", "r") as k_mers:
         with open("./bin/converted.fa", "w") as converted:
             subprocess.run(["./convert_superstring.py"], stdin=k_mers, stdout=converted)
-    # k-mers in result; in original sequence; in result always without complements; in original without complements; in merged file
+    # in result; in original sequence; in result without complements; in original without complements; in merged file
     stats = [{}, {}, {}, {}]
     runs = [
         (0, "./bin/converted.fa", "converted", complements),
@@ -56,9 +63,15 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool) 
     return True
 
 
+# Initialize.
 if not os.path.exists("bin"):
     os.makedirs("bin")
+if len(sys.argv) != 2:
+    print_help()
+    exit(1)
 path = sys.argv[1]
+
+# Do the tests.
 success = True
 print(f"Testing with support for reverse complements:")
 for a in ["greedy", "pseudosimplitigs"]:
@@ -72,6 +85,8 @@ for a in ["greedy", "greedyAC", "pseudosimplitigs", "pseudosimplitigsAC"]:
     for k in range(5, 32):
         success &= verify_instance(path, k, a, False)
     print("")
+
+# Print status.
 if not success:
     print("Tests failed")
     exit(0)

@@ -66,7 +66,7 @@ namespace {
                 {KMerSet{"CCCCAACAAAT", {1,0,0,0,1,1,0,1,0,0,0,}, 4}, {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, true},
         };
 
-        for (auto t : tests) {
+        for (auto &&t : tests) {
             KMerSet got = Greedy(t.input, t.complements);
             EXPECT_EQ(t.wantResult.superstring, got.superstring);
             EXPECT_EQ(t.wantResult.k, got.k);

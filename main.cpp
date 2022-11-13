@@ -93,10 +93,10 @@ int main(int argc, char **argv) {
                     return 0;
             }
         }
-    } catch (std::invalid_argument) {
+    } catch (std::invalid_argument&) {
         Help();
         return 1;
-    };
+    }
     auto data = ReadFasta(path);
     if (!data.size()) {
         std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;

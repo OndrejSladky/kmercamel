@@ -58,7 +58,7 @@ char ComplementaryNucleotide(const char nucleotide) {
 }
 
 /// Compute the reverse complement of the given k-mer.
-KMer ReverseComplement(KMer &kMer) {
+KMer ReverseComplement(const KMer &kMer) {
     KMer ans;
     for (int i = (int)kMer.length() - 1; i >= 0; --i) {
         ans.value += ComplementaryNucleotide(kMer.value[i]);
@@ -70,7 +70,7 @@ const char letters[4] {'A', 'C', 'G', 'T'};
 
 /// Convert the encoded KMer representation to string.
 std::string NumberToKMer(int64_t encoded, int length) {
-    std::string ret = "";
+    std::string ret;
     for (int i = 0; i < length; ++i) {
         // The last two bits correspond to one nucleotide.
         ret = letters[encoded & 3] + ret;
