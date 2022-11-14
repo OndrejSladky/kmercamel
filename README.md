@@ -45,13 +45,29 @@ runs the pseudosimplitigs on the streptococcus fasta file with `k=12` and `d=7`.
 
 Run `./convert_superstring`. This runs a Python script which inputs the superstring masked representaion and outputs the SPSS representation.
 
-## How to verify
+## How to test
 
 
-First, install [jellyfish](https://github.com/gmarcais/Jellyfish).
+For integration tests you'll have to install [jellyfish](https://github.com/gmarcais/Jellyfish).
 
 You can verify all the algortihms for `4 < k < 32` on a given fasta file by running:
 
 ```
-./verify path_to_fasta
+make verify
 ```
+
+For unittest, install googletest module by running:
+
+```
+git submodule init
+git submodule update
+```
+
+You can then run the cpp unittest by `make cpptest`.
+
+Similarly testing the convert script can be done via `make converttest`.
+
+To run all the test, simply run `make test`.
+
+
+
