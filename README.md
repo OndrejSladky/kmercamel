@@ -48,7 +48,7 @@ Run `./convert_superstring`. This runs a Python script which inputs the superstr
 ## How to test
 
 
-For integration tests you'll have to install [jellyfish](https://github.com/gmarcais/Jellyfish).
+For integration tests you'll have to install [jellyfish (v2)](https://github.com/gmarcais/Jellyfish).
 
 You can verify all the algortihms for `4 < k < 32` on a given fasta file by running:
 
@@ -64,6 +64,8 @@ git submodule update
 ```
 
 You can then run the cpp unittest by `make cpptest`.
+
+NOTE: at this point some tests might be failing as I relied on a particular order of unordered map, which is apparently different on different architectures.
 
 Similarly testing the convert script can be done via `make converttest`.
 
