@@ -43,7 +43,9 @@ namespace {
                 gotSuccess = false;
             }
             EXPECT_EQ(t.wantSuccess, gotSuccess);
-            if (t.wantSuccess) EXPECT_EQ(t.wantResult, gotResult);
+            if (t.wantSuccess) {
+                EXPECT_EQ(t.wantResult, gotResult);
+            }
         }
     }
 

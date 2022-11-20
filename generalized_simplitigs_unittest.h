@@ -65,26 +65,38 @@ namespace {
             int k;
             int d_max;
             bool complements;
-            std::string wantSuperstring;
+            std::vector<std::string> wantSuperstring;
             std::unordered_set<int64_t> wantKMers;
-            std::vector<bool> wantMask;
+            std::vector<std::vector<bool>> wantMask;
         };
         std::vector<TestCase> tests = {
-                // Behavior of the unordered_set.begin() is not specified. It may happen that it takes "ATTT" first and then this test fails.
-                // {ACAA, ATTT, AACA}
-                {"GGGG", {0b00010000, 0b00111111, 0b00000100}, {1,0,0, 0}, 4, 2, false,
-                 "GGGGAACAA", {0b00111111}, {1,0,0,0,1,1,0,0, 0}},
+                // {ACAA, AACA}
+                {"GGGG", {0b00010000,  0b00000100}, {1,0,0, 0}, 4, 2, false,
+                 {"GGGGAACAA"}, {},{ {1,0,0,0,1,1,0,0, 0}}},
                 // {ACAA, ATTT, TGTT, AAAT, TTGT, AACA}
                 {"GGGG", {0b00010000, 0b00111111, 0b11101111, 0b00000011, 0b11111011, 0b00000100}, {1,0,0, 0}, 4, 2, true,
-                        "GGGGAACAAAT", {}, {1,0,0,0, 1,1,0,1,0,0, 0}},
+                 {"GGGGAACAAAT", "GGGGATTTGTT" }, {}, { {1,0,0,0, 1,1,0,1,0,0, 0}, {1,0,0,0, 1,0,1,1,0,0, 0}  }},
         };
 
-        for (auto t: tests) {
+        for (auto &&t: tests) {
             NextGeneralizedSimplitig(t.kMers, t.superstring, t.mask, t.k, t.d_max, t.complements);
 
-            EXPECT_EQ(t.wantSuperstring, t.superstring);
-            EXPECT_EQ(t.wantMask, t.mask);
             EXPECT_EQ(t.wantKMers, t.kMers);
+
+            bool valid = false;
+
+            // Check that at least one valid possibility has happened.
+            for (size_t i = 0; i < t.wantSuperstring.size(); ++i) {
+                bool currentValid = true;
+                currentValid &= t.wantSuperstring[i] == t.superstring;
+                currentValid &= t.wantMask[i].size() == t.mask.size();
+                for (size_t j = 0; j < t.wantMask[i].size(); ++j) {
+                    currentValid &= t.wantMask[i][j] == t.mask[j];
+                }
+                valid |= currentValid;
+            }
+
+            EXPECT_TRUE(valid);
         }
     }
 
@@ -98,15 +110,16 @@ namespace {
             std::vector<bool> wantMask;
         };
         std::vector<TestCase> tests = {
-                // Behavior of the unordered_set.begin() is not specified. It may happen that it takes "CCCC" first and then this test fails.
-                { {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3, false,
-                 "AACAATTTCCCC", {1,1,0,0,1, 0,0,0, 1, 0,0,0}},
+                // As behavior of the unordered_set.begin() is not specified, some tests are commented, as they could fail otherwise.
+                // Uncommenting them may add additional check but could also add false positives.
+                //{ {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3, false,
+                // "AACAATTTCCCC", {1,1,0,0,1, 0,0,0, 1, 0,0,0}},
                 { {KMer{"GCT"}, KMer{"TAA"}, KMer{"AAA"}}, 3, 2, false,
                         "GCTAAA", {1,0, 1,1, 0,0}},
                 { {KMer{"TAA"}, KMer{"AAA"}, KMer{"GCT"}}, 3, 2, false,
                         "GCTAAA", {1,0, 1,1, 0,0}},
-                { {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3, true,
-                        "ATTTGTTGGGG", {1,0,1, 1,0,0,0, 1, 0,0,0}},
+                //{ {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3, true,
+                //        "ATTTGTTGGGG", {1,0,1, 1,0,0,0, 1, 0,0,0}},
                 {{KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}, 31, 5, false,
                  "TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}},
         };

@@ -37,8 +37,10 @@ namespace {
             std::vector<bool> wantMask;
         };
         std::vector<TestCase> tests = {
-                { {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3,
-                  "AACAATTTCCCC", {1,1,0,0,1, 0,0,0, 1, 0,0,0}},
+                // As behavior of the unordered_set.begin() is not specified, some tests are commented, as they could fail otherwise.
+                // Uncommenting them may add additional check but could also add false positives.
+                //{ {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, 4, 3,
+                //  "AACAATTTCCCC", {1,1,0,0,1, 0,0,0, 1, 0,0,0}},
                 { {KMer{"GCT"}, KMer{"TAA"}, KMer{"AAA"}}, 3, 2,
                         "GCTAAA", {1,0, 1,1, 0,0}},
                 { {KMer{"TAA"}, KMer{"AAA"}, KMer{"GCT"}}, 3, 2,

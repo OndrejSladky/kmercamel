@@ -4,7 +4,7 @@ CXX=         g++
 CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2
 GTEST=       googletest/googletest
 
-all: kmers
+all: kmers kmerstest
 
 test: cpptest converttest verify
 
