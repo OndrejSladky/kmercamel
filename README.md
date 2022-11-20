@@ -65,8 +65,6 @@ git submodule update
 
 You can then run the cpp unittest by `make cpptest`.
 
-NOTE: at this point some tests might be failing as I relied on a particular order of unordered map, which is apparently different on different architectures.
-
 Similarly testing the convert script can be done via `make converttest`.
 
 To run all the test, simply run `make test`.
