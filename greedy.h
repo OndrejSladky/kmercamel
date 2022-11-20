@@ -7,29 +7,27 @@
 #include <list>
 #include <cstdint>
 
-#include "greedy_ac.h"
 #include "kmers.h"
+
+struct OverlapEdge {
+    size_t firstIndex;
+    size_t secondIndex;
+    int overlapLength;
+};
 
 /// Greedily find the approximate hamiltonian path with longest overlaps.
 /// k is the size of one k-mer and n is the number of distinct k-mers.
 /// If complements are provided, treat k-mer and its complement as identical.
-/// If this is the case, k-mers are expected not to contain both k-mer and its complement.
-std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &input, int k, bool complements) {
-    // If complements, kMers should be twice the size.
-    std::vector<int64_t> kMers((1 + complements) * input.size());
+/// If this is the case, k-mers are expected to contain both the k-mer and its reverse complement at positions i and i+size/2.
+std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
+    size_t n = kMers.size() / (1 + complements);
     std::vector<OverlapEdge> hamiltonianPath;
     std::vector<bool> suffixForbidden(kMers.size(), false);
     std::vector<bool> prefixForbidden(kMers.size(), false);
     std::vector<size_t> first(kMers.size());
     std::vector<size_t> last(kMers.size());
-    for (size_t i = 0; i < input.size(); ++i) {
+    for (size_t i = 0; i < kMers.size(); ++i) {
         first[i] = last[i] = i;
-        kMers[i] = KMerToNumber(input[i]);
-    }
-    // Fill in the reverse complements. K-mer and its reverse complement are at indices i and i + input.size.
-    for (size_t i = input.size(); i < kMers.size(); ++i) {
-        first[i] = last[i] = i;
-        kMers[i] = ReverseComplement(KMerToNumber(input[i - input.size()]), k);
     }
     for (int d = k - 1; d >= 0; --d) {
         std::unordered_map<int64_t, std::list<size_t>> prefixes;
@@ -43,7 +41,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &input, int k
             if (prefixes.count(suffix) == 0 || prefixes[suffix].empty()) continue;
             auto j = prefixes[suffix].begin();
             // If the path forms a cycle, or is between k-mer and its reverse complement, skip this path.
-            while (j != prefixes[suffix].end() && (first[i] == *j || (i % input.size()) == (*j % input.size()) || prefixForbidden[*j])) {
+            while (j != prefixes[suffix].end() && (first[i] == *j || (i % n) == (*j % n) || prefixForbidden[*j])) {
                 auto new_j = j;
                 new_j++;
                 if (prefixForbidden[*j]) prefixes[suffix].erase(j);
@@ -57,8 +55,8 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &input, int k
             prefixForbidden[*j] = true;
             // Forbid the reverse complements from forming any paths.
             if (complements) {
-                size_t i_comp = (i + input.size()) % kMers.size();
-                size_t j_comp = (*j + input.size()) % kMers.size();
+                size_t i_comp = (i + n) % kMers.size();
+                size_t j_comp = (*j + n) % kMers.size();
                 suffixForbidden[i_comp] = true;
                 suffixForbidden[j_comp] = true;
                 prefixForbidden[i_comp] = true;
@@ -72,22 +70,59 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<KMer> &input, int k
     return hamiltonianPath;
 }
 
+/// Construct the superstring from the given hamiltonian path in the overlap graph.
+KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<int64_t> &kMers, const int k) {
+    std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
+    std::vector<bool> isStart(kMers.size(), false);
+    for (auto edge : hamiltonianPath) {
+        isStart[edge.firstIndex] = true;
+        edgeFrom[edge.firstIndex] = edge;
+    }
+    for (auto edge : hamiltonianPath) {
+        isStart[edge.secondIndex] = false;
+    }
+
+    // Find the vertex in the overlap graph with in-degree 0.
+    size_t start = 0;
+    for (; start < kMers.size() && !isStart[start]; ++start);
+    // Handle the edge case of only one k-mer.
+    start %= kMers.size();
+
+    std::stringstream superstring;
+    superstring << NumberToKMer(kMers[start], k);
+    std::vector<bool> mask (1, 1);
+
+    while(edgeFrom[start].secondIndex != size_t(-1)) {
+        superstring << NumberToKMer(kMers[edgeFrom[start].secondIndex], k - edgeFrom[start].overlapLength);
+        for (int i = 0; i < k - 1 - edgeFrom[start].overlapLength; ++i) mask.push_back(0);
+        mask.push_back(1);
+        start = edgeFrom[start].secondIndex;
+    }
+
+    for(int i = 0; i < k - 1; ++i) mask.push_back(0);
+
+    return KMerSet {
+            superstring.str(),
+            mask,
+            k
+    };
+}
+
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm.
 /// This runs in O(n k), where n is the number of k-mers.
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected not to contain both k-mer and its complement.
-KMerSet Greedy(std::vector<KMer> kMers, bool complements) {
+KMerSet Greedy(std::vector<int64_t> kMers, int k, bool complements) {
     if (kMers.empty()) {
         throw std::invalid_argument("input cannot be empty");
     }
-    int k = kMers[0].length();
-    auto hamiltonianPath = OverlapHamiltonianPath(kMers, k, complements);
     if (complements) {
-      size_t n = kMers.size();
-      kMers.resize(2 * n);
-      for (size_t i = 0; i < n; ++i) {
-          kMers[i + n] = ReverseComplement(kMers[i]);
-      }
+        size_t n = kMers.size();
+        kMers.resize(2 * n);
+        for (size_t i = 0; i < n; ++i) {
+            kMers[i + n] = ReverseComplement(kMers[i], k);
+        }
     }
+    auto hamiltonianPath = OverlapHamiltonianPath(kMers, k, complements);
     return SuperstringFromPath(hamiltonianPath, kMers, k);
 }
