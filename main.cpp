@@ -11,7 +11,7 @@
 #include "unistd.h"
 
 
-void WriteName(KMerSet result, std::vector<KMer> kMers, std::vector<FastaRecord> &data, long time) {
+void WriteName(KMerSet result, std::vector<KMer> kMers, std::vector<FastaRecord> &data) {
     std::cout << ">superstring ";
     size_t scanned_length = 0;
     for (auto &&record : data) {
@@ -21,8 +21,7 @@ void WriteName(KMerSet result, std::vector<KMer> kMers, std::vector<FastaRecord>
     std::cout << "k=" << result.k << " ";
     std::cout << "k_mers_cnt=" << kMers.size() << " ";
     std::cout << "seq_l=" << scanned_length << " ";
-    std::cout << "compression_coeff=" << result.superstring.length() / (double)kMers.size() << " ";
-    std::cout << "t=" << time << "ms" << std::endl;
+    std::cout << "compression_coeff=" << result.superstring.length() / (double)kMers.size() << std::endl;
 }
 
 void WriteSuperstring(KMerSet result) {
@@ -138,7 +137,7 @@ int main(int argc, char **argv) {
     if (printStats) {
         WriteStats(result, kMers, data, duration.count());
     } else {
-        WriteName(result, kMers, data, duration.count());
+        WriteName(result, kMers, data);
         WriteSuperstring(result);
     }
     return 0;
