@@ -4,14 +4,14 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <filesystem>
 
 #include "gtest/gtest.h"
 
 namespace {
     TEST(ReadFastaTest, ReadFasta) {
-        int build_dir_name_length = 17;
-        std::string path = (std::string) get_current_dir_name();
-        path = path.substr(0, path.size() - build_dir_name_length) + "tests/test.fa";
+        std::string path = std::filesystem::current_path();
+        path += "/tests/test.fa";
         std::vector<FastaRecord> wantResult = {
                 FastaRecord{">1", "ACCCGAAC"},
                 FastaRecord{">2", "CGTANATGC"},
@@ -22,7 +22,7 @@ namespace {
         auto gotResult = ReadFasta(path);
 
         EXPECT_EQ(wantResult.size(), gotResult.size());
-        for (int i = 0; i < wantResult.size(); ++i) {
+        for (size_t i = 0; i < wantResult.size(); ++i) {
             EXPECT_EQ(wantResult[i].name, gotResult[i].name);
             EXPECT_EQ(wantResult[i].sequence, gotResult[i].sequence);
         }
@@ -58,17 +58,17 @@ namespace {
     TEST(FilterKMersWithComplementTest, FilterKMersWithComplement) {
         struct TestCase {
             std::unordered_set<std::string> kMers;
-            std::unordered_set<std::string> wantResult;
+            size_t wantResultSize;
         };
         std::vector<TestCase> tests = {
-                {{"AA", "TT", "AC", "GT"}, {"TT", "GT"}},
-                {{"AT", }, {"AT"}},
-                {{"GT", {"CG"} }, {"GT", "CG"}},
+                {{"AA", "TT", "AC", "GT"}, 2},
+                {{"AT", }, 1},
+                {{"GT", "CG"}, 2},
         };
 
         for (auto t: tests) {
             auto gotResult = FilterKMersWithComplement(t.kMers);
-            EXPECT_EQ(t.wantResult, gotResult);
+            EXPECT_EQ(t.wantResultSize, gotResult.size());
         }
     }
 
@@ -94,7 +94,7 @@ namespace {
             // ConstructKMers does not return the kMers in any particular order.
             std::sort(gotResult.begin(), gotResult.end(), [](const KMer &a, const KMer &b) {return a.value < b.value;});
             EXPECT_EQ(t.wantResult.size(), gotResult.size());
-            for (int i = 0; i < t.wantResult.size(); ++i) {
+            for (size_t i = 0; i < t.wantResult.size(); ++i) {
                 EXPECT_EQ(t.wantResult[i].value, gotResult[i].value);
             }
         }

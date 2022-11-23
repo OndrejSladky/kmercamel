@@ -54,7 +54,7 @@ namespace {
         for (auto t : tests) {
             std::vector<OverlapEdge> got = OverlapHamiltonianPathAC( t.kMers);
             EXPECT_EQ(t.wantResult.size(), got.size());
-            for (int i = 0; i < t.wantResult.size(); ++i) {
+            for (size_t i = 0; i < t.wantResult.size(); ++i) {
                 EXPECT_EQ(t.wantResult[i].firstIndex, got[i].firstIndex);
                 EXPECT_EQ(t.wantResult[i].secondIndex, got[i].secondIndex);
                 EXPECT_EQ(t.wantResult[i].overlapLength, got[i].overlapLength);
@@ -77,7 +77,7 @@ namespace {
         a.ConstructTrie(std::vector<KMer>{KMer{"ACT"}, KMer{"ACG"}});
 
         ASSERT_EQ(wantStates.size(), a.states.size());
-        for (int i = 0; i < wantStates.size(); ++i) {
+        for (size_t i = 0; i < wantStates.size(); ++i) {
             EXPECT_EQ(wantStates[i].backwardEdge, a.states[i].backwardEdge);
             for (int j = 0; j < 4; ++j) {
                 EXPECT_EQ(wantStates[i].forwardEdges[j], a.states[i].forwardEdges[j]);
@@ -111,7 +111,7 @@ namespace {
 
         a.ConstructBackwardEdges();
 
-        for (int i = 0; i < wantStates.size(); ++i) {
+        for (size_t i = 0; i < wantStates.size(); ++i) {
             EXPECT_EQ(wantStates[i].backwardEdge, a.states[i].backwardEdge);
         }
         EXPECT_EQ(wantReversedOrdering, a.reversedOrdering);

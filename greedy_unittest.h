@@ -41,7 +41,7 @@ namespace {
         for (auto t : tests) {
             std::vector<OverlapEdge> got = OverlapHamiltonianPath( t.kMers, t.k, t.complements);
             EXPECT_EQ(t.wantResult.size(), got.size());
-            for (int i = 0; i < t.wantResult.size(); ++i) {
+            for (size_t i = 0; i < t.wantResult.size(); ++i) {
                 EXPECT_EQ(t.wantResult[i].firstIndex, got[i].firstIndex);
                 EXPECT_EQ(t.wantResult[i].secondIndex, got[i].secondIndex);
                 EXPECT_EQ(t.wantResult[i].overlapLength, got[i].overlapLength);
