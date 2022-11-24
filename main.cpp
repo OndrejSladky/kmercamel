@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 
         auto kMers = ConstructKMers(data, k, complements);
         if (algorithm == "greedyAC")
-            result = GreedyAC(kMers);
+            result = GreedyAC(kMers, complements);
         else if (algorithm == "pseudosimplitigs")
             result = GreedyGeneralizedSimplitigs(kMers, k, d_max, complements);
         else if (algorithm == "pseudosimplitigsAC")
