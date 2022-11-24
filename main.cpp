@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
     else if (algorithm == "pseudosimplitigs")
         result = GreedyGeneralizedSimplitigs(kMers, k, d_max, complements);
     else if (algorithm == "pseudosimplitigsAC")
-        result = GreedyGeneralizedSimplitigsAC(kMers, k, d_max);
+        result = GreedyGeneralizedSimplitigsAC(kMers, k, d_max, complements);
     else {
         std::cerr << "Algortihm '" << algorithm << "' not supported." << std::endl;
         Help();

@@ -74,7 +74,7 @@ path = sys.argv[1]
 # Do the tests.
 success = True
 print(f"Testing with support for reverse complements:")
-for a in ["greedy", "pseudosimplitigs"]:
+for a in ["pseudosimplitigsAC", "greedy", "pseudosimplitigs"]:
     print(f"Testing {a}:")
     for k in range(5, 32):
         success &= verify_instance(path, k, a, True)
