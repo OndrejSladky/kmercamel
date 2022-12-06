@@ -6,32 +6,32 @@
 namespace {
     TEST(OverlapHamiltonianPathTest, OverlapHamiltonianPath) {
         struct TestCase {
-            std::vector<KMer> kMers;
+            std::vector<int64_t> kMers;
             std::vector<OverlapEdge> wantResult;
             int k;
             bool complements;
         };
         std::vector<TestCase> tests = {
                 {
-                        {KMer{"AT"},  },
+                        {KMerToNumber({"AT"}), KMerToNumber({"AT"}) },
                         std::vector<OverlapEdge>{},
                         2,
                         true,
                 },
                 {
-                        std::vector<KMer>{KMer{"ACG"}, KMer{"TAC"}, KMer{"GGC"}},
+                        {KMerToNumber({"ACG"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
                         std::vector<OverlapEdge>{OverlapEdge{1, 0, 2},OverlapEdge{0, 2, 1}},
                         3,
                         false,
                 },
                 {
-                        {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"AACA"}},
+                        {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"AACA"}), KMerToNumber({"TTGT"}), KMerToNumber({"AAAT"}), KMerToNumber({"TGTT"})},
                         std::vector<OverlapEdge>{OverlapEdge{2, 0, 3},OverlapEdge{0, 4, 2}},
                         4,
                         true,
                 },
                 {
-                        {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}},
+                        {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}),KMerToNumber({"CCCC"}), KMerToNumber({"AACA"}), KMerToNumber({"TTGT"}), KMerToNumber({"AAAT"}),KMerToNumber({"GGGG"}), KMerToNumber({"TGTT"})},
                         std::vector<OverlapEdge>{OverlapEdge{3, 0, 3},OverlapEdge{0, 5, 2}, {2, 3, 0}},
                         4,
                         true,
@@ -52,22 +52,22 @@ namespace {
     TEST(GreedyTest, Greedy) {
         struct TestCase {
             KMerSet wantResult;
-            std::vector<KMer> input;
+            std::vector<int64_t> input;
             bool complements;
         };
         std::vector<TestCase> tests = {
-                {KMerSet{"TACGT", std::vector<bool> {1, 1, 1, 0, 0}, 3 }, {KMer{"CGT"}, KMer{"TAC"}, KMer{"ACG"}}, false},
-                {KMerSet{"TAGC", std::vector<bool> {1, 0, 1, 0}, 2 }, {KMer{"TA"}, KMer{"GC"}, }, false},
-                {KMerSet{"ACGTTT", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3 }, {KMer{"CGT"}, KMer{"TTT"}, KMer{"ACG"}}, false},
-                {KMerSet{"TACTT", std::vector<bool> {1, 1, 0, 0, 0}, 4 }, {KMer{"TACT"}, KMer{"ACTT"}}, false},
-                {KMerSet{"TACTTAAGGAC",  std::vector<bool> {1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0}, 4 }, {KMer{"TACT"}, KMer{"ACTT"}, KMer{"GGAC"}, KMer{"TAAG"}}, false},
-                {KMerSet{"GAAAAGTTTAAAGAC", std::vector<bool> {1,1, 0, 1,1,1,1,1,1,1,1,1,0,0,0}, 4}, {KMer{"AAGA"}, KMer{"TTAA"}, KMer{"TTTA"}, KMer{"AGAC"}, KMer{"GTTT"}, KMer{"AGTT"}, KMer{"AAGT"}, KMer{"TAAA"}, KMer{"AAAG"}, KMer{"AAAA"}, KMer{"GAAA"}}, false},
-                {KMerSet{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}, 31}, {KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}, false},
-                {KMerSet{"CCCCAACAAAT", {1,0,0,0,1,1,0,1,0,0,0,}, 4}, {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, true},
+                {KMerSet{"TACGT", std::vector<bool> {1, 1, 1, 0, 0}, 3 }, {KMerToNumber({"CGT"}), KMerToNumber({"TAC"}), KMerToNumber({"ACG"})}, false},
+                {KMerSet{"TAGC", std::vector<bool> {1, 0, 1, 0}, 2 }, {KMerToNumber({"TA"}), KMerToNumber({"GC"}), }, false},
+                {KMerSet{"ACGTTT", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3 }, {KMerToNumber({"CGT"}), KMerToNumber({"TTT"}), KMerToNumber({"ACG"})}, false},
+                {KMerSet{"TACTT", std::vector<bool> {1, 1, 0, 0, 0}, 4 }, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"})}, false},
+                {KMerSet{"TACTTAAGGAC",  std::vector<bool> {1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0}, 4 }, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"}), KMerToNumber({"GGAC"}), KMerToNumber({"TAAG"})}, false},
+                {KMerSet{"GAAAAGTTTAAAGAC", std::vector<bool> {1,1, 0, 1,1,1,1,1,1,1,1,1,0,0,0}, 4}, {KMerToNumber({"AAGA"}), KMerToNumber({"TTAA"}), KMerToNumber({"TTTA"}), KMerToNumber({"AGAC"}), KMerToNumber({"GTTT"}), KMerToNumber({"AGTT"}), KMerToNumber({"AAGT"}), KMerToNumber({"TAAA"}), KMerToNumber({"AAAG"}), KMerToNumber({"AAAA"}), KMerToNumber({"GAAA"})}, false},
+                {KMerSet{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}, 31}, {KMerToNumber({"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}), KMerToNumber({"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"})}, false},
+                {KMerSet{"CCCCAACAAAT", {1,0,0,0,1,1,0,1,0,0,0,}, 4}, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"CCCC"}), KMerToNumber({"AACA"})}, true},
         };
 
         for (auto &&t : tests) {
-            KMerSet got = Greedy(t.input, t.complements);
+            KMerSet got = Greedy(t.input, t.wantResult.k, t.complements);
             EXPECT_EQ(t.wantResult.superstring, got.superstring);
             EXPECT_EQ(t.wantResult.k, got.k);
             EXPECT_EQ(t.wantResult.mask, got.mask);

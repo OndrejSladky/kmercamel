@@ -9,6 +9,7 @@
 
 #include "models.h"
 #include "kmers.h"
+#include "greedy.h"
 
 constexpr int INVALID_STATE = -1;
 struct ACState {
@@ -110,12 +111,6 @@ struct ACAutomaton {
     }
 };
 
-struct OverlapEdge {
-    size_t firstIndex;
-    size_t secondIndex;
-    int overlapLength;
-};
-
 /// Greedily find the approximate hamiltonian path with longest overlaps using the AC automaton.
 std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMers) {
     ACAutomaton automaton;
@@ -157,40 +152,11 @@ std::string Suffix(const KMer &kMer, const int overlap) {
 
 /// Construct the superstring from the given hamiltonian path in the overlap graph.
 KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<KMer> &kMers, const int k) {
-    std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
-    std::vector<bool> isStart(kMers.size(), false);
-    for (auto edge : hamiltonianPath) {
-        isStart[edge.firstIndex] = true;
-        edgeFrom[edge.firstIndex] = edge;
+    std::vector<int64_t> encoded(kMers.size());
+    for (size_t i = 0 ; i < kMers.size(); ++i) {
+        encoded[i] = KMerToNumber(kMers[i]);
     }
-    for (auto edge : hamiltonianPath) {
-        isStart[edge.secondIndex] = false;
-    }
-
-    // Find the vertex in the overlap graph with in-degree 0.
-    size_t start = 0;
-    for (; start < kMers.size() && !isStart[start]; ++start);
-    // Handle the edge case of only one k-mer.
-    start %= kMers.size();
-
-    std::stringstream superstring;
-    superstring << kMers[start].value;
-    std::vector<bool> mask (1, 1);
-
-    while(edgeFrom[start].secondIndex != size_t(-1)) {
-        superstring << Suffix(kMers[edgeFrom[start].secondIndex], edgeFrom[start].overlapLength);
-        for (int i = 0; i < k - 1 - edgeFrom[start].overlapLength; ++i) mask.push_back(0);
-        mask.push_back(1);
-        start = edgeFrom[start].secondIndex;
-    }
-
-    for(int i = 0; i < k - 1; ++i) mask.push_back(0);
-
-    return KMerSet {
-        superstring.str(),
-        mask,
-        k
-    };
+    return SuperstringFromPath(hamiltonianPath, encoded, k);
 }
 
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm with Aho-Corasick automaton.

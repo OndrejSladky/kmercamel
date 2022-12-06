@@ -40,7 +40,7 @@ std::vector<FastaRecord> ReadFasta(std::string &path) {
 
 /// Create a list of unique k-mers in no particular order.
 /// This runs in O(k*data.size) expected time.
-void AddKMersFromSequence(std::unordered_set<std::string> &kMers, std::string data, int k) {
+void AddKMersFromSequence(std::unordered_set<std::string> &kMers, std::string &data, int k) {
     // Convert the sequence to uppercase letters.
     std::transform(data.begin(), data.end(), data.begin(), toupper);
     size_t possibleKMerEnd = k;
@@ -79,4 +79,55 @@ std::vector<KMer> ConstructKMers(std::vector<FastaRecord> &data, int k, bool com
         result.push_back(KMer{kMer});
     }
     return result;
+}
+
+
+/// Create a list of unique k-mers encoded as integers in no particular order.
+/// This runs in O(k*data.size) expected time.
+void AddKMersFromSequence(std::unordered_set<int64_t> &kMers, std::string &data, int k, bool complements) {
+    // Convert the sequence to uppercase letters.
+    std::transform(data.begin(), data.end(), data.begin(), toupper);
+    size_t possibleKMerEnd = k;
+    int64_t currentKMer = 0;
+    int64_t mask = (((int64_t) 1) <<  (2 * k) ) - 1;
+    for (size_t i = 1; i <= data.size(); ++i) {
+        if (data[i-1] != 'A' && data[i-1] != 'C' && data[i-1] != 'G' && data[i-1] != 'T') {
+            // Skip this and the next k-1 k-mers.
+            possibleKMerEnd = i + k;
+            currentKMer = 0;
+        } else {
+            currentKMer <<= 2;
+            currentKMer &= mask;
+            currentKMer |= NucleotideToInt(data[i - 1]);
+        }
+        if (i >= possibleKMerEnd && (!complements || kMers.count(ReverseComplement(currentKMer, k)) == 0)) {
+            kMers.insert(currentKMer);
+        }
+    }
+}
+
+/// Read encoded k-mers from the given fasta file.
+std::unordered_set<int64_t> ReadKMers(std::string &path, int k, bool complements) {
+    std::ifstream fasta(path);
+    std::unordered_set<int64_t> kMers;
+    std::string sequence;
+    std::string line;
+    if (fasta.is_open()) {
+        while (std::getline(fasta, line)) {
+            // Add k-mers from the previous record.
+            if (!line.empty() && line[0] == '>') {
+                AddKMersFromSequence(kMers, sequence, k, complements);
+                sequence = "";
+            } else {
+                // Append to the last record.
+                sequence += line;
+            }
+        }
+        // Add k-mers from the last record.
+        AddKMersFromSequence(kMers, sequence, k, complements);
+        fasta.close();
+    } else {
+        throw std::invalid_argument("couldn't open file " + path);
+    }
+    return kMers;
 }

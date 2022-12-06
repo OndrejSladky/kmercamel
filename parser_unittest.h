@@ -28,7 +28,36 @@ namespace {
         }
     }
 
-    TEST(AddKMersFromSequenceTest, AddKMersFromSequence) {
+    TEST(ReadKMersTest, ReadKMers) {
+        std::string path = (std::string) get_current_dir_name();
+        path += "/tests/test.fa";
+        std::vector<FastaRecord> wantResult = {
+                FastaRecord{">1", "ACCCGAAC"},
+                FastaRecord{">2", "CGTANATGC"},
+                FastaRecord{">3 with description", "ACCCGTTTAACG"},
+                FastaRecord{">4", "A"},
+        };
+        struct TestCase {
+            int k;
+            bool complements;
+            size_t wantResultSize;
+        };
+        std::vector<TestCase> tests = {
+                {10, true, 3},
+                {5, true, 11},
+                {5, false, 11},
+                {2, true, 9},
+                {2, false, 11},
+        };
+
+        for (auto &t: tests) {
+            auto gotResult = ReadKMers(path, t.k, t.complements);
+            EXPECT_EQ(t.wantResultSize, gotResult.size());
+        }
+
+    }
+
+    TEST(AddKMersFromSequenceTest, String) {
         struct TestCase {
             std::string data;
             std::unordered_set<std::string> initialKMers;
@@ -52,6 +81,30 @@ namespace {
             AddKMersFromSequence(t.initialKMers, t.data, t.k);
             for (auto &&kMer : t.initialKMers) EXPECT_EQ(1, t.wantResult.count(kMer));
             for (auto &&kMer : t.wantResult) EXPECT_EQ(1, t.initialKMers.count(kMer));
+        }
+    }
+
+    TEST(AddKMersFromSequenceTest, Number) {
+        struct TestCase {
+            std::string data;
+            std::unordered_set<int64_t> initialKMers;
+            int k;
+            bool complements;
+            size_t wantResultSize;
+        };
+        std::vector<TestCase> tests = {
+                {"AAAA", {}, 2, true, 1},
+                {"ACGTA", {}, 3, true, 2},
+                {"ACGTA", {}, 3, false, 3},
+                {"acgTa", {}, 3, false, 3},
+                {"ACGNMTTA", {}, 3, true, 2},
+                {"ACCCGTTTAACG", {}, 10, true, 3},
+                {"ACC", {}, 10, true, 0},
+
+        };
+        for (auto t: tests) {
+            AddKMersFromSequence(t.initialKMers, t.data, t.k, t.complements);
+            EXPECT_EQ(t.wantResultSize, t.initialKMers.size());
         }
     }
 

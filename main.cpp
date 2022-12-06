@@ -11,17 +11,10 @@
 #include "unistd.h"
 
 
-void WriteName(KMerSet result, std::vector<KMer> kMers, std::vector<FastaRecord> &data, long time) {
+void WriteName(KMerSet result, long time) {
     std::cout << ">superstring ";
-    size_t scanned_length = 0;
-    for (auto &&record : data) {
-        scanned_length += record.sequence.length();
-    }
     std::cout << "l=" << result.superstring.length() << " ";
     std::cout << "k=" << result.k << " ";
-    std::cout << "k_mers_cnt=" << kMers.size() << " ";
-    std::cout << "seq_l=" << scanned_length << " ";
-    std::cout << "compression_coeff=" << result.superstring.length() / (double)kMers.size() << " ";
     std::cout << "t=" << time << "ms" << std::endl;
 }
 
@@ -33,15 +26,8 @@ void WriteSuperstring(KMerSet result) {
     std::cout << superstring << std::endl;
 }
 
-void WriteStats(KMerSet result, std::vector<KMer> kMers, std::vector<FastaRecord> &data, long time) {
-    size_t scanned_length = 0;
-    for (auto &&record : data) {
-        scanned_length += record.sequence.length();
-    }
+void WriteStats(KMerSet result, long time) {
     std::cout << "superstring length:         " << result.superstring.length() << std::endl;
-    std::cout << "k-mers count:               " << kMers.size() << std::endl;
-    std::cout << "length of scanned sequence: " << scanned_length << std::endl;
-    std::cout << "coefficient:                " << result.superstring.length() / (double)kMers.size() << std::endl;
     std::cout << "execution time:             " << time << " ms" << std::endl;
     std::cout << "========================================="  << std::endl;
 }
@@ -97,12 +83,6 @@ int main(int argc, char **argv) {
         Help();
         return 1;
     }
-    auto data = ReadFasta(path);
-    if (!data.size()) {
-        std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
-        Help();
-        return 1;
-    }
     if (k == 0) {
         std::cerr << "Required parameter k not set." << std::endl;
         Help();
@@ -117,28 +97,40 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    auto kMers = ConstructKMers(data, k, complements);
     auto before = std::chrono::high_resolution_clock::now();
     KMerSet result;
-    if (algorithm == "greedyAC")
-        result = GreedyAC(kMers);
-    else if (algorithm == "greedy")
-        result = Greedy(kMers, complements);
-    else if (algorithm == "pseudosimplitigs")
-        result = GreedyGeneralizedSimplitigs(kMers, k, d_max, complements);
-    else if (algorithm == "pseudosimplitigsAC")
-        result = GreedyGeneralizedSimplitigsAC(kMers, k, d_max);
-    else {
-        std::cerr << "Algortihm '" << algorithm << "' not supported." << std::endl;
-        Help();
-        return 1;
+    if (algorithm == "greedy") {
+        auto kMersSet = ReadKMers(path, k, complements);
+        auto kMers = std::vector<int64_t> (kMersSet.begin(), kMersSet.end());
+        result = Greedy(kMers, k, complements);
+    } else {
+        auto data = ReadFasta(path);
+        if (!data.size()) {
+            std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
+            Help();
+            return 1;
+        }
+
+        auto kMers = ConstructKMers(data, k, complements);
+        if (algorithm == "greedyAC")
+            result = GreedyAC(kMers);
+        else if (algorithm == "pseudosimplitigs")
+            result = GreedyGeneralizedSimplitigs(kMers, k, d_max, complements);
+        else if (algorithm == "pseudosimplitigsAC")
+            result = GreedyGeneralizedSimplitigsAC(kMers, k, d_max);
+        else {
+            std::cerr << "Algortihm '" << algorithm << "' not supported." << std::endl;
+            Help();
+            return 1;
+        }
     }
+
     auto now = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - before);
     if (printStats) {
-        WriteStats(result, kMers, data, duration.count());
+        WriteStats(result, duration.count());
     } else {
-        WriteName(result, kMers, data, duration.count());
+        WriteName(result,duration.count());
         WriteSuperstring(result);
     }
     return 0;
