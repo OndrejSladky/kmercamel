@@ -47,7 +47,6 @@ struct ACAutomaton {
         // Initialize the root.
         AddState(0);
         for (size_t i = 0; i < kMers.size(); ++i) states[0].supporters.push_back(i);
-        // TODO: make this independent of the implementation by providing iterator to KMer.
         for (size_t i = 0; i < kMers.size(); ++i) {
             int state = 0;
             for (char c : kMers[i].value) {
@@ -112,10 +111,12 @@ struct ACAutomaton {
 };
 
 /// Greedily find the approximate hamiltonian path with longest overlaps using the AC automaton.
-std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMers) {
+std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMers, bool complements) {
+    size_t n = kMers.size() / (1 + complements);
     ACAutomaton automaton;
     automaton.Construct(kMers);
     std::vector<bool> forbidden(kMers.size(), false);
+    std::vector<bool> prefixForbidden(kMers.size(), false);
     std::vector<std::list<size_t>> incidentKMers(automaton.states.size());
     std::vector<OverlapEdge> hamiltonianPath;
     std::vector<size_t> first(kMers.size());
@@ -130,14 +131,25 @@ std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMer
             if (incidentKMers[s].empty()) continue;
             if (forbidden[j]) continue;
             auto i = incidentKMers[s].begin();
-            if (first[*i] == j) {
-                if (incidentKMers[s].size() == 1) continue;
-                i++;
+            // If the path forms a cycle, or is between k-mer and its reverse complement, skip this path.
+            while (i != incidentKMers[s].end() && (first[*i]%n == j%n || first[*i]%n == last[j]%n|| prefixForbidden[*i])) {
+                auto new_i = i;
+                new_i++;
+                if (prefixForbidden[*i]) incidentKMers[s].erase(i);
+                i = new_i;
             }
-            hamiltonianPath.push_back(OverlapEdge{*i, j, automaton.states[s].depth});
-            forbidden[j] = true;
-            first[last[j]] = first[*i];
-            last[first[*i]] = last[j];
+            if (i == incidentKMers[s].end()) {
+                continue;
+            }
+            std::vector<std::pair<size_t,size_t>> new_edges ({{*i, j}});
+            if (complements) new_edges.push_back({(j + n) % kMers.size(), (*i + n) % kMers.size()});
+            for (auto [x, y] : new_edges) {
+                hamiltonianPath.push_back(OverlapEdge{x, y, automaton.states[s].depth});
+                forbidden[y] = true;
+                first[last[y]] = first[x];
+                last[first[x]] = last[y];
+                prefixForbidden[x] = true;
+            }
             incidentKMers[s].erase(i);
         }
         incidentKMers[automaton.states[s].backwardEdge].merge(incidentKMers[s]);
@@ -161,11 +173,19 @@ KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, con
 
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm with Aho-Corasick automaton.
 /// This runs in O(n k), where n is the number of k-mers.
-KMerSet GreedyAC(std::vector<KMer> &kMers) {
+/// If complements are provided, it is expected that kMers do not contain both k-mer and its reverse complement.
+KMerSet GreedyAC(std::vector<KMer> kMers, bool complements) {
 	if (kMers.empty()) {
 		throw std::invalid_argument("input cannot be empty");
 	}
+    // Add complementary k-mers.
+    size_t n = kMers.size();
+    kMers.resize(n * (1 + complements));
+    if (complements) for (size_t i = 0; i < n; ++i) {
+        kMers[i + n] = ReverseComplement(kMers[i]);
+    }
+
 	const int k = kMers[0].length();
-    auto hamiltonianPath = OverlapHamiltonianPathAC(kMers);
+    auto hamiltonianPath = OverlapHamiltonianPathAC(kMers, complements);
     return SuperstringFromPath(hamiltonianPath, kMers, k);
 }

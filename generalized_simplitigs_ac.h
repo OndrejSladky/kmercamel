@@ -10,13 +10,17 @@
 /// Find the index of the first extending k-mer from the incidentKMers which is not forbidden.
 /// Mark this k-mer forbidden and remove all the k-mers in incidentKMers which are forbidden.
 /// The latter is done in order not to increase time complexity by repeatedly iterating over forbidden k-mers.
+/// If complements is true, it is expected that index i and i + size/2 in forbidden represent complementary k-mers.
 /// Return -1 if only forbidden k-mers were found.
-size_t ExtensionAC(std::vector<bool> &forbidden, std::list<size_t> &incidentKMers) {
+size_t ExtensionAC(std::vector<bool> &forbidden, std::list<size_t> &incidentKMers, bool complements) {
+    size_t n = forbidden.size() / (1 + complements);
     while(!incidentKMers.empty()) {
         if(forbidden[incidentKMers.front()]) {
             incidentKMers.pop_front();
         } else {
             forbidden[incidentKMers.front()] = true;
+            // Mark complementary k-mer as used (if complements is set to false, this is k-mer itself).
+            forbidden[(incidentKMers.front() + n) % forbidden.size()] = true;
             size_t ret = incidentKMers.front();
             incidentKMers.pop_front();
             return ret;
@@ -27,9 +31,18 @@ size_t ExtensionAC(std::vector<bool> &forbidden, std::list<size_t> &incidentKMer
 
 /// Compute the generalized simplitigs greedily using the Aho-Corasick automaton.
 /// This runs in O(n k), where n is the number of k-mers.
-KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max) {
+/// If complements are provided, it is expected that kMers do not contain both k-mer and its reverse complement.
+KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max, bool complements) {
     std::string superstring;
     std::vector<bool> mask;
+
+    // Add complementary k-mers.
+    size_t n = kMers.size();
+    kMers.resize(n * (1 + complements));
+    if (complements) for (size_t i = 0; i < n; ++i) {
+        kMers[i + n] = ReverseComplement(kMers[i]);
+    }
+
     ACAutomaton a;
     a.Construct(kMers);
 
@@ -69,13 +82,15 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max)
         size_t firstKMer = firstUnused;
         size_t lastKMer = firstUnused;
         forbidden[firstUnused] = true;
+        // Forbid the complementary k-mer.
+        forbidden[(firstUnused + n) % forbidden.size()] = true;
         std::deque<bool> simplitigMask{1};
         int d_l = 1, d_r = 1;
         while (d_l <= d_max || d_r <= d_max) {
             if (d_r <= d_l) {
                 int state = suffixes[lastKMer][k - d_r];
                 size_t ext = -1;
-                if (state != -1) ext = ExtensionAC(forbidden, a.states[state].supporters);
+                if (state != -1) ext = ExtensionAC(forbidden, a.states[state].supporters, complements);
                 if (ext == size_t(-1)) {
                     // No right extension found.
                     ++d_r;
@@ -90,7 +105,7 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max)
             } else {
                 int state = prefixes[firstKMer][k - d_l];
                 size_t ext = -1;
-                if (state != -1) ext = ExtensionAC(forbidden, incidentKMers[state]);
+                if (state != -1) ext = ExtensionAC(forbidden, incidentKMers[state], complements);
                 if (ext == size_t(-1)) {
                     // No left extension found.
                     ++d_l;

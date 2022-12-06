@@ -41,7 +41,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
             if (prefixes.count(suffix) == 0 || prefixes[suffix].empty()) continue;
             auto j = prefixes[suffix].begin();
             // If the path forms a cycle, or is between k-mer and its reverse complement, skip this path.
-            while (j != prefixes[suffix].end() && (first[i] == *j || (i % n) == (*j % n) || prefixForbidden[*j])) {
+            while (j != prefixes[suffix].end() && (first[i]%n == *j%n || first[i]%n == last[*j]%n || prefixForbidden[*j])) {
                 auto new_j = j;
                 new_j++;
                 if (prefixForbidden[*j]) prefixes[suffix].erase(j);
@@ -50,20 +50,15 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
             if (j == prefixes[suffix].end()) {
                 continue;
             }
-            hamiltonianPath.push_back(OverlapEdge{i, *j, d});
-            suffixForbidden[i] = true;
-            prefixForbidden[*j] = true;
-            // Forbid the reverse complements from forming any paths.
-            if (complements) {
-                size_t i_comp = (i + n) % kMers.size();
-                size_t j_comp = (*j + n) % kMers.size();
-                suffixForbidden[i_comp] = true;
-                suffixForbidden[j_comp] = true;
-                prefixForbidden[i_comp] = true;
-                prefixForbidden[j_comp] = true;
+            std::vector<std::pair<size_t,size_t>> new_edges ({{i, *j}});
+            if (complements) new_edges.push_back({(*j + n) % kMers.size(), (i + n) % kMers.size()});
+            for (auto [x, y] : new_edges) {
+                hamiltonianPath.push_back(OverlapEdge{x, y, d});
+                prefixForbidden[y] = true;
+                first[last[y]] = first[x];
+                last[first[x]] = last[y];
+                suffixForbidden[x] = true;
             }
-            first[last[*j]] = first[i];
-            last[first[i]] = last[*j];
             prefixes[suffix].erase(j);
         }
     }

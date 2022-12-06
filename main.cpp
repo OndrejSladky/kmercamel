@@ -11,11 +11,10 @@
 #include "unistd.h"
 
 
-void WriteName(KMerSet result, long time) {
+void WriteName(KMerSet result) {
     std::cout << ">superstring ";
     std::cout << "l=" << result.superstring.length() << " ";
-    std::cout << "k=" << result.k << " ";
-    std::cout << "t=" << time << "ms" << std::endl;
+    std::cout << "k=" << result.k << std::endl;
 }
 
 void WriteSuperstring(KMerSet result) {
@@ -113,11 +112,11 @@ int main(int argc, char **argv) {
 
         auto kMers = ConstructKMers(data, k, complements);
         if (algorithm == "greedyAC")
-            result = GreedyAC(kMers);
+            result = GreedyAC(kMers, complements);
         else if (algorithm == "pseudosimplitigs")
             result = GreedyGeneralizedSimplitigs(kMers, k, d_max, complements);
         else if (algorithm == "pseudosimplitigsAC")
-            result = GreedyGeneralizedSimplitigsAC(kMers, k, d_max);
+            result = GreedyGeneralizedSimplitigsAC(kMers, k, d_max, complements);
         else {
             std::cerr << "Algortihm '" << algorithm << "' not supported." << std::endl;
             Help();
@@ -130,7 +129,7 @@ int main(int argc, char **argv) {
     if (printStats) {
         WriteStats(result, duration.count());
     } else {
-        WriteName(result,duration.count());
+        WriteName(result);
         WriteSuperstring(result);
     }
     return 0;

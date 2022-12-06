@@ -73,21 +73,15 @@ path = sys.argv[1]
 
 # Do the tests.
 success = True
-print(f"Testing with support for reverse complements:")
-for a in ["greedy", "pseudosimplitigs"]:
+for a in ["greedyAC", "pseudosimplitigsAC", "greedy", "pseudosimplitigs"]:
     print(f"Testing {a}:")
-    for k in range(5, 32):
-        success &= verify_instance(path, k, a, True)
-    print("")
-print(f"Testing without support for reverse complements:")
-for a in ["greedy", "greedyAC", "pseudosimplitigs", "pseudosimplitigsAC"]:
-    print(f"Testing {a}:")
-    for k in range(5, 32):
-        success &= verify_instance(path, k, a, False)
-    print("")
+    for complements in [True, False]:
+        for k in range(5, 32):
+            success &= verify_instance(path, k, a, complements)
+        print("")
 
 # Print status.
 if not success:
     print("Tests failed")
-    exit(0)
+    exit(1)
 print("OK")

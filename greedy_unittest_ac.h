@@ -43,16 +43,23 @@ namespace {
         struct TestCase {
             std::vector<KMer> kMers;
             std::vector<OverlapEdge> wantResult;
+            bool complements;
         };
         std::vector<TestCase> tests = {
                 {
                         std::vector<KMer>{KMer{"ACG"}, KMer{"TAC"}, KMer{"GGC"}},
                         std::vector<OverlapEdge>{OverlapEdge{1, 0, 2},OverlapEdge{0, 2, 1}},
+                        false,
+                },
+                {
+                        {KMer{"TAA"}, KMer{"TTT"}, KMer{"TTA"}, KMer{"AAA"}},
+                        {{1, 2, 2}, {0, 3, 2}},
+                        true,
                 },
         };
 
         for (auto t : tests) {
-            std::vector<OverlapEdge> got = OverlapHamiltonianPathAC( t.kMers);
+            std::vector<OverlapEdge> got = OverlapHamiltonianPathAC(t.kMers, t.complements);
             EXPECT_EQ(t.wantResult.size(), got.size());
             for (size_t i = 0; i < t.wantResult.size(); ++i) {
                 EXPECT_EQ(t.wantResult[i].firstIndex, got[i].firstIndex);
@@ -118,20 +125,26 @@ namespace {
     }
 
     TEST(GreedyACTest, GreedyAC) {
-        std::vector<std::pair<KMerSet, std::vector<KMer>>> tests = {
-                {KMerSet{"TACGT",  std::vector<bool> {1, 1, 1, 0, 0}, 3 }, {KMer{"CGT"}, KMer{"TAC"}, KMer{"ACG"}}},
-                {KMerSet{"ACGTTT",  std::vector<bool> {1, 1, 0, 1, 0, 0}, 3 }, {KMer{"CGT"}, KMer{"TTT"}, KMer{"ACG"}}},
-                {KMerSet{"TACTT",  std::vector<bool> {1, 1, 0, 0, 0}, 4 }, {KMer{"TACT"}, KMer{"ACTT"}}},
-                {KMerSet{"TACTTAAGGAC",  std::vector<bool> {1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0}, 4 }, {KMer{"TACT"}, KMer{"ACTT"}, KMer{"GGAC"}, KMer{"TAAG"}}},
-                {KMerSet{"GAAAAGTTTAAAGAC", std::vector<bool> {1,1, 0, 1,1,1,1,1,1,1,1,1,0,0,0}, 4}, {KMer{"AAGA"}, KMer{"TTAA"}, KMer{"TTTA"}, KMer{"AGAC"}, KMer{"GTTT"}, KMer{"AGTT"}, KMer{"AAGT"}, KMer{"TAAA"}, KMer{"AAAG"}, KMer{"AAAA"}, KMer{"GAAA"}}},
-                {KMerSet{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}, 31}, {KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}},
+        struct TestCase {
+            KMerSet wantResult;
+            std::vector<KMer> input;
+            bool complements;
+        };
+        std::vector<TestCase> tests = {
+                {KMerSet{"TACGT",  std::vector<bool> {1, 1, 1, 0, 0}, 3 }, {KMer{"CGT"}, KMer{"TAC"}, KMer{"ACG"}}, false},
+                {KMerSet{"ACGTTT",  std::vector<bool> {1, 1, 0, 1, 0, 0}, 3 }, {KMer{"CGT"}, KMer{"TTT"}, KMer{"ACG"}}, false},
+                {KMerSet{"TACTT",  std::vector<bool> {1, 1, 0, 0, 0}, 4 }, {KMer{"TACT"}, KMer{"ACTT"}}, false},
+                {KMerSet{"TACTTAAGGAC",  std::vector<bool> {1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0}, 4 }, {KMer{"TACT"}, KMer{"ACTT"}, KMer{"GGAC"}, KMer{"TAAG"}}, false},
+                {KMerSet{"GAAAAGTTTAAAGAC", std::vector<bool> {1,1, 0, 1,1,1,1,1,1,1,1,1,0,0,0}, 4}, {KMer{"AAGA"}, KMer{"TTAA"}, KMer{"TTTA"}, KMer{"AGAC"}, KMer{"GTTT"}, KMer{"AGTT"}, KMer{"AAGT"}, KMer{"TAAA"}, KMer{"AAAG"}, KMer{"AAAA"}, KMer{"GAAA"}}, false},
+                {KMerSet{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}, 31}, {KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}, false},
+                {{"TAAA", {1,1, 0,0}, 3}, {KMer{"TAA"}, KMer{"TTT"}}, true},
         };
 
         for (auto t : tests) {
-            KMerSet got = GreedyAC(t.second);
-            EXPECT_EQ(t.first.superstring, got.superstring);
-            EXPECT_EQ(t.first.k, got.k);
-            EXPECT_EQ(t.first.mask, got.mask);
+            KMerSet got = GreedyAC(t.input, t.complements);
+            EXPECT_EQ(t.wantResult.superstring, got.superstring);
+            EXPECT_EQ(t.wantResult.k, got.k);
+            EXPECT_EQ(t.wantResult.mask, got.mask);
         }
     }
 }
