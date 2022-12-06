@@ -53,7 +53,7 @@ namespace {
                 },
                 {
                         {KMer{"TAA"}, KMer{"TTT"}, KMer{"TTA"}, KMer{"AAA"}},
-                        {OverlapEdge{1, 2, 2}},
+                        {{1, 2, 2}, {0, 3, 2}},
                         true,
                 },
         };
@@ -137,7 +137,7 @@ namespace {
                 {KMerSet{"TACTTAAGGAC",  std::vector<bool> {1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0}, 4 }, {KMer{"TACT"}, KMer{"ACTT"}, KMer{"GGAC"}, KMer{"TAAG"}}, false},
                 {KMerSet{"GAAAAGTTTAAAGAC", std::vector<bool> {1,1, 0, 1,1,1,1,1,1,1,1,1,0,0,0}, 4}, {KMer{"AAGA"}, KMer{"TTAA"}, KMer{"TTTA"}, KMer{"AGAC"}, KMer{"GTTT"}, KMer{"AGTT"}, KMer{"AAGT"}, KMer{"TAAA"}, KMer{"AAAG"}, KMer{"AAAA"}, KMer{"GAAA"}}, false},
                 {KMerSet{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}, 31}, {KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}, false},
-                {{"TTTA", {1,1, 0,0}, 3}, {KMer{"TAA"}, KMer{"TTT"}}, true},
+                {{"TAAA", {1,1, 0,0}, 3}, {KMer{"TAA"}, KMer{"TTT"}}, true},
         };
 
         for (auto t : tests) {

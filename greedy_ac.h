@@ -132,7 +132,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMer
             if (forbidden[j]) continue;
             auto i = incidentKMers[s].begin();
             // If the path forms a cycle, or is between k-mer and its reverse complement, skip this path.
-            while (i != incidentKMers[s].end() && (first[*i] == j || (j % n) == (*i % n) || prefixForbidden[*i])) {
+            while (i != incidentKMers[s].end() && (first[*i]%n == j%n || first[*i]%n == last[j]%n|| prefixForbidden[*i])) {
                 auto new_i = i;
                 new_i++;
                 if (prefixForbidden[*i]) incidentKMers[s].erase(i);
@@ -141,19 +141,15 @@ std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMer
             if (i == incidentKMers[s].end()) {
                 continue;
             }
-            hamiltonianPath.push_back(OverlapEdge{*i, j, automaton.states[s].depth});
-            forbidden[j] = true;
-            if (complements) {
-                // Forbid the reverse complements from any further interaction
-                size_t i_comp = (*i + n) % kMers.size();
-                size_t j_comp = (j + n) % kMers.size();
-                forbidden[i_comp] = true;
-                forbidden[j_comp] = true;
-                prefixForbidden[i_comp] = true;
-                prefixForbidden[j_comp] = true;
+            std::vector<std::pair<size_t,size_t>> new_edges ({{*i, j}});
+            if (complements) new_edges.push_back({(j + n) % kMers.size(), (*i + n) % kMers.size()});
+            for (auto [x, y] : new_edges) {
+                hamiltonianPath.push_back(OverlapEdge{x, y, automaton.states[s].depth});
+                forbidden[y] = true;
+                first[last[y]] = first[x];
+                last[first[x]] = last[y];
+                prefixForbidden[x] = true;
             }
-            first[last[j]] = first[*i];
-            last[first[*i]] = last[j];
             incidentKMers[s].erase(i);
         }
         incidentKMers[automaton.states[s].backwardEdge].merge(incidentKMers[s]);
