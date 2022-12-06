@@ -26,13 +26,13 @@ namespace {
                 },
                 {
                         {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"AACA"}), KMerToNumber({"TTGT"}), KMerToNumber({"AAAT"}), KMerToNumber({"TGTT"})},
-                        std::vector<OverlapEdge>{OverlapEdge{2, 0, 3},OverlapEdge{0, 4, 2}},
+                        std::vector<OverlapEdge>{{2, 0, 3},{3, 5, 3},{0, 4, 2},{1, 3, 2}},
                         4,
                         true,
                 },
                 {
                         {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}),KMerToNumber({"CCCC"}), KMerToNumber({"AACA"}), KMerToNumber({"TTGT"}), KMerToNumber({"AAAT"}),KMerToNumber({"GGGG"}), KMerToNumber({"TGTT"})},
-                        std::vector<OverlapEdge>{OverlapEdge{3, 0, 3},OverlapEdge{0, 5, 2}, {2, 3, 0}},
+                        std::vector<OverlapEdge>{{3, 0, 3},{4, 7, 3},{0, 5, 2},{1, 4, 2}, {2, 1, 0},{5, 6, 0}},
                         4,
                         true,
                 },
@@ -63,7 +63,7 @@ namespace {
                 {KMerSet{"TACTTAAGGAC",  std::vector<bool> {1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0}, 4 }, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"}), KMerToNumber({"GGAC"}), KMerToNumber({"TAAG"})}, false},
                 {KMerSet{"GAAAAGTTTAAAGAC", std::vector<bool> {1,1, 0, 1,1,1,1,1,1,1,1,1,0,0,0}, 4}, {KMerToNumber({"AAGA"}), KMerToNumber({"TTAA"}), KMerToNumber({"TTTA"}), KMerToNumber({"AGAC"}), KMerToNumber({"GTTT"}), KMerToNumber({"AGTT"}), KMerToNumber({"AAGT"}), KMerToNumber({"TAAA"}), KMerToNumber({"AAAG"}), KMerToNumber({"AAAA"}), KMerToNumber({"GAAA"})}, false},
                 {KMerSet{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}, 31}, {KMerToNumber({"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}), KMerToNumber({"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"})}, false},
-                {KMerSet{"CCCCAACAAAT", {1,0,0,0,1,1,0,1,0,0,0,}, 4}, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"CCCC"}), KMerToNumber({"AACA"})}, true},
+                {KMerSet{"CCCCATTTGTT", {1,0,0,0,1,0,1,1,0,0,0,}, 4}, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"CCCC"}), KMerToNumber({"AACA"})}, true},
         };
 
         for (auto &&t : tests) {
