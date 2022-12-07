@@ -40,9 +40,10 @@ std::pair<int64_t, int64_t> LeftExtension(int64_t first, std::unordered_set<int6
 /// Find the next generalized simplitig.
 /// Update the provided superstring and the mask.
 /// Also remove the used k-mers from kMers.
+/// If complements are true, it is expected that kMers contain both k-mer and its reverse complement.
 void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &superstring, std::vector<bool> &mask, int k, int d_max, bool complements) {
-    int64_t last, first;
-    last = first = *kMers.begin();
+     // Maintain the first and last k-mer in the simplitig.
+    int64_t last = *kMers.begin(), first = last;
     std::string simplitig = NumberToKMer(last, k);
     kMers.erase(last);
     if (complements) kMers.erase(ReverseComplement(last, k));
@@ -85,11 +86,12 @@ void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &s
     }
     superstring += simplitig;
     for (auto x : simplitigMask) mask.push_back(x);
+    // Fill the remaining zeros of the last k-mer in the simplitig.
     for (int i = 0; i < k - 1; ++i) mask.push_back(0);
 }
 
 /// Compute the generalized simplitigs greedily.
-/// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses is fast for small d_max.
+/// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses it is fast.
 KMerSet GreedyGeneralizedSimplitigs(std::vector<KMer> kMers, int k, int d_max, bool complements) {
     std::string superstring;
     std::vector<bool> mask;

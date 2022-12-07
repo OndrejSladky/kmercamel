@@ -107,7 +107,10 @@ void AddKMersFromSequence(std::unordered_set<int64_t> &kMers, std::string &data,
 }
 
 /// Read encoded k-mers from the given fasta file.
-std::unordered_set<int64_t> ReadKMers(std::string &path, int k, bool complements) {
+/// Return unique k-mers in no particular order.
+/// If complements is set to true, the result contains only one of the complementary k-mers - it is not guaranteed which one.
+/// This runs in O(sequence length) expected time.
+std::vector<int64_t> ReadKMers(std::string &path, int k, bool complements) {
     std::ifstream fasta(path);
     std::unordered_set<int64_t> kMers;
     std::string sequence;
@@ -129,5 +132,5 @@ std::unordered_set<int64_t> ReadKMers(std::string &path, int k, bool complements
     } else {
         throw std::invalid_argument("couldn't open file " + path);
     }
-    return kMers;
+    return {kMers.begin(), kMers.end()};
 }

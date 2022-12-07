@@ -28,8 +28,7 @@ int64_t KMerToNumber(const KMer &kMer) {
 
 /// Compute the prefix of size d of the given k-mer.
 int64_t BitPrefix(int64_t kMer, int k, int d) {
-    int64_t mask = -1LL ^ ((1LL << ((k - d) << 1LL)) - 1LL);
-    return (kMer & mask) >> ((k - d) << 1LL);
+    return kMer >> ((k - d) << 1LL);
 }
 
 /// Compute the suffix of size d of the given k-mer.
@@ -54,12 +53,13 @@ char ComplementaryNucleotide(const char nucleotide) {
     else if (nucleotide == 'T') return 'A';
     else if (nucleotide == 'G') return 'C';
     else if (nucleotide == 'C') return 'G';
-    throw std::invalid_argument("cannot convert letter " + std::string(1, nucleotide) + "to int.");
+    throw std::invalid_argument("cannot find complementary nucleotide for letter " + std::string(1, nucleotide));
 }
 
 /// Compute the reverse complement of the given k-mer.
 KMer ReverseComplement(const KMer &kMer) {
     KMer ans;
+    ans.value.reserve(kMer.length());
     for (int i = (int)kMer.length() - 1; i >= 0; --i) {
         ans.value += ComplementaryNucleotide(kMer.value[i]);
     }
@@ -71,9 +71,10 @@ const char letters[4] {'A', 'C', 'G', 'T'};
 /// Convert the encoded KMer representation to string.
 std::string NumberToKMer(int64_t encoded, int length) {
     std::string ret;
+    ret.reserve(length);
     for (int i = 0; i < length; ++i) {
         // The last two bits correspond to one nucleotide.
-        ret = letters[encoded & 3] + ret;
+        ret[length - i -1] = letters[encoded & 3];
         // Move to the next letter.
         encoded >>= 2;
     }

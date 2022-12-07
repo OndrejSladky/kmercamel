@@ -104,8 +104,7 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max,
                 }
             } else {
                 int state = prefixes[firstKMer][k - d_l];
-                size_t ext = -1;
-                if (state != -1) ext = ExtensionAC(forbidden, incidentKMers[state], complements);
+                size_t ext = ExtensionAC(forbidden, incidentKMers[state], complements);
                 if (ext == size_t(-1)) {
                     // No left extension found.
                     ++d_l;

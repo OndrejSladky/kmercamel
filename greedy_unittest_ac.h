@@ -4,12 +4,6 @@
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(SuffixTest, Suffix) {
-        EXPECT_EQ("CGT", Suffix(KMer{"ACGT"}, 1));
-        EXPECT_EQ("CGTA", Suffix(KMer{"CGTA"}, 0));
-        EXPECT_EQ("", Suffix(KMer{"CC"}, 2));
-    }
-
     TEST(SuperstringFromPathTest, SuperstringFromPath) {
         struct TestCase {
             std::vector<OverlapEdge> path;
