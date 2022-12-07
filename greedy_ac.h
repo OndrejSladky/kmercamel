@@ -36,9 +36,9 @@ struct ACAutomaton {
     int AddState(const int depth) {
         ACState newState;
         newState.depth = depth;
-        newState.id = states.size();
+        newState.id = (int)states.size();
         states.push_back(newState);
-        return states.size() - 1;
+        return (int)states.size() - 1;
     }
 
     /// Generate the trie from the given k-mers and set *endStateIndices*.
@@ -88,7 +88,7 @@ struct ACAutomaton {
                 q.push(forwardEdge);
             }
         }
-        int orderingIndex = reversedOrdering.size() - 2;
+        size_t orderingIndex = reversedOrdering.size() - size_t(2);
         while (!q.empty()) {
             int state = q.front();
             reversedOrdering[orderingIndex--] = state;
@@ -142,7 +142,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMer
                 continue;
             }
             std::vector<std::pair<size_t,size_t>> new_edges ({{*i, j}});
-            if (complements) new_edges.push_back({(j + n) % kMers.size(), (*i + n) % kMers.size()});
+            if (complements) new_edges.emplace_back((j + n) % kMers.size(), (*i + n) % kMers.size());
             for (auto [x, y] : new_edges) {
                 hamiltonianPath.push_back(OverlapEdge{x, y, automaton.states[s].depth});
                 forbidden[y] = true;
@@ -157,17 +157,14 @@ std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMer
     return hamiltonianPath;
 }
 
-/// Return the suffix of the given kMer without the first *overlap* chars.
-std::string Suffix(const KMer &kMer, const int overlap) {
-    return kMer.value.substr(overlap, kMer.length() - overlap);
-}
-
-/// Construct the superstring from the given hamiltonian path in the overlap graph.
+/// Construct the superstring and the path from the given hamiltonian path in the overlap graph.
 KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<KMer> &kMers, const int k) {
+    // Encode the k-mers into integers.
     std::vector<int64_t> encoded(kMers.size());
     for (size_t i = 0 ; i < kMers.size(); ++i) {
         encoded[i] = KMerToNumber(kMers[i]);
     }
+    // Call the integer variant of SuperstringFromPath.
     return SuperstringFromPath(hamiltonianPath, encoded, k);
 }
 
@@ -185,7 +182,7 @@ KMerSet GreedyAC(std::vector<KMer> kMers, bool complements) {
         kMers[i + n] = ReverseComplement(kMers[i]);
     }
 
-	const int k = kMers[0].length();
+	const int k = (int)kMers[0].length();
     auto hamiltonianPath = OverlapHamiltonianPathAC(kMers, complements);
     return SuperstringFromPath(hamiltonianPath, kMers, k);
 }

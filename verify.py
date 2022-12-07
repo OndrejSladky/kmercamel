@@ -24,11 +24,10 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool) 
         with open("./bin/converted.fa", "w") as converted:
             subprocess.run(["./convert_superstring.py"], stdin=k_mers, stdout=converted)
     # in result; in original sequence; in result without complements; in original without complements; in merged file
-    stats = [{}, {}, {}, {}]
+    stats = [{}, {}, {}]
     runs = [
         (0, "./bin/converted.fa", "converted", complements),
         (1, fasta_path, "original", complements),
-        (2, "./bin/converted.fa", "non-canonical", False),
     ]
     for i, path, result, pass_complements in runs:
         args = ["jellyfish", "count", "-m", f"{k}", "-s", "100M", "-o", f"./bin/{result}.jf", path]
@@ -48,15 +47,16 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool) 
     with open(f"./bin/merged_stats.txt", "r") as f:
         for _ in range(4):
             key, value = f.readline().split()
-            stats[3][key] = value
+            stats[2][key] = value
     distinct_key = "Distinct:"
-    if stats[0][distinct_key] != stats[1][distinct_key] or stats[0][distinct_key] != stats[3][distinct_key]:
+    total_key = "Total:"
+    if stats[0][distinct_key] != stats[1][distinct_key] or stats[0][distinct_key] != stats[2][distinct_key]:
         print("F")
-        print(f"Failed: k={k}: expected orginal_distinct_count={stats[1][distinct_key]}, result_distinct_count={stats[0][distinct_key]} and merged_distinct_count={stats[3][distinct_key]} to be equal.")
+        print(f"Failed: k={k}: expected orginal_distinct_count={stats[1][distinct_key]}, result_distinct_count={stats[0][distinct_key]} and merged_distinct_count={stats[2][distinct_key]} to be equal.")
         return False
-    elif complements and stats[0][distinct_key] != stats[2][distinct_key]:
+    elif complements and stats[0][distinct_key] != stats[0][total_key]:
         print("W")
-        print(f"Warning: k={k}: number of k-mers={stats[0][distinct_key]} is not equal to number of canonical k-mers={stats[2][distinct_key]} in the superstring.")
+        print(f"Warning: k={k}: number of masked k-mers={stats[0][total_key]} is not minimal possible (minimum is {stats[0][distinct_key]}).")
     else:
         print(".", end="")
         sys.stdout.flush()

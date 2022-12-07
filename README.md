@@ -1,12 +1,14 @@
-## Algorithms
+# XXX
+TODO: find a nice name for the program.
 
-| Algorithm                     | Implemented | Basic optimizations | Support for complements |
-|-------------------------------|-------------|---------------------|-------------------------|
-| GREEDY with AC                | YES         | NO                  | YES                     |
-| GREEDY with hashing           | YES         | YES                 | YES                     |
-| Pseudosimplitigs with AC      | YES         | NO                  | YES                     |
-| Pseudosimplitigs with hashing | YES         | YES                 | YES                     |
+This repository provides implementation of two algorithms for representing set of k-mers as a masked superstring.
 
+- Pseudosimplitigs
+- Global GREEDY algorithm
+
+Both of these come in two different implementations:
+- Encoding the k-mers as integers and using fast prefix/suffix equality checks.
+- Using the Aho-Corasick automaton.
 
 ## How to install
 
@@ -48,7 +50,8 @@ Run `./convert_superstring`. This runs a Python script which inputs the superstr
 ## How to test
 
 
-For integration tests you'll have to install [jellyfish (v2)](https://github.com/gmarcais/Jellyfish).
+For integration tests you'll have to install [jellyfish (v2)](https://github.com/gmarcais/Jellyfish)
+and add it to PATH.
 
 You can verify all the algortihms for `4 < k < 32` on a given fasta file by running:
 
