@@ -77,8 +77,9 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
 /// return only one of them.
 KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<int64_t> &kMers, const int k) {
     std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
-    std::vector<bool> isStart(kMers.size(), true);
+    std::vector<bool> isStart(kMers.size(), false);
     for (auto edge : hamiltonianPath) {
+        isStart[edge.firstIndex] = true;
         edgeFrom[edge.firstIndex] = edge;
     }
     for (auto edge : hamiltonianPath) {
@@ -88,6 +89,9 @@ KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, con
     // Find the vertex in the overlap graph with in-degree 0.
     size_t start = 0;
     for (; start < kMers.size() && !isStart[start]; ++start);
+
+    // Handle the edge case with no edges.
+    start %= kMers.size();
 
     std::stringstream superstring;
     superstring << NumberToKMer(kMers[start], k);

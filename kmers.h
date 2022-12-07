@@ -70,8 +70,7 @@ const char letters[4] {'A', 'C', 'G', 'T'};
 
 /// Convert the encoded KMer representation to string.
 std::string NumberToKMer(int64_t encoded, int length) {
-    std::string ret;
-    ret.reserve(length);
+    std::string ret(length, 'N');
     for (int i = 0; i < length; ++i) {
         // The last two bits correspond to one nucleotide.
         ret[length - i -1] = letters[encoded & 3];

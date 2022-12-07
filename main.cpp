@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
         Help();
         return 1;
     } else if (k > 31 && (algorithm != "pseudosimplitigsAC")) {
-        std::cerr << "k > 31 not supported for the algorithm '" + algorithm + "'. " << std::endl;
+        std::cerr << "k > 31 not supported for the algorithm '" + algorithm + "'." << std::endl;
         Help();
         return 1;
     }
