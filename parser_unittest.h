@@ -29,7 +29,7 @@ namespace {
     }
 
     TEST(ReadKMersTest, ReadKMers) {
-        std::string path = (std::string) get_current_dir_name();
+        std::string path = std::filesystem::current_path();
         path += "/tests/test.fa";
         std::vector<FastaRecord> wantResult = {
                 FastaRecord{">1", "ACCCGAAC"},
