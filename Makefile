@@ -19,7 +19,7 @@ cpptest: kmerstest
 
 # Execute unittest on Windows.
 cpptest-win: kmerstest.exe
-	kmerstest.exe
+	start kmerstest.exe
 
 converttest: convert_superstring_unittest.py
 	./convert_superstring_unittest.py
