@@ -9,6 +9,10 @@
 #include "gtest/gtest.h"
 
 namespace {
+
+// Retrieving current path on Windows does not work as on linux
+// therefore the following two unittests are linux-specific.
+#ifdef __unix__
     TEST(ReadFastaTest, ReadFasta) {
         std::string path = std::filesystem::current_path();
         path += "/tests/test.fa";
@@ -56,6 +60,7 @@ namespace {
         }
 
     }
+#endif
 
     TEST(AddKMersFromSequenceTest, String) {
         struct TestCase {

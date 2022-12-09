@@ -21,8 +21,10 @@ jobs:
       run: make
     - name: submodule
       run: git submodule init; git submodule update
-    - name: unittests
-      run: make cpptest; make converttest
+    - name: cpptests
+      run: make cpptest
+    - name: converttests
+      run: make converttest
       
   verify_ubuntu:
     runs-on: ubuntu-latest
