@@ -26,20 +26,6 @@ jobs:
     - name: converttests
       run: make converttest
       
-  build_with_unittests_win:
-
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: make
-      run: make build-win
-    - name: submodule
-      run: git submodule init; git submodule update
-    - name: cpptests
-      run: make cpptest-win
-    - name: converttests
-      run: make converttest
-      
   verify_ubuntu:
     runs-on: ubuntu-latest
     

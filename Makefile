@@ -6,9 +6,6 @@ GTEST=       googletest/googletest
 
 all: kmers
 
-# Build kmers so that it can be executed on windows.
-build-win: kmers.exe
-
 test: cpptest converttest verify
 
 verify: verify.py kmers
@@ -19,10 +16,6 @@ quick-verify: verify.py kmers
 
 cpptest: kmerstest
 	./kmerstest
-
-# Execute unittest on Windows.
-cpptest-win: kmerstest.exe
-	start ./kmerstest.exe
 
 converttest: convert_superstring_unittest.py
 	./convert_superstring_unittest.py
