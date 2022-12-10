@@ -50,5 +50,5 @@ jobs:
     - name: jellyfish
       run: sudo apt install jellyfish
     - name: verify
-      run: make verify
+      run: make quick-verify
 

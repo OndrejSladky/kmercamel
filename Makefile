@@ -14,6 +14,9 @@ test: cpptest converttest verify
 verify: verify.py kmers
 	./verify.py ./spneumoniae.fa
 
+quick-verify: verify.py kmers
+	./verify.py --quick ./spneumoniae.fa
+
 cpptest: kmerstest
 	./kmerstest
 

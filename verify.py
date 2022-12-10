@@ -2,6 +2,7 @@
 import subprocess
 import sys
 import os
+import argparse
 
 
 def print_help():
@@ -63,25 +64,30 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool) 
     return True
 
 
-# Initialize.
-if not os.path.exists("bin"):
-    os.makedirs("bin")
-if len(sys.argv) != 2:
-    print_help()
-    exit(1)
-path = sys.argv[1]
+def main():
+    # Initialize.
+    if not os.path.exists("bin"):
+        os.makedirs("bin")
 
-# Do the tests.
-success = True
-for a in ["greedyAC", "pseudosimplitigsAC", "greedy", "pseudosimplitigs"]:
-    print(f"Testing {a}:")
-    for complements in [True, False]:
-        for k in range(5, 32):
-            success &= verify_instance(path, k, a, complements)
-        print("")
+    parser = argparse.ArgumentParser("check whether ./kmers outputs a superstring which contains the same set of k-mers"
+                                     "as the original sequence")
+    parser.add_argument("path", help="path to the fasta file on which ./kmers is verified")
+    parser.add_argument("--quick", help="if set do not check for full range of k", action="store_true")
+    args = parser.parse_args()
 
-# Print status.
-if not success:
-    print("Tests failed")
-    exit(1)
-print("OK")
+    # Do the tests.
+    success = True
+    for a in ["greedyAC", "pseudosimplitigsAC", "greedy", "pseudosimplitigs"]:
+        print(f"Testing {a}:")
+        for complements in [True, False]:
+            for k in ([5, 8, 12] if args.quick else range(5, 32)):
+                success &= verify_instance(args.path, k, a, complements)
+            print("")
+
+    # Print status.
+    if not success:
+        print("Tests failed")
+        exit(1)
+    print("OK")
+
+main()
