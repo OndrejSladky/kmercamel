@@ -10,6 +10,9 @@ Both of these come in two different implementations:
 - Encoding the k-mers as integers and using fast prefix/suffix equality checks.
 - Using the Aho-Corasick automaton.
 
+The versions with k-mer encoding are usually faster, but the versions with Aho-Corasick automaton
+support arbitrarily large k-mers.
+
 ## How to install
 
 First clone the repo:

@@ -98,8 +98,8 @@ int main(int argc, char **argv) {
         std::cerr << "k must be positive." << std::endl;
         Help();
         return 1;
-    } else if (k > 31 && (algorithm != "pseudosimplitigsAC")) {
-        std::cerr << "k > 31 not supported for the algorithm '" + algorithm + "'." << std::endl;
+    } else if (k > 31 && (algorithm == "pseudosimplitigs" || algorithm == "greedy")) {
+        std::cerr << "k > 31 not supported for the algorithm '" + algorithm + "'. Use its AC version instead." << std::endl;
         Help();
         return 1;
     }

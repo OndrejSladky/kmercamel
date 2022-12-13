@@ -4,7 +4,13 @@
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(SuperstringFromPathTest, SuperstringFromPath) {
+    TEST(SuffixTest, Suffix) {
+        EXPECT_EQ("CGT", Suffix(KMer{"ACGT"}, 1));
+        EXPECT_EQ("CGTA", Suffix(KMer{"CGTA"}, 0));
+        EXPECT_EQ("", Suffix(KMer{"CC"}, 2));
+    }
+
+    TEST(SuperstringFromPathTest, String) {
         struct TestCase {
             std::vector<OverlapEdge> path;
             std::vector<KMer> kMers;
@@ -33,6 +39,7 @@ namespace {
             EXPECT_EQ(t.wantResult.mask, got.mask);
         }
     }
+
     TEST(OverlapHamiltonianPathACTest, OverlapHamiltonianPathAC) {
         struct TestCase {
             std::vector<KMer> kMers;
