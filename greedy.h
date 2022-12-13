@@ -5,6 +5,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <list>
+#include <algorithm>
 #include <cstdint>
 
 #include "kmers.h"
@@ -75,7 +76,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
 /// Construct the superstring and its mask from the given hamiltonian path in the overlap graph.
 /// If reverse complements are considered and the hamiltonian path contains two paths which are reverse complements of one another,
 /// return only one of them.
-KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<int64_t> &kMers, const int k) {
+void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<int64_t> &kMers, std::ostream& of, const int k) {
     std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
     std::vector<bool> isStart(kMers.size(), false);
     for (auto edge : hamiltonianPath) {
@@ -93,35 +94,38 @@ KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, con
     // Handle the edge case with no edges.
     start %= kMers.size();
 
-    std::stringstream superstring;
-    superstring << NumberToKMer(kMers[start], k);
-    std::vector<bool> mask (1, 1);
+    int64_t last = BitSuffix(kMers[start], k-1);
+    of << letters[BitPrefix(kMers[start], k, 1)];
 
     // Move from the first k-mer to the last which has no successor.
     while(edgeFrom[start].secondIndex != size_t(-1)) {
-        superstring << NumberToKMer(kMers[edgeFrom[start].secondIndex], k - edgeFrom[start].overlapLength);
-        for (int i = 0; i < k - 1 - edgeFrom[start].overlapLength; ++i) mask.push_back(0);
-        mask.push_back(1);
+        int overlapLength = edgeFrom[start].overlapLength;
+        if (overlapLength != k - 1) {
+            std::string unmaskedNucleotides = NumberToKMer(BitPrefix(last, k-1, k-1-overlapLength), k-1-overlapLength);
+            std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
+            of << unmaskedNucleotides;
+        }
+        last = BitSuffix(kMers[edgeFrom[start].secondIndex], k-1);
+        of << letters[BitPrefix(kMers[edgeFrom[start].secondIndex], k, 1)];
         start = edgeFrom[start].secondIndex;
     }
 
-    for(int i = 0; i < k - 1; ++i) mask.emplace_back(0);
-
-    return KMerSet {
-            superstring.str(),
-            mask,
-            k
-    };
+    // Print the trailing k-1 characters.
+    std::string unmaskedNucleotides = NumberToKMer(last, k-1);
+    std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
+    of << unmaskedNucleotides << "\n";
 }
 
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm.
 /// This runs in O(n k), where n is the number of k-mers.
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected not to contain both k-mer and its complement.
-KMerSet Greedy(std::vector<int64_t> kMers, int k, bool complements) {
+/// Warning: this will destroy kMers.
+void Greedy(std::vector<int64_t> &kMers, std::ostream& of, int k, bool complements) {
     if (kMers.empty()) {
         throw std::invalid_argument("input cannot be empty");
     }
+    of << ">superstring\n";
     if (complements) {
         size_t n = kMers.size();
         kMers.resize(2 * n);
@@ -130,5 +134,5 @@ KMerSet Greedy(std::vector<int64_t> kMers, int k, bool complements) {
         }
     }
     auto hamiltonianPath = OverlapHamiltonianPath(kMers, k, complements);
-    return SuperstringFromPath(hamiltonianPath, kMers, k);
+    SuperstringFromPath(hamiltonianPath, kMers, of, k);
 }

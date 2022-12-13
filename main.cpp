@@ -102,11 +102,12 @@ int main(int argc, char **argv) {
         std::cerr << "k > 31 not supported for the algorithm '" + algorithm + "'. Use its AC version instead." << std::endl;
         Help();
         return 1;
+    } else if (printStats && algorithm == "greedy") {
+        std::cerr << "Algorithm greedy does not support printing statistics. Remove this option." << std::endl;
+        Help();
+        return 1;
     }
 
-    auto before = std::chrono::high_resolution_clock::now();
-    size_t kMersCount;
-    KMerSet result;
     // Handle greedy separately so that it consumes less memory.
     if (algorithm == "greedy") {
         auto kMers = ReadKMers(path, k, complements);
@@ -115,9 +116,9 @@ int main(int argc, char **argv) {
             Help();
             return 1;
         }
-        kMersCount = kMers.size();
-        result = Greedy(kMers, k, complements);
+        Greedy(kMers, std::cout, k, complements);
     } else {
+        auto before = std::chrono::high_resolution_clock::now();
         auto data = ReadFasta(path);
         if (data.empty()) {
             std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
@@ -126,7 +127,8 @@ int main(int argc, char **argv) {
         }
 
         auto kMers = ConstructKMers(data, k, complements);
-        kMersCount = kMers.size();
+        KMerSet result;
+        size_t kMersCount = kMers.size();
         if (algorithm == "greedyAC")
             result = GreedyAC(kMers, complements);
         else if (algorithm == "pseudosimplitigs")
@@ -138,15 +140,15 @@ int main(int argc, char **argv) {
             Help();
             return 1;
         }
+        auto now = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - before);
+        if (printStats) {
+            WriteStats(result, duration.count(), kMersCount);
+        } else {
+            WriteName(result);
+            WriteSuperstring(result);
+        }
     }
 
-    auto now = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - before);
-    if (printStats) {
-        WriteStats(result, duration.count(), kMersCount);
-    } else {
-        WriteName(result);
-        WriteSuperstring(result);
-    }
     return 0;
 }
