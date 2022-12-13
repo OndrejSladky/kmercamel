@@ -32,34 +32,39 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
     std::vector<bool> prefixForbidden(kMers.size(), false);
     std::vector<size_t> first(kMers.size());
     std::vector<size_t> last(kMers.size());
+    std::vector<size_t> next(kMers.size(), -1);
     for (size_t i = 0; i < kMers.size(); ++i) {
         first[i] = last[i] = i;
     }
+    std::unordered_map<int64_t, size_t> prefixes;
     for (int d = k - 1; d >= 0; --d) {
-        std::unordered_map<int64_t, std::list<size_t>> prefixes;
+        prefixes.clear();
         for (size_t i = 0 ; i < kMers.size(); ++i) if(!prefixForbidden[i]) {
+            next[i] = -1;
             int64_t prefix = BitPrefix(kMers[i], k, d);
-            if (prefixes.count(prefix) == 0) prefixes[prefix] = std::list<size_t>();
-            prefixes[prefix].push_back(i);
+            if (prefixes.count(prefix) != 0) next[i] = prefixes[prefix];
+            prefixes[prefix] = i;
         }
         for (size_t i = 0 ; i < kMers.size(); ++i) if(!suffixForbidden[i]) {
             int64_t suffix = BitSuffix(kMers[i], d);
-            if (prefixes.count(suffix) == 0 || prefixes[suffix].empty()) continue;
-            auto j = prefixes[suffix].begin();
+            if (prefixes.count(suffix) == 0) continue;
+            size_t j = prefixes[suffix];
+            size_t previous = prefixes[suffix];
             // If the path forms a cycle, or is between k-mer and its reverse complement, or the k-mers complement was already selected skip this path.
-            while (j != prefixes[suffix].end() && (first[i]%n == *j%n || first[i]%n == last[*j]%n || prefixForbidden[*j])) {
-                auto new_j = j;
-                new_j++;
+            while (j != size_t(-1) && (first[i]%n == j%n || first[i]%n == last[j]%n || prefixForbidden[j])) {
+                size_t new_j = next[j];
                 // If the k-mer is forbidden, remove it to keep the complexity linear.
-                if (prefixForbidden[*j]) prefixes[suffix].erase(j);
+                // This is not done with the first k-mer but that is not a problem.
+                if (prefixForbidden[j]) next[previous] = new_j;
+                else previous = j;
                 j = new_j;
             }
-            if (j == prefixes[suffix].end()) {
+            if (j == size_t(-1)) {
                 continue;
             }
-            std::vector<std::pair<size_t,size_t>> new_edges ({{i, *j}});
+            std::vector<std::pair<size_t,size_t>> new_edges ({{i, j}});
             // Add also the edge between complementary k-mers in the opposite direction.
-            if (complements) new_edges.emplace_back((*j + n) % kMers.size(), (i + n) % kMers.size());
+            if (complements) new_edges.emplace_back((j + n) % kMers.size(), (i + n) % kMers.size());
             for (auto [x, y] : new_edges) {
                 hamiltonianPath.push_back(OverlapEdge{x, y, d});
                 prefixForbidden[y] = true;
@@ -67,7 +72,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
                 last[first[x]] = last[y];
                 suffixForbidden[x] = true;
             }
-            prefixes[suffix].erase(j);
+            next[previous] = next[j];
         }
     }
     return hamiltonianPath;
