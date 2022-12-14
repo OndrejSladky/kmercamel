@@ -3,6 +3,7 @@
 #include "generalized_simplitigs.h"
 #include "generalized_simplitigs_ac.h"
 #include "parser.h"
+#include "streaming.h"
 
 #include <iostream>
 #include <string>
@@ -37,13 +38,13 @@ void Help() {
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
     std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
-    std::cerr << "  -a algorithm     - the algorithm to be run [greedy (default), greedyAC, pseudosimplitigs, pseudosimplitigsAC]" << std::endl;
+    std::cerr << "  -a algorithm     - the algorithm to be run [greedy (default), greedyAC, pseudosimplitigs, pseudosimplitigsAC, streaming]" << std::endl;
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
     std::cerr << "  -s               - if given print statistics instead of superstring" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
     std::cerr << "Example usage:       ./kmers -p path_to_fasta -k 13 -d 5 -a greedy" << std::endl;
-    std::cerr << "Possible algorithms: greedy greedyAC pseudosimplitigs pseudosimplitigsAC" << std::endl;
+    std::cerr << "Possible algorithms: greedy greedyAC pseudosimplitigs pseudosimplitigsAC streaming" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -104,6 +105,11 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    // Handle streaming algorithm separately and stop the computation afterwards.
+    if (algorithm == "streaming") {
+        Streaming(path, std::cout,  k , complements);
+        return 0;
+    }
     auto before = std::chrono::high_resolution_clock::now();
     size_t kMersCount;
     KMerSet result;
