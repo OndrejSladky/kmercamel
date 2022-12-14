@@ -4,6 +4,7 @@
 #include "greedy_unittest_ac.h"
 #include "generalized_simplitigs_unittest.h"
 #include "generalized_simplitigs_ac_unittest.h"
+#include "streaming_unittest.h"
 
 #include "gtest/gtest.h"
 

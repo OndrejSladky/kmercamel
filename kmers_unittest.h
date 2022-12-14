@@ -24,28 +24,18 @@ namespace {
         struct TestCase {
             char nucleotide;
             int wantResult;
-            bool wantSuccess;
         };
         std::vector<TestCase> tests = {
-                {'A', 0, true},
-                {'C', 1, true},
-                {'G', 2, true},
-                {'T', 3, true},
-                {'B', 0, false},
+                {'A', 0},
+                {'C', 1},
+                {'G', 2},
+                {'T', 3},
+                {'B', -1},
         };
 
         for (auto t : tests) {
-            int gotResult = 0;
-            bool gotSuccess = true;
-            try {
-                gotResult = NucleotideToInt(t.nucleotide);
-            } catch(std::invalid_argument&) {
-                gotSuccess = false;
-            }
-            EXPECT_EQ(t.wantSuccess, gotSuccess);
-            if (t.wantSuccess) {
-                EXPECT_EQ(t.wantResult, gotResult);
-            }
+            int gotResult = NucleotideToInt(t.nucleotide);
+            EXPECT_EQ(t.wantResult, gotResult);
         }
     }
 

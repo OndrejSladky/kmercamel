@@ -6,13 +6,18 @@
 #include "models.h"
 
 /// Convert the given basic nucleotide to int so it can be used for indexing in AC.
+/// If nonexisting nucleotide is given, return -1.
 int NucleotideToInt (char c) {
     switch (c) {
         case 'A': return 0;
         case 'C': return 1;
         case 'G': return 2;
         case 'T': return 3;
-        default: throw std::invalid_argument("cannot convert letter " + std::string(1, c) + "to int.");
+        case 'a': return 0;
+        case 'c': return 1;
+        case 'g': return 2;
+        case 't': return 3;
+        default: return -1;
     }
 }
 
