@@ -1,12 +1,11 @@
-# XXX
-TODO: find a nice name for the program.
-
-This repository provides implementation of two algorithms for representing set of k-mers as a masked superstring.
+# KmerCamel 🐫
+KmerCamel provides implementation of three algorithms for efficiently representing set of k-mers as a masked superstring.
 
 - Pseudosimplitigs
 - Global GREEDY algorithm
+- Streaming algorithm
 
-Both of these come in two different implementations:
+The first two come in two different implementations:
 - Encoding the k-mers as integers and using fast prefix/suffix equality checks.
 - Using the Aho-Corasick automaton.
 
@@ -30,7 +29,7 @@ The program has the following arguments:
 
 - `-p path_to_fasta` - the path to fasta file. This is a required argument.
 - `-k value_of_k` - the size of one k-mer. This is a required argument.
-- `-a algorithm` - the algortihm which should be run. Either `greedy` or `greedyAC` for global GREEDY, `pseudosimplitigs` or `pseudosimplitigsAC` for greedily computing pseudosimplitigs.
+- `-a algorithm` - the algortihm which should be run. Either `streaming` for Streaming algorithm, `greedy` or `greedyAC` for global GREEDY, `pseudosimplitigs` or `pseudosimplitigsAC` for greedily computing pseudosimplitigs.
 The versions with AC use Aho-Corasick automaton. Default `greedy`.
 - `-d value_of_d` - d_max used in pseudosimplitigs. Default 5.
 - `-s` - if provided do not print the resulting superstring, but rather stats about it. If not print the an output in fasta file format with one record.
