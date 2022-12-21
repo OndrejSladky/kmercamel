@@ -130,6 +130,7 @@ int main(int argc, char **argv) {
             Help();
             return 1;
         }
+        d_max = std::min(k, d_max);
 
         auto kMers = ConstructKMers(data, k, complements);
         kMersCount = kMers.size();

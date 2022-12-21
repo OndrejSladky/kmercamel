@@ -31,7 +31,7 @@ The program has the following arguments:
 - `-k value_of_k` - the size of one k-mer. This is a required argument.
 - `-a algorithm` - the algortihm which should be run. Either `streaming` for Streaming algorithm, `greedy` or `greedyAC` for global GREEDY, `pseudosimplitigs` or `pseudosimplitigsAC` for greedily computing pseudosimplitigs.
 The versions with AC use Aho-Corasick automaton. Default `greedy`.
-- `-d value_of_d` - d_max used in pseudosimplitigs. Default 5.
+- `-d value_of_d` - d_max used in pseudosimplitigs. Default 5. Increasing `d` beyond `k` has no effect.
 - `-s` - if provided do not print the resulting superstring, but rather stats about it. If not print the an output in fasta file format with one record.
 The name includes the statistics about the superstring and the sequence is the superstring - capital letters indicate that at given position, a k-mer starts.
 - `-c` - treat k-mer and its reverse complement as equal.
@@ -55,7 +55,7 @@ Run `./convert_superstring`. This runs a Python script which inputs the superstr
 For integration tests you'll have to install [jellyfish (v2)](https://github.com/gmarcais/Jellyfish)
 and add it to PATH.
 
-You can verify all the algortihms for `4 < k < 32` on a given fasta file by running:
+You can verify all the algortihms for `1 < k < 32` on a given fasta file by running:
 
 ```
 make verify

@@ -80,7 +80,7 @@ def main():
     for a in ["streaming", "greedyAC", "pseudosimplitigsAC", "greedy", "pseudosimplitigs"]:
         print(f"Testing {a}:")
         for complements in [True, False]:
-            for k in ([5, 8, 12] if args.quick else range(5, 32)):
+            for k in ([5, 8, 12] if args.quick else range(2, 32)):
                 success &= verify_instance(args.path, k, a, complements)
             print("")
 
