@@ -54,6 +54,7 @@ int main(int argc, char **argv) {
     std::string algorithm = "greedy";
     bool printStats = false;
     bool complements = false;
+    bool d_set = false;
     int opt;
     try {
         while ((opt = getopt(argc, argv, "p:k:d:a:shc"))  != -1) {
@@ -65,6 +66,7 @@ int main(int argc, char **argv) {
                     k = std::stoi(optarg);
                     break;
                 case  'd':
+                    d_set = true;
                     d_max = std::stoi(optarg);
                     break;
                 case  'a':
@@ -99,8 +101,16 @@ int main(int argc, char **argv) {
         std::cerr << "k must be positive." << std::endl;
         Help();
         return 1;
+    } else if (d_max <= 0) {
+        std::cerr << "d must be positive." << std::endl;
+        Help();
+        return 1;
     } else if (k > 31 && (algorithm == "pseudosimplitigs" || algorithm == "greedy")) {
         std::cerr << "k > 31 not supported for the algorithm '" + algorithm + "'. Use its AC version instead." << std::endl;
+        Help();
+        return 1;
+    } else if (d_set && (algorithm == "greedyAC" || algorithm == "greedy")) {
+        std::cerr << "Unsupported arguement d for algorithm '" + algorithm + "'." << std::endl;
         Help();
         return 1;
     }
