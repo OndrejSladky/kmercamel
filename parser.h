@@ -4,6 +4,11 @@
 #include <fstream>
 #include <algorithm>
 
+#include <zlib.h>
+#include <stdio.h>
+#include "kseq.h"
+KSEQ_INIT(gzFile, gzread)
+
 #include "models.h"
 #include "kmers.h"
 
@@ -17,24 +22,25 @@ struct FastaRecord {
 
 /// Read fasta file with given path.
 std::vector<FastaRecord> ReadFasta(std::string &path) {
-    std::ifstream fasta(path);
+
+    gzFile fp;
+    kseq_t *seq;
     std::vector<FastaRecord> records;
-    std::string line;
-    if (fasta.is_open()) {
-        while (std::getline(fasta, line)) {
-            // Start new record.
-            if (!line.empty() && line[0] == '>') {
-                records.push_back({line, ""});
-            // Ignore lines before the first record.
-            } else if (!records.empty()) {
-                // Append to the last record.
-                records[records.size() - 1].sequence += line;
-            }
-        }
-        fasta.close();
-    } else {
+    int l;
+
+    fp = gzopen(path.c_str(), "r");
+    if (fp == 0) {
         throw std::invalid_argument("couldn't open file " + path);
     }
+    seq = kseq_init(fp);
+    while ((l = kseq_read(seq)) >= 0) {
+        records.push_back(FastaRecord{
+            seq->name.s,
+            seq->seq.s,
+        });
+    }
+    kseq_destroy(seq);
+    gzclose(fp);
     return records;
 }
 
