@@ -15,6 +15,7 @@ namespace {
             std::vector<OverlapEdge> path;
             std::vector<KMer> kMers;
             int k;
+            bool complements;
             KMerSet wantResult;
         };
         std::vector<TestCase> tests = {
@@ -22,18 +23,20 @@ namespace {
                     std::vector<OverlapEdge>{OverlapEdge{1, 0, 2},OverlapEdge{0, 2, 1}},
                     std::vector<KMer>{KMer{"ACG"}, KMer{"TAC"}, KMer{"GGC"}},
                     3,
+                    false,
                     KMerSet{"TACGGC", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3}
                 },
                 {
                         std::vector<OverlapEdge>{OverlapEdge{2, 1, 2},OverlapEdge{1, 3, 1}},
                         std::vector<KMer>{KMer{"GCC"}, KMer{"ACG"}, KMer{"TAC"}, KMer{"GGC"}, KMer{"CGT"}, KMer{"GTA"}},
                         3,
+                        true,
                         KMerSet{"TACGGC", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3}
                 },
         };
 
         for (auto t : tests) {
-            KMerSet got = SuperstringFromPath(t.path, t.kMers, t.k);
+            KMerSet got = SuperstringFromPath(t.path, t.kMers, t.k, t.complements);
             EXPECT_EQ(t.wantResult.superstring, got.superstring);
             EXPECT_EQ(t.wantResult.k, got.k);
             EXPECT_EQ(t.wantResult.mask, got.mask);

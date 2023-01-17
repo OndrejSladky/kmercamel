@@ -165,16 +165,21 @@ std::string Suffix(const KMer &kMer, const int overlap) {
 
 
 /// Construct the superstring and the path from the given hamiltonian path in the overlap graph.
-KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<KMer> &kMers, const int k) {
+KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<KMer> &kMers, const int k, bool complements) {
     std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
     std::vector<bool> isStart(kMers.size(), false);
+    // Compute the resulting length of the superstring.
+    int result_length = kMers.size() * k;
     for (auto edge : hamiltonianPath) {
         isStart[edge.firstIndex] = true;
         edgeFrom[edge.firstIndex] = edge;
+        result_length -= edge.overlapLength;
     }
     for (auto edge : hamiltonianPath) {
         isStart[edge.secondIndex] = false;
     }
+    // The superstring is only one strand.
+    result_length /= (1 + complements);
 
     // Find the vertex in the overlap graph with in-degree 0.
     size_t start = 0;
@@ -182,12 +187,13 @@ KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, con
     // Handle the edge case of only one k-mer.
     start %= kMers.size();
 
-    std::stringstream superstring;
-    superstring << kMers[start].value;
+    std::string superstring;
+    superstring.reserve(result_length + 10);
+    superstring += kMers[start].value;
     std::vector<bool> mask (1, 1);
 
     while(edgeFrom[start].secondIndex != size_t(-1)) {
-        superstring << Suffix(kMers[edgeFrom[start].secondIndex], edgeFrom[start].overlapLength);
+        superstring += Suffix(kMers[edgeFrom[start].secondIndex], edgeFrom[start].overlapLength);
         for (int i = 0; i < k - 1 - edgeFrom[start].overlapLength; ++i) mask.push_back(0);
         mask.push_back(1);
         start = edgeFrom[start].secondIndex;
@@ -196,7 +202,7 @@ KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, con
     for(int i = 0; i < k - 1; ++i) mask.push_back(0);
 
     return KMerSet {
-            superstring.str(),
+            superstring,
             mask,
             k
     };
@@ -218,5 +224,5 @@ KMerSet GreedyAC(std::vector<KMer> kMers, bool complements) {
 
 	const int k = (int)kMers[0].length();
     auto hamiltonianPath = OverlapHamiltonianPathAC(kMers, complements);
-    return SuperstringFromPath(hamiltonianPath, kMers, k);
+    return SuperstringFromPath(hamiltonianPath, kMers, k, complements);
 }
