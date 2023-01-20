@@ -7,6 +7,7 @@
 #include <vector>
 #include <deque>
 #include <cstdint>
+#include <algorithm>
 
 
 /// Find the right extension to the provided last k-mer from the kMers.
@@ -44,7 +45,8 @@ std::pair<int64_t, int64_t> LeftExtension(int64_t first, std::unordered_set<int6
 void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &superstring, std::vector<bool> &mask, int k, int d_max, bool complements) {
      // Maintain the first and last k-mer in the simplitig.
     int64_t last = *kMers.begin(), first = last;
-    std::string simplitig = NumberToKMer(last, k);
+    std::list<char> simplitig;
+    for (char c : NumberToKMer(last, k)) simplitig.emplace_back(c);
     kMers.erase(last);
     if (complements) kMers.erase(ReverseComplement(last, k));
     std::deque<bool> simplitigMask {1};
@@ -60,7 +62,7 @@ void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &s
                 // Extend the simplitig to the right.
                 kMers.erase(extension.second);
                 if (complements) kMers.erase(ReverseComplement(extension.second, k));
-                simplitig += NumberToKMer(ext, d_r);
+                for (char c : NumberToKMer(ext, d_r)) simplitig.emplace_back(c);
                 for (int i = 0; i < d_r - 1; ++i) simplitigMask.push_back(0);
                 simplitigMask.push_back(1);
                 d_r = 1;
@@ -76,7 +78,9 @@ void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &s
                 // Extend the simplitig to the left.
                 kMers.erase(extension.second);
                 if (complements) kMers.erase(ReverseComplement(extension.second, k));
-                simplitig = NumberToKMer(ext, d_l) + simplitig;
+                auto simplitigExtenstion = NumberToKMer(ext, d_l);
+                std::reverse(simplitigExtenstion.begin(), simplitigExtenstion.end());
+                for (char c : simplitigExtenstion) simplitig.emplace_front(c);
                 for (int i = 0; i < d_l - 1; ++i) simplitigMask.push_front(0);
                 simplitigMask.push_front(1);
                 d_l = 1;
@@ -84,7 +88,7 @@ void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &s
             }
         }
     }
-    superstring += simplitig;
+    superstring += std::string (simplitig.begin(), simplitig.end());
     for (auto x : simplitigMask) mask.push_back(x);
     // Fill the remaining zeros of the last k-mer in the simplitig.
     for (int i = 0; i < k - 1; ++i) mask.push_back(0);
