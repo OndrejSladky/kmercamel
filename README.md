@@ -91,5 +91,5 @@ To run all the test, simply run `make test`.
 
 ## Contact
 
-You can contact the developer at [ondra.sladky@gmail.com](mailto:ondra.sladky@gmail.com).
+You can contact the developer at [sladky@iuuk.mff.cuni.cz](mailto:sladky@iuuk.mff.cuni.cz).
 
