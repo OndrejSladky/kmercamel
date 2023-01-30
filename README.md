@@ -53,10 +53,12 @@ The output contains the resulting superstring - capital letters indicate that at
 For example:
 
 ```
-./kmers ./spneumoniae.fa -a pseudosimplitigsAC -k 12 -d 7
+./kmercamel ./spneumoniae.fa -a pseudosimplitigsAC -k 12 -d 7
 ```
 
 runs the Local Greedy on the streptococcus fasta file with `k=12` and `d=7`.
+
+Alternatively, if your operating system supports it, you can run `./🐫` instead of `./kmercamel`.
 
 ## Converting k-mer set superstring representation to the traditional one
 
