@@ -16,12 +16,12 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool) 
     """
     Check if running superstring algorithm on given fasta file produces the same set of k-mers as the original one.
     """
-    with open("./bin/kmers.txt", "w") as k_mers:
-        args = ["./kmers", "-p", fasta_path, "-k", f"{k}", "-a", algorithm]
+    with open("./bin/kmercamel.txt", "w") as k_mers:
+        args = ["./kmercamel", "-p", fasta_path, "-k", f"{k}", "-a", algorithm]
         if complements:
             args.append("-c")
         subprocess.run(args, stdout=k_mers)
-    with open("./bin/kmers.txt", "r") as k_mers:
+    with open("./bin/kmercamel.txt", "r") as k_mers:
         with open("./bin/converted.fa", "w") as converted:
             subprocess.run(["./convert_superstring.py"], stdin=k_mers, stdout=converted)
     # in result; in original sequence; in result without complements; in original without complements; in merged file
