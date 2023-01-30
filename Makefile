@@ -23,7 +23,7 @@ converttest: convert_superstring_unittest.py
 
 kmercamel: $(SRC)/main.cpp $(wildcard *.cpp *.h *.hpp)
 	$(CXX) $(CXXFLAGS) $(SRC)/main.cpp -o $@
-	cp kmercamel 🐫 || true
+	cp kmercamel  🐫 || true
 
 kmercameltest: $(SRC)/unittest.cpp gtest-all.o $(wildcard *.cpp *.h *.hpp)
 	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include $(SRC)/unittest.cpp gtest-all.o -pthread -o $@
