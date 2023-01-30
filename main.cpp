@@ -35,6 +35,7 @@ void WriteStats(const KMerSet& result, long time, size_t kMersCount) {
 }
 
 void Help() {
+    std::cerr << "KmerCamel v0.1" << std::endl;
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
     std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
