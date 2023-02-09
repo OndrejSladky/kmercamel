@@ -3,6 +3,7 @@
 CXX=         g++
 CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2
 GTEST=       googletest/googletest
+LDFLAGS=     -lz
 SRC=         src
 
 all: kmercamel
@@ -22,11 +23,11 @@ converttest: convert_superstring_unittest.py
 	./convert_superstring_unittest.py
 
 kmercamel: $(SRC)/main.cpp $(wildcard *.cpp *.h *.hpp)
-	$(CXX) $(CXXFLAGS) $(SRC)/main.cpp -o $@
+	$(CXX) $(CXXFLAGS) $(SRC)/main.cpp -o $@ $(LDFLAGS)
 	cp kmercamel  🐫 || true
 
 kmercameltest: $(SRC)/unittest.cpp gtest-all.o $(wildcard *.cpp *.h *.hpp)
-	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include $(SRC)/unittest.cpp gtest-all.o -pthread -o $@
+	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include $(SRC)/unittest.cpp gtest-all.o -pthread -o $@ $(LDFLAGS)
 
 gtest-all.o: $(GTEST)/src/gtest-all.cc $(wildcard *.cpp *.h *.hpp)
 	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include -I $(GTEST) -DGTEST_CREATE_SHARED_LIBRARY=1 -c -pthread $(GTEST)/src/gtest-all.cc -o $@
