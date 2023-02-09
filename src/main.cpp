@@ -132,9 +132,9 @@ int main(int argc, char **argv) {
             Help();
             return 1;
         }
-        kMersCount = kMers.size();
-        result = Greedy(kMers, k, complements);
+        Greedy(kMers, std::cout, k, complements);
     } else {
+        auto before = std::chrono::high_resolution_clock::now();
         auto data = ReadFasta(path);
         if (data.empty()) {
             std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
@@ -144,7 +144,8 @@ int main(int argc, char **argv) {
         d_max = std::min(k, d_max);
 
         auto kMers = ConstructKMers(data, k, complements);
-        kMersCount = kMers.size();
+        KMerSet result;
+        size_t kMersCount = kMers.size();
         if (algorithm == "greedyAC")
             result = GreedyAC(kMers, complements);
         else if (algorithm == "pseudosimplitigs")
@@ -156,15 +157,15 @@ int main(int argc, char **argv) {
             Help();
             return 1;
         }
+        auto now = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - before);
+        if (printStats) {
+            WriteStats(result, duration.count(), kMersCount);
+        } else {
+            WriteName(result);
+            WriteSuperstring(result);
+        }
     }
 
-    auto now = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - before);
-    if (printStats) {
-        WriteStats(result, duration.count(), kMersCount);
-    } else {
-        WriteName(result);
-        WriteSuperstring(result);
-    }
     return 0;
 }
