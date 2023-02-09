@@ -22,11 +22,11 @@ cpptest: kmercameltest
 converttest: convert_superstring_unittest.py
 	./convert_superstring_unittest.py
 
-kmercamel: $(SRC)/main.cpp $(wildcard *.cpp *.h *.hpp)
+kmercamel: $(SRC)/main.cpp $(SRC)/$(wildcard *.cpp *.h *.hpp)
 	$(CXX) $(CXXFLAGS) $(SRC)/main.cpp -o $@ $(LDFLAGS)
 	cp kmercamel  🐫 || true
 
-kmercameltest: $(SRC)/unittest.cpp gtest-all.o $(wildcard *.cpp *.h *.hpp)
+kmercameltest: $(SRC)/unittest.cpp gtest-all.o $(SRC)/$(wildcard *.cpp *.h *.hpp)
 	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include $(SRC)/unittest.cpp gtest-all.o -pthread -o $@ $(LDFLAGS)
 
 gtest-all.o: $(GTEST)/src/gtest-all.cc $(wildcard *.cpp *.h *.hpp)

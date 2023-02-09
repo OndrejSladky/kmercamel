@@ -118,7 +118,7 @@ void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const 
     // Print the trailing k-1 characters.
     std::string unmaskedNucleotides = NumberToKMer(last, k-1);
     std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
-    of << unmaskedNucleotides << "\n";
+    of << unmaskedNucleotides;
 }
 
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm.
@@ -130,7 +130,6 @@ void Greedy(std::vector<int64_t> &kMers, std::ostream& of, int k, bool complemen
     if (kMers.empty()) {
         throw std::invalid_argument("input cannot be empty");
     }
-    of << ">superstring\n";
     if (complements) {
         size_t n = kMers.size();
         kMers.resize(2 * n);

@@ -145,7 +145,9 @@ namespace {
         };
 
         for (auto t : tests) {
-            KMerSet got = GreedyAC(t.input, t.complements);
+            std::stringstream of;
+
+            KMerSet got = GreedyAC(t.input, of, t.complements);
             EXPECT_EQ(t.wantResult.superstring, got.superstring);
             EXPECT_EQ(t.wantResult.k, got.k);
             EXPECT_EQ(t.wantResult.mask, got.mask);

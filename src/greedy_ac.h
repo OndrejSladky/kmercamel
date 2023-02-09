@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <list>
 #include <sstream>
+#include <fstream>
 
 #include "models.h"
 #include "kmers.h"
@@ -211,7 +212,7 @@ KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, con
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm with Aho-Corasick automaton.
 /// This runs in O(n k), where n is the number of k-mers.
 /// If complements are provided, it is expected that kMers do not contain both k-mer and its reverse complement.
-KMerSet GreedyAC(std::vector<KMer> kMers, bool complements) {
+KMerSet GreedyAC(std::vector<KMer> kMers, std::ostream& of, bool complements) {
 	if (kMers.empty()) {
 		throw std::invalid_argument("input cannot be empty");
 	}

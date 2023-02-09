@@ -9,29 +9,30 @@ namespace {
             std::vector<OverlapEdge> path;
             std::vector<int64_t> kMers;
             int k;
-            KMerSet wantResult;
+            std::string wantResult;
         };
         std::vector<TestCase> tests = {
                 {
                         std::vector<OverlapEdge>{OverlapEdge{1, 0, 2},OverlapEdge{0, 2, 1}},
                         std::vector<int64_t>{KMerToNumber({"ACG"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
                         3,
-                        KMerSet{"TACGGC", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3}
+                        "TAcGgc",
                 },
                 {
                         std::vector<OverlapEdge>{OverlapEdge{2, 1, 2},OverlapEdge{1, 3, 1}},
                         std::vector<int64_t>{KMerToNumber({"GCC"}), KMerToNumber({"ACG"}), KMerToNumber({"TAC"}),
                                           KMerToNumber({"GGC"}), KMerToNumber({"CGT"}), KMerToNumber({"GTA"})},
                         3,
-                        KMerSet{"TACGGC", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3}
+                        "TAcGgc",
                 },
         };
 
         for (auto t : tests) {
-            KMerSet got = SuperstringFromPath(t.path, t.kMers, t.k);
-            EXPECT_EQ(t.wantResult.superstring, got.superstring);
-            EXPECT_EQ(t.wantResult.k, got.k);
-            EXPECT_EQ(t.wantResult.mask, got.mask);
+            std::stringstream of;
+
+            SuperstringFromPath(t.path, t.kMers, of, t.k);
+
+            EXPECT_EQ(t.wantResult, of.str());
         }
     }
 
@@ -82,26 +83,28 @@ namespace {
 
     TEST(GreedyTest, Greedy) {
         struct TestCase {
-            KMerSet wantResult;
+            std::string wantResult;
+            int k;
             std::vector<int64_t> input;
             bool complements;
         };
         std::vector<TestCase> tests = {
-                {KMerSet{"TACGT", std::vector<bool> {1, 1, 1, 0, 0}, 3 }, {KMerToNumber({"CGT"}), KMerToNumber({"TAC"}), KMerToNumber({"ACG"})}, false},
-                {KMerSet{"TAGC", std::vector<bool> {1, 0, 1, 0}, 2 }, {KMerToNumber({"TA"}), KMerToNumber({"GC"}), }, false},
-                {KMerSet{"ACGTTT", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3 }, {KMerToNumber({"CGT"}), KMerToNumber({"TTT"}), KMerToNumber({"ACG"})}, false},
-                {KMerSet{"TACTT", std::vector<bool> {1, 1, 0, 0, 0}, 4 }, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"})}, false},
-                {KMerSet{"TACTTAAGGAC",  std::vector<bool> {1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0}, 4 }, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"}), KMerToNumber({"GGAC"}), KMerToNumber({"TAAG"})}, false},
-                {KMerSet{"GAAAAGTTTAAAGAC", std::vector<bool> {1,1, 0, 1,1,1,1,1,1,1,1,1,0,0,0}, 4}, {KMerToNumber({"AAGA"}), KMerToNumber({"TTAA"}), KMerToNumber({"TTTA"}), KMerToNumber({"AGAC"}), KMerToNumber({"GTTT"}), KMerToNumber({"AGTT"}), KMerToNumber({"AAGT"}), KMerToNumber({"TAAA"}), KMerToNumber({"AAAG"}), KMerToNumber({"AAAA"}), KMerToNumber({"GAAA"})}, false},
-                {KMerSet{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}, 31}, {KMerToNumber({"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}), KMerToNumber({"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"})}, false},
-                {KMerSet{"CCCCATTTGTT", {1,0,0,0,1,0,1,1,0,0,0,}, 4}, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"CCCC"}), KMerToNumber({"AACA"})}, true},
+                {"TACgt", 3, {KMerToNumber({"CGT"}), KMerToNumber({"TAC"}), KMerToNumber({"ACG"})}, false},
+                {"TaGc", 2, {KMerToNumber({"TA"}), KMerToNumber({"GC"}), }, false},
+                {"ACgTtt", 3, {KMerToNumber({"CGT"}), KMerToNumber({"TTT"}), KMerToNumber({"ACG"})}, false},
+                {"TActt", 4, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"})}, false},
+                {"TActTaaGgac", 4, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"}), KMerToNumber({"GGAC"}), KMerToNumber({"TAAG"})}, false},
+                {"GAaAAGTTTAAAgac", 4, {KMerToNumber({"AAGA"}), KMerToNumber({"TTAA"}), KMerToNumber({"TTTA"}), KMerToNumber({"AGAC"}), KMerToNumber({"GTTT"}), KMerToNumber({"AGTT"}), KMerToNumber({"AAGT"}), KMerToNumber({"TAAA"}), KMerToNumber({"AAAG"}), KMerToNumber({"AAAA"}), KMerToNumber({"GAAA"})}, false},
+                {"TTtcttttttttttttttttttttttttttga", 31, {KMerToNumber({"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}), KMerToNumber({"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"})}, false},
+                {"CcccAtTTgtt", 4, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"CCCC"}), KMerToNumber({"AACA"})}, true},
         };
 
         for (auto &&t : tests) {
-            KMerSet got = Greedy(t.input, t.wantResult.k, t.complements);
-            EXPECT_EQ(t.wantResult.superstring, got.superstring);
-            EXPECT_EQ(t.wantResult.k, got.k);
-            EXPECT_EQ(t.wantResult.mask, got.mask);
+            std::stringstream of;
+
+            Greedy(t.input, of, t.k, t.complements);
+
+            EXPECT_EQ(t.wantResult, of.str());
         }
     }
 }
