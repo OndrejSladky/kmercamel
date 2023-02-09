@@ -152,7 +152,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMer
             }
             incidentKMers[s].erase(i);
         }
-        incidentKMers[automaton.states[s].backwardEdge].merge(incidentKMers[s]);
+        incidentKMers[automaton.states[s].backwardEdge].splice(incidentKMers[automaton.states[s].backwardEdge].end(), incidentKMers[s]);
     }
     return hamiltonianPath;
 }
