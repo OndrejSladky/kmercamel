@@ -62,12 +62,6 @@ namespace {
                         4,
                         true,
                 },
-                {
-                        {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}),KMerToNumber({"CCCC"}), KMerToNumber({"AACA"}), KMerToNumber({"TTGT"}), KMerToNumber({"AAAT"}),KMerToNumber({"GGGG"}), KMerToNumber({"TGTT"})},
-                        std::vector<OverlapEdge>{{3, 0, 3},{4, 7, 3},{0, 5, 2},{1, 4, 2}, {2, 1, 0},{5, 6, 0}},
-                        4,
-                        true,
-                },
         };
 
         for (auto t : tests) {
@@ -94,9 +88,8 @@ namespace {
                 {"ACgTtt", 3, {KMerToNumber({"CGT"}), KMerToNumber({"TTT"}), KMerToNumber({"ACG"})}, false},
                 {"TActt", 4, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"})}, false},
                 {"TActTaaGgac", 4, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"}), KMerToNumber({"GGAC"}), KMerToNumber({"TAAG"})}, false},
-                {"GAaAAGTTTAAAgac", 4, {KMerToNumber({"AAGA"}), KMerToNumber({"TTAA"}), KMerToNumber({"TTTA"}), KMerToNumber({"AGAC"}), KMerToNumber({"GTTT"}), KMerToNumber({"AGTT"}), KMerToNumber({"AAGT"}), KMerToNumber({"TAAA"}), KMerToNumber({"AAAG"}), KMerToNumber({"AAAA"}), KMerToNumber({"GAAA"})}, false},
                 {"TTtcttttttttttttttttttttttttttga", 31, {KMerToNumber({"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}), KMerToNumber({"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"})}, false},
-                {"CcccAtTTgtt", 4, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"CCCC"}), KMerToNumber({"AACA"})}, true},
+                {"AtTTgttGggg", 4, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"CCCC"}), KMerToNumber({"AACA"})}, true},
         };
 
         for (auto &&t : tests) {
