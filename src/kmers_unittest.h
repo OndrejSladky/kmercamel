@@ -46,6 +46,14 @@ namespace {
         EXPECT_EQ('G', ComplementaryNucleotide('C'));
     }
 
+    TEST(NucleotideAtIndexTest, NucleotideAtIndex) {
+        EXPECT_EQ('G', NucleotideAtIndex(0b111001, 3, 1));
+        EXPECT_EQ('G', NucleotideAtIndex(0b11100111, 4, 1));
+        EXPECT_EQ('C', NucleotideAtIndex(0b11100001, 4, 3));
+        EXPECT_EQ('T', NucleotideAtIndex(0b1101100001, 5, 0));
+        EXPECT_EQ('T', NucleotideAtIndex(0b11, 1, 0));
+    }
+
     TEST(NumberToKMerTest, NumberToKMer) {
         struct TestCase {
             int64_t encoded;

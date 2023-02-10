@@ -88,15 +88,13 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // Handle streaming algorithm separately and stop the computation afterwards.
+    // Handle streaming algorithm separately.
     if (algorithm == "streaming") {
         WriteName(k);
         Streaming(path, std::cout,  k , complements);
-        std::cout << std::endl;
-        return 0;
     }
     // Handle greedy separately so that it consumes less memory.
-    if (algorithm == "greedy") {
+    else if (algorithm == "greedy") {
         auto kMers = ReadKMers(path, k, complements);
         if (kMers.empty()) {
             std::cerr << "Path '" << path << "' contains no k-mers." << std::endl;
@@ -115,23 +113,22 @@ int main(int argc, char **argv) {
         d_max = std::min(k - 1, d_max);
 
         auto kMers = ConstructKMers(data, k, complements);
-        KMerSet result;
         WriteName(k);
-        if (algorithm == "greedyAC")
-            result = GreedyAC(kMers, std::cout, complements);
-        else if (algorithm == "pseudosimplitigs")
-            result = GreedyGeneralizedSimplitigs(kMers, k, d_max, complements);
+        if (algorithm == "greedyAC") {
+            KMerSet result = GreedyAC(kMers, std::cout, complements);
+            WriteSuperstring(result.superstring, result.mask);
+        }
+        else if (algorithm == "pseudosimplitigs") {
+            GreedyGeneralizedSimplitigs(kMers, std::cout, k, d_max, complements);
+        }
         else if (algorithm == "pseudosimplitigsAC") {
             GreedyGeneralizedSimplitigsAC(kMers, std::cout, k, d_max, complements);
-            std::cout << std::endl;
-            return 0;
         }
         else {
             std::cerr << "Algorithm '" << algorithm << "' not supported." << std::endl;
             Help();
             return 1;
         }
-        WriteSuperstring(result.superstring, result.mask);
     }
     std::cout << std::endl;
     return 0;
