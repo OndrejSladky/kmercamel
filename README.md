@@ -53,7 +53,7 @@ The output contains the resulting superstring - capital letters indicate that at
 For example:
 
 ```
-./kmercamel ./spneumoniae.fa -a pseudosimplitigsAC -k 12 -d 7
+./kmercamel -p ./spneumoniae.fa -a pseudosimplitigsAC -k 12 -d 7
 ```
 
 runs the Local Greedy on the streptococcus fasta file with `k=12` and `d=7`.
