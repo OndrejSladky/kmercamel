@@ -1,5 +1,5 @@
-#include "global_ac.h"
-#include "global.h"
+#include "greedy_ac.h"
+#include "greedy.h"
 #include "generalized_simplitigs.h"
 #include "generalized_simplitigs_ac.h"
 #include "parser.h"
