@@ -62,7 +62,7 @@ Alternatively, if your operating system supports it, you can run `./🐫` instea
 
 ## Converting k-mer set superstring representation to the traditional one
 
-Run `./convert_superstring`. This runs a Python script which inputs the superstring masked representation and outputs the SPSS representation.
+Run `./convert_superstring.py < input.fa`. This runs a Python script which inputs the superstring masked representation and outputs the SPSS representation.
 
 ## How to test
 
