@@ -26,10 +26,10 @@ The following table summarizes the current state of development of these algorit
 
 ## How to install
 
-First clone the repo:
+First clone the repo and its dependency:
 
 ```
-git clone https://github.com/OndrejSladky/kmercamel
+git clone --recursive https://github.com/OndrejSladky/kmercamel
 ```
 
 Compile the program by running `make`.
@@ -76,14 +76,7 @@ You can verify all the algorithms for `1 < k < 32` on a given fasta file by runn
 make verify
 ```
 
-For unittests, install googletest module by running:
-
-```
-git submodule init
-git submodule update
-```
-
-You can then run the c++ unittests by `make cpptest`.
+You can run the c++ unittests by `make cpptest`.
 
 Similarly testing the convert script can be done via `make converttest`.
 
