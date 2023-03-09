@@ -29,7 +29,7 @@ The following table summarizes the current state of development of these algorit
 First clone the repo:
 
 ```
-git clone https://github.com/GordonHoklinder/kmercamel
+git clone https://github.com/OndrejSladky/kmercamel
 ```
 
 Compile the program by running `make`.
