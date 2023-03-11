@@ -77,7 +77,7 @@ def main():
 
     # Do the tests.
     success = True
-    for a in ["streaming", "greedyAC", "pseudosimplitigsAC", "greedy", "pseudosimplitigs"]:
+    for a in ["streaming", "globalAC", "localAC", "global", "local"]:
         print(f"Testing {a}:")
         for complements in [True, False]:
             for k in ([5, 8, 12] if args.quick else range(2, 32)):

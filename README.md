@@ -26,10 +26,10 @@ The following table summarizes the current state of development of these algorit
 
 ## How to install
 
-First clone the repo:
+First clone the repo and its dependency:
 
 ```
-git clone https://github.com/GordonHoklinder/kmercamel
+git clone --recursive https://github.com/OndrejSladky/kmercamel
 ```
 
 Compile the program by running `make`.
@@ -41,8 +41,8 @@ The program has the following arguments:
 
 - `-p path_to_fasta` - the path to fasta file. This is a required argument.
 - `-k value_of_k` - the size of one k-mer. This is a required argument.
-- `-a algorithm` - the algorithm which should be run. Either `greedy` or `greedyAC` for Global Greedy, `pseudosimplitigs` or `pseudosimplitigsAC` for Local Greedy.
-The versions with AC use Aho-Corasick automaton. Default `greedy`.
+- `-a algorithm` - the algorithm which should be run. Either `global` or `globalAC` for Global Greedy, `local` or `localAC` for Local Greedy.
+The versions with AC use Aho-Corasick automaton. Default `global`.
 - `-d value_of_d` - d_max used in Local Greedy. Default 5. Increasing `d` beyond `k` has no effect.
 - `-c` - treat k-mer and its reverse complement as equal.
 - `-h` - print help.
@@ -53,7 +53,7 @@ The output contains the resulting superstring - capital letters indicate that at
 For example:
 
 ```
-./kmercamel ./spneumoniae.fa -a pseudosimplitigsAC -k 12 -d 7
+./kmercamel -p ./spneumoniae.fa -a localAC -k 12 -d 7
 ```
 
 runs the Local Greedy on the streptococcus fasta file with `k=12` and `d=7`.
@@ -62,7 +62,7 @@ Alternatively, if your operating system supports it, you can run `./🐫` instea
 
 ## Converting k-mer set superstring representation to the traditional one
 
-Run `./convert_superstring`. This runs a Python script which inputs the superstring masked representation and outputs the SPSS representation.
+Run `./convert_superstring.py < input.fa`. This runs a Python script which inputs the superstring masked representation and outputs the SPSS representation.
 
 ## How to test
 
@@ -76,14 +76,7 @@ You can verify all the algorithms for `1 < k < 32` on a given fasta file by runn
 make verify
 ```
 
-For unittests, install googletest module by running:
-
-```
-git submodule init
-git submodule update
-```
-
-You can then run the c++ unittests by `make cpptest`.
+You can run the c++ unittests by `make cpptest`.
 
 Similarly testing the convert script can be done via `make converttest`.
 
