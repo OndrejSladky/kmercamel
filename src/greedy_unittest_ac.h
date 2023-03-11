@@ -15,31 +15,29 @@ namespace {
             std::vector<OverlapEdge> path;
             std::vector<KMer> kMers;
             int k;
-            bool complements;
-            KMerSet wantResult;
+            std::string wantResult;
         };
         std::vector<TestCase> tests = {
                 {
-                    std::vector<OverlapEdge>{OverlapEdge{1, 0, 2},OverlapEdge{0, 2, 1}},
-                    std::vector<KMer>{KMer{"ACG"}, KMer{"TAC"}, KMer{"GGC"}},
-                    3,
-                    false,
-                    KMerSet{"TACGGC", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3}
+                        std::vector<OverlapEdge>{OverlapEdge{1, 0, 2},OverlapEdge{0, 2, 1}},
+                        {KMer{"ACG"}, KMer{"TAC"}, KMer{"GGC"}},
+                        3,
+                        "TAcGgc",
                 },
                 {
                         std::vector<OverlapEdge>{OverlapEdge{2, 1, 2},OverlapEdge{1, 3, 1}},
-                        std::vector<KMer>{KMer{"GCC"}, KMer{"ACG"}, KMer{"TAC"}, KMer{"GGC"}, KMer{"CGT"}, KMer{"GTA"}},
+                        {KMer{"GCC"}, KMer{"ACG"}, KMer{"TAC"}, KMer{"GGC"}, KMer{"CGT"}, KMer{"GTA"}},
                         3,
-                        true,
-                        KMerSet{"TACGGC", std::vector<bool> {1, 1, 0, 1, 0, 0}, 3}
+                        "TAcGgc",
                 },
         };
 
         for (auto t : tests) {
-            KMerSet got = SuperstringFromPath(t.path, t.kMers, t.k, t.complements);
-            EXPECT_EQ(t.wantResult.superstring, got.superstring);
-            EXPECT_EQ(t.wantResult.k, got.k);
-            EXPECT_EQ(t.wantResult.mask, got.mask);
+            std::stringstream of;
+
+            SuperstringFromPath(t.path, t.kMers, of, t.k);
+
+            EXPECT_EQ(t.wantResult, of.str());
         }
     }
 
@@ -128,29 +126,29 @@ namespace {
         EXPECT_EQ(wantReversedOrdering, a.reversedOrdering);
     }
 
+
     TEST(GreedyACTest, GreedyAC) {
         struct TestCase {
-            KMerSet wantResult;
+            std::string wantResult;
             std::vector<KMer> input;
             bool complements;
         };
         std::vector<TestCase> tests = {
-                {KMerSet{"TACGT",  std::vector<bool> {1, 1, 1, 0, 0}, 3 }, {KMer{"CGT"}, KMer{"TAC"}, KMer{"ACG"}}, false},
-                {KMerSet{"ACGTTT",  std::vector<bool> {1, 1, 0, 1, 0, 0}, 3 }, {KMer{"CGT"}, KMer{"TTT"}, KMer{"ACG"}}, false},
-                {KMerSet{"TACTT",  std::vector<bool> {1, 1, 0, 0, 0}, 4 }, {KMer{"TACT"}, KMer{"ACTT"}}, false},
-                {KMerSet{"TACTTAAGGAC",  std::vector<bool> {1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0}, 4 }, {KMer{"TACT"}, KMer{"ACTT"}, KMer{"GGAC"}, KMer{"TAAG"}}, false},
-                {KMerSet{"GAAAAGTTTAAAGAC", std::vector<bool> {1,1, 0, 1,1,1,1,1,1,1,1,1,0,0,0}, 4}, {KMer{"AAGA"}, KMer{"TTAA"}, KMer{"TTTA"}, KMer{"AGAC"}, KMer{"GTTT"}, KMer{"AGTT"}, KMer{"AAGT"}, KMer{"TAAA"}, KMer{"AAAG"}, KMer{"AAAA"}, KMer{"GAAA"}}, false},
-                {KMerSet{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA", std::vector<bool> {1,1,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0}, 31}, {KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}, false},
-                {{"TAAA", {1,1, 0,0}, 3}, {KMer{"TAA"}, KMer{"TTT"}}, true},
+                {"TACgt", {KMer{"CGT"}, KMer{"TAC"}, KMer{"ACG"}}, false},
+                {"GcTa", {KMer{"TA"}, KMer{"GC"}, }, false},
+                {"ACgTtt", {KMer{"CGT"}, KMer{"TTT"}, KMer{"ACG"}}, false},
+                {"TActt", {KMer{"TACT"}, KMer{"ACTT"}}, false},
+                {"TActTaaGgac", {KMer{"TACT"}, KMer{"ACTT"}, KMer{"GGAC"}, KMer{"TAAG"}}, false},
+                {"TTtcttttttttttttttttttttttttttga", {KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}, false},
+                {"AAcAaatCccc", {KMer{"ACAA"}, KMer{"ATTT"}, KMer{"CCCC"}, KMer{"AACA"}}, true},
         };
 
-        for (auto t : tests) {
+        for (auto &&t : tests) {
             std::stringstream of;
 
-            KMerSet got = GreedyAC(t.input, of, t.complements);
-            EXPECT_EQ(t.wantResult.superstring, got.superstring);
-            EXPECT_EQ(t.wantResult.k, got.k);
-            EXPECT_EQ(t.wantResult.mask, got.mask);
+            GreedyAC(t.input, of,  t.complements);
+
+            EXPECT_EQ(t.wantResult, of.str());
         }
     }
 }
