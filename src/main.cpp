@@ -72,6 +72,11 @@ int main(int argc, char **argv) {
                     break;
                 case  'a':
                     algorithm = optarg;
+                    // Backwards compatability.
+                    if (algorithm == "greedy") algorithm = "global";
+                    if (algorithm == "greedyAC") algorithm = "globalAC";
+                    if (algorithm == "pseudosimplitigs") algorithm = "local";
+                    if (algorithm == "pseudosimplitigsAC") algorithm = "localAC";
                     break;
                 case  's':
                     printStats = true;
