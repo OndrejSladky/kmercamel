@@ -39,20 +39,20 @@ void Help() {
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
     std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
-    std::cerr << "  -a algorithm     - the algorithm to be run [greedy (default), greedyAC, pseudosimplitigs, pseudosimplitigsAC, streaming]" << std::endl;
+    std::cerr << "  -a algorithm     - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
     std::cerr << "  -s               - if given print statistics instead of superstring" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
-    std::cerr << "Example usage:       ./kmers -p path_to_fasta -k 13 -d 5 -a greedy" << std::endl;
-    std::cerr << "Possible algorithms: greedy greedyAC pseudosimplitigs pseudosimplitigsAC streaming" << std::endl;
+    std::cerr << "Example usage:       ./kmers -p path_to_fasta -k 13 -d 5 -a global" << std::endl;
+    std::cerr << "Possible algorithms: global globalAC local localAC streaming" << std::endl;
 }
 
 int main(int argc, char **argv) {
     std::string path;
     int k = 0;
     int d_max = 5;
-    std::string algorithm = "greedy";
+    std::string algorithm = "global";
     bool printStats = false;
     bool complements = false;
     bool d_set = false;
@@ -72,6 +72,11 @@ int main(int argc, char **argv) {
                     break;
                 case  'a':
                     algorithm = optarg;
+                    // Backwards compatability.
+                    if (algorithm == "greedy") algorithm = "global";
+                    if (algorithm == "greedyAC") algorithm = "globalAC";
+                    if (algorithm == "pseudosimplitigs") algorithm = "local";
+                    if (algorithm == "pseudosimplitigsAC") algorithm = "localAC";
                     break;
                 case  's':
                     printStats = true;
@@ -106,11 +111,11 @@ int main(int argc, char **argv) {
         std::cerr << "d must be positive." << std::endl;
         Help();
         return 1;
-    } else if (k > 31 && (algorithm == "pseudosimplitigs" || algorithm == "greedy")) {
+    } else if (k > 31 && (algorithm == "local" || algorithm == "global")) {
         std::cerr << "k > 31 not supported for the algorithm '" + algorithm + "'. Use its AC version instead." << std::endl;
         Help();
         return 1;
-    } else if (d_set && (algorithm == "greedyAC" || algorithm == "greedy")) {
+    } else if (d_set && (algorithm == "globalAC" || algorithm == "global")) {
         std::cerr << "Unsupported arguement d for algorithm '" + algorithm + "'." << std::endl;
         Help();
         return 1;
@@ -124,8 +129,8 @@ int main(int argc, char **argv) {
     auto before = std::chrono::high_resolution_clock::now();
     size_t kMersCount;
     KMerSet result;
-    // Handle greedy separately so that it consumes less memory.
-    if (algorithm == "greedy") {
+    // Handle global separately so that it consumes less memory.
+    if (algorithm == "global") {
         auto kMers = ReadKMers(path, k, complements);
         if (kMers.empty()) {
             std::cerr << "Path '" << path << "' contains no k-mers." << std::endl;
@@ -145,11 +150,11 @@ int main(int argc, char **argv) {
 
         auto kMers = ConstructKMers(data, k, complements);
         kMersCount = kMers.size();
-        if (algorithm == "greedyAC")
+        if (algorithm == "globalAC")
             result = GreedyAC(kMers, complements);
-        else if (algorithm == "pseudosimplitigs")
+        else if (algorithm == "local")
             result = GreedyGeneralizedSimplitigs(kMers, k, d_max, complements);
-        else if (algorithm == "pseudosimplitigsAC")
+        else if (algorithm == "localAC")
             result = GreedyGeneralizedSimplitigsAC(kMers, k, d_max, complements);
         else {
             std::cerr << "Algorithm '" << algorithm << "' not supported." << std::endl;

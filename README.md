@@ -41,8 +41,8 @@ The program has the following arguments:
 
 - `-p path_to_fasta` - the path to fasta file. This is a required argument.
 - `-k value_of_k` - the size of one k-mer. This is a required argument.
-- `-a algorithm` - the algorithm which should be run. Either `greedy` or `greedyAC` for Global Greedy, `pseudosimplitigs` or `pseudosimplitigsAC` for Local Greedy.
-The versions with AC use Aho-Corasick automaton. Default `greedy`.
+- `-a algorithm` - the algorithm which should be run. Either `global` or `globalAC` for Global Greedy, `local` or `localAC` for Local Greedy.
+The versions with AC use Aho-Corasick automaton. Default `global`.
 - `-d value_of_d` - d_max used in Local Greedy. Default 5. Increasing `d` beyond `k` has no effect.
 - `-c` - treat k-mer and its reverse complement as equal.
 - `-h` - print help.
@@ -53,7 +53,7 @@ The output contains the resulting superstring - capital letters indicate that at
 For example:
 
 ```
-./kmercamel -p ./spneumoniae.fa -a pseudosimplitigsAC -k 12 -d 7
+./kmercamel -p ./spneumoniae.fa -a localAC -k 12 -d 7
 ```
 
 runs the Local Greedy on the streptococcus fasta file with `k=12` and `d=7`.
