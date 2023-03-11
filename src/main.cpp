@@ -12,11 +12,12 @@
 #include "unistd.h"
 
 void Help() {
-    std::cerr << "KmerCamel v0.1" << std::endl;
+    std::cerr << "KmerCamel v0.2" << std::endl;
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
     std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
     std::cerr << "  -a algorithm     - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
+    std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
@@ -28,15 +29,20 @@ int main(int argc, char **argv) {
     std::string path;
     int k = 0;
     int d_max = 5;
+    std::ofstream output;
     std::string algorithm = "global";
     bool complements = false;
     bool d_set = false;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "p:k:d:a:hc"))  != -1) {
+        while ((opt = getopt(argc, argv, "p:k:d:a:o:hc"))  != -1) {
             switch(opt) {
                 case  'p':
                     path = optarg;
+                    break;
+                case 'o':
+                    output.open(optarg);
+                    std::cout.rdbuf(output.rdbuf());
                     break;
                 case  'k':
                     k = std::stoi(optarg);

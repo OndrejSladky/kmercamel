@@ -43,6 +43,7 @@ The program has the following arguments:
 - `-k value_of_k` - the size of one k-mer. This is a required argument.
 - `-a algorithm` - the algorithm which should be run. Either `global` or `globalAC` for Global Greedy, `local` or `localAC` for Local Greedy.
 The versions with AC use Aho-Corasick automaton. Default `global`.
+- `-o output_path` - the path to output file. If not specified, output is printed to stdout.
 - `-d value_of_d` - d_max used in Local Greedy. Default 5. Increasing `d` beyond `k` has no effect.
 - `-c` - treat k-mer and its reverse complement as equal.
 - `-h` - print help.
