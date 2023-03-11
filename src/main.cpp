@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 
         auto kMers = ConstructKMers(data, k, complements);
         WriteName(k);
-        if (algorithm == "globalAC")
+        if (algorithm == "globalAC") {
             KMerSet result = GreedyAC(kMers, std::cout, complements);
             WriteSuperstring(result.superstring, result.mask);
         }
