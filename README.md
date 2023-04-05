@@ -1,5 +1,9 @@
 # KmerCamel 🐫
-KmerCamel provides implementations of algorithms for efficiently representing a set of k-mers as a masked superstring.
+KmerCamel provides implementations of algorithms for efficiently representing a set of k-mers as a [masked superstring](https://doi.org/10.1101/2023.02.01.526717), based on the following paper:
+
+> Ondřej Sladký, Pavel Veselý, and Karel Břinda: Masked superstrings as a unified framework for textual *k*-mer set representations. *bioRxiv* 2023.02.01.526717, 2023.
+[https://doi.org/10.1101/2023.02.01.526717](https://doi.org/10.1101/2023.02.01.526717)
+
 Note that this is an experimental program, focused mainly on bacterial genomes and pangenomes.
 
 The implemented algorithms are the following:
@@ -23,6 +27,15 @@ The following table summarizes the current state of development of these algorit
 | Global Greedy with hashing    | YES                     | Basic               |
 | Local Greedy with AC          | YES                     | None yet            |
 | Local Greedy with hashing     | YES                     | None yet            |
+
+### Mask optimization
+
+Both the local and global greedy algorithms compute a superstring of the k-mers together with a default mask that minimizes the number of 1s.
+As noted in the paper, there are possibly many masks for a superstring, and various objectives for mask optimization can be considered,
+depending on the application.
+We refer to the [supplementary repository of the paper](https://github.com/karel-brinda/masked-superstrings-supplement/tree/main/experiments/08_optimize_masks)
+for Python scripts that take a masked superstring as input and output a masked superstring with mask optimized to the number of 1s (min or max)
+or to the number of runs of 1s (min).
 
 ## How to install
 
