@@ -4,7 +4,7 @@ KmerCamel provides implementations of algorithms for efficiently representing a 
 > Ondřej Sladký, Pavel Veselý, and Karel Břinda: Masked superstrings as a unified framework for textual *k*-mer set representations. *bioRxiv* 2023.02.01.526717, 2023.
 [https://doi.org/10.1101/2023.02.01.526717](https://doi.org/10.1101/2023.02.01.526717)
 
-Note that this is an experimental program, focused mainly on bacterial genomes and pangenomes.
+Note that this is an experimental program, focused mainly on bacterial genomes and pangenomes. See [supplementary materials](https://github.com/karel-brinda/masked-superstrings-supplement) of the aforementioned paper for experimental results with KmerCamel🐫.
 
 The implemented algorithms are the following:
 - Local Greedy algorithm	 - constructs the superstring by locally finding and appending an unused k-mer with the largest overlap.
