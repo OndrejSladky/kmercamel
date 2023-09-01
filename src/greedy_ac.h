@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <list>
 #include <sstream>
+#include <fstream>
 
 #include "models.h"
 #include "kmers.h"
@@ -152,7 +153,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMer
             }
             incidentKMers[s].erase(i);
         }
-        incidentKMers[automaton.states[s].backwardEdge].merge(incidentKMers[s]);
+        incidentKMers[automaton.states[s].backwardEdge].splice(incidentKMers[automaton.states[s].backwardEdge].end(), incidentKMers[s]);
     }
     return hamiltonianPath;
 }
@@ -165,12 +166,15 @@ std::string Suffix(const KMer &kMer, const int overlap) {
 
 
 /// Construct the superstring and the path from the given hamiltonian path in the overlap graph.
-KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<KMer> &kMers, const int k) {
+void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<KMer> &kMers, std::ostream& of, const int k) {
     std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
     std::vector<bool> isStart(kMers.size(), false);
+    // Compute the resulting length of the superstring.
+    int result_length = kMers.size() * k;
     for (auto edge : hamiltonianPath) {
         isStart[edge.firstIndex] = true;
         edgeFrom[edge.firstIndex] = edge;
+        result_length -= edge.overlapLength;
     }
     for (auto edge : hamiltonianPath) {
         isStart[edge.secondIndex] = false;
@@ -182,30 +186,31 @@ KMerSet SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, con
     // Handle the edge case of only one k-mer.
     start %= kMers.size();
 
-    std::stringstream superstring;
-    superstring << kMers[start].value;
-    std::vector<bool> mask (1, 1);
+    // Print the first character.
+    of << kMers[start].value[0];
 
+    // Move from the first k-mer to the last which has no successor.
     while(edgeFrom[start].secondIndex != size_t(-1)) {
-        superstring << Suffix(kMers[edgeFrom[start].secondIndex], edgeFrom[start].overlapLength);
-        for (int i = 0; i < k - 1 - edgeFrom[start].overlapLength; ++i) mask.push_back(0);
-        mask.push_back(1);
+        int overlapLength = edgeFrom[start].overlapLength;
+        if (overlapLength != k - 1) {
+            std::string unmaskedNucleotides = kMers[start].value.substr(1, k - 1 - overlapLength);
+            std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
+            of << unmaskedNucleotides;
+        }
+        of << kMers[edgeFrom[start].secondIndex].value[0];
         start = edgeFrom[start].secondIndex;
     }
 
-    for(int i = 0; i < k - 1; ++i) mask.push_back(0);
-
-    return KMerSet {
-            superstring.str(),
-            mask,
-            k
-    };
+    // Print the trailing k-1 characters.
+    std::string unmaskedNucleotides = kMers[start].value.substr(1);
+    std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
+    of << unmaskedNucleotides;
 }
 
 /// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm with Aho-Corasick automaton.
 /// This runs in O(n k), where n is the number of k-mers.
 /// If complements are provided, it is expected that kMers do not contain both k-mer and its reverse complement.
-KMerSet GreedyAC(std::vector<KMer> kMers, bool complements) {
+void GreedyAC(std::vector<KMer> kMers, std::ostream& of, bool complements) {
 	if (kMers.empty()) {
 		throw std::invalid_argument("input cannot be empty");
 	}
@@ -218,5 +223,5 @@ KMerSet GreedyAC(std::vector<KMer> kMers, bool complements) {
 
 	const int k = (int)kMers[0].length();
     auto hamiltonianPath = OverlapHamiltonianPathAC(kMers, complements);
-    return SuperstringFromPath(hamiltonianPath, kMers, k);
+    SuperstringFromPath(hamiltonianPath, kMers, of, k);
 }

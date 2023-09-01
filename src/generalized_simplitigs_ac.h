@@ -6,6 +6,8 @@
 #include <vector>
 #include <deque>
 #include <list>
+#include <algorithm>
+#include <fstream>
 
 /// Find the index of the first extending k-mer from the incidentKMers which is not forbidden.
 /// Mark this k-mer forbidden and remove all the k-mers in incidentKMers which are forbidden.
@@ -32,10 +34,7 @@ size_t ExtensionAC(std::vector<bool> &forbidden, std::list<size_t> &incidentKMer
 /// Compute the generalized simplitigs greedily using the Aho-Corasick automaton.
 /// This runs in O(n k), where n is the number of k-mers.
 /// If complements are provided, it is expected that kMers do not contain both k-mer and its reverse complement.
-KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max, bool complements) {
-    std::string superstring;
-    std::vector<bool> mask;
-
+void GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, std::ostream& of, int k, int d_max, bool complements) {
     // Add complementary k-mers.
     size_t n = kMers.size();
     kMers.resize(n * (1 + complements));
@@ -77,14 +76,13 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max,
             }
         }
         if (firstUnused == size_t(-1)) break;
-        auto simplitig = kMers[firstUnused].value;
+        std::list<char> simplitig = {kMers[firstUnused].value[0]};
         // Maintain the left and right most k-mer of the generalized simplitig.
         size_t firstKMer = firstUnused;
         size_t lastKMer = firstUnused;
         forbidden[firstUnused] = true;
         // Forbid the complementary k-mer.
         forbidden[(firstUnused + n) % forbidden.size()] = true;
-        std::deque<bool> simplitigMask{1};
         int d_l = 1, d_r = 1;
         while (d_l <= d_max || d_r <= d_max) {
             if (d_r <= d_l) {
@@ -95,11 +93,10 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max,
                     // No right extension found.
                     ++d_r;
                 } else {
-                    // Extend the simplitig to the right.
+                    // Extend the generalized simplitig to the right.
+                    for (int i = 1; i < d_r; ++i) simplitig.emplace_back((char)std::tolower(kMers[lastKMer].value[i]));
+                    simplitig.emplace_back(kMers[lastKMer].value[d_r]);
                     lastKMer = ext;
-                    simplitig += kMers[ext].value.substr(k - d_r, d_r);
-                    for (int i = 0; i < d_r - 1; ++i) simplitigMask.push_back(0);
-                    simplitigMask.push_back(1);
                     d_r = 1;
                 }
             } else {
@@ -110,19 +107,15 @@ KMerSet GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, int k, int d_max,
                     ++d_l;
                 } else {
                     // Extend the simplitig to the left.
+                    for (int i = d_l - 1; i > 0; --i) simplitig.emplace_front((char)std::tolower(kMers[ext].value[i]));
+                    simplitig.emplace_front(kMers[ext].value[0]);
                     firstKMer = ext;
-                    simplitig = kMers[ext].value.substr(0, d_l) + simplitig;
-                    for (int i = 0; i < d_l - 1; ++i) simplitigMask.push_front(0);
-                    simplitigMask.push_front(1);
                     d_l = 1;
                 }
             }
         }
-        superstring += simplitig;
-        for (auto x: simplitigMask) mask.push_back(x);
-        for (int i = 0; i < k - 1; ++i) mask.push_back(0);
+        for (int i = 1; i < k; ++i) simplitig.emplace_back((char)std::tolower(kMers[lastKMer].value[i]));
+        of << std::string(simplitig.begin(), simplitig.end());
     }
-
-    return KMerSet{superstring, mask, k};
 }
 

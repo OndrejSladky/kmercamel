@@ -73,6 +73,11 @@ KMer ReverseComplement(const KMer &kMer) {
 
 const char letters[4] {'A', 'C', 'G', 'T'};
 
+/// Return the index-th nucleotide from the encoded k-mer.
+inline char NucleotideAtIndex(int64_t encoded, int k, int index) {
+    return letters[(encoded >> ((k - index - 1LL) << 1LL)) & 3LL];
+}
+
 /// Convert the encoded KMer representation to string.
 std::string NumberToKMer(int64_t encoded, int length) {
     std::string ret(length, 'N');

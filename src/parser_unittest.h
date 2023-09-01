@@ -17,10 +17,10 @@ namespace {
         std::string path = std::filesystem::current_path();
         path += "/tests/test.fa";
         std::vector<FastaRecord> wantResult = {
-                FastaRecord{">1", "ACCCGAAC"},
-                FastaRecord{">2", "CGTANATGC"},
-                FastaRecord{">3 with description", "ACCCGTTTAACG"},
-                FastaRecord{">4", "A"},
+                FastaRecord{"1", "ACCCGAAC"},
+                FastaRecord{"2", "CGTANATGC"},
+                FastaRecord{"3", "ACCCGTTTAACG"},
+                FastaRecord{"4", "A"},
         };
 
         auto gotResult = ReadFasta(path);

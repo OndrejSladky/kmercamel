@@ -7,6 +7,8 @@
 #include <vector>
 #include <deque>
 #include <cstdint>
+#include <algorithm>
+#include <fstream>
 
 
 /// Find the right extension to the provided last k-mer from the kMers.
@@ -41,13 +43,12 @@ std::pair<int64_t, int64_t> LeftExtension(int64_t first, std::unordered_set<int6
 /// Update the provided superstring and the mask.
 /// Also remove the used k-mers from kMers.
 /// If complements are true, it is expected that kMers contain both k-mer and its reverse complement.
-void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &superstring, std::vector<bool> &mask, int k, int d_max, bool complements) {
+void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::ostream& of,  int k, int d_max, bool complements) {
      // Maintain the first and last k-mer in the simplitig.
     int64_t last = *kMers.begin(), first = last;
-    std::string simplitig = NumberToKMer(last, k);
+    std::list<char> simplitig {NucleotideAtIndex(first, k, 0)};
     kMers.erase(last);
     if (complements) kMers.erase(ReverseComplement(last, k));
-    std::deque<bool> simplitigMask {1};
     int d_l = 1, d_r = 1;
     while (d_l <= d_max || d_r <= d_max) {
         if (d_r <= d_l) {
@@ -57,14 +58,13 @@ void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &s
                 // No right extension found.
                 ++d_r;
             } else {
-                // Extend the simplitig to the right.
+                // Extend the generalized simplitig to the right.
                 kMers.erase(extension.second);
                 if (complements) kMers.erase(ReverseComplement(extension.second, k));
-                simplitig += NumberToKMer(ext, d_r);
-                for (int i = 0; i < d_r - 1; ++i) simplitigMask.push_back(0);
-                simplitigMask.push_back(1);
-                d_r = 1;
+                for (int i = 1; i < d_r; ++i) simplitig.emplace_back((char)std::tolower(NucleotideAtIndex(last, k, i)));
+                simplitig.emplace_back(NucleotideAtIndex(last, k, d_r));
                 last = extension.second;
+                d_r = 1;
             }
         } else {
             auto extension = LeftExtension(first, kMers, k, d_l);
@@ -76,29 +76,22 @@ void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::string &s
                 // Extend the simplitig to the left.
                 kMers.erase(extension.second);
                 if (complements) kMers.erase(ReverseComplement(extension.second, k));
-                simplitig = NumberToKMer(ext, d_l) + simplitig;
-                for (int i = 0; i < d_l - 1; ++i) simplitigMask.push_front(0);
-                simplitigMask.push_front(1);
-                d_l = 1;
+                for (int i = d_l - 1; i > 0; --i) simplitig.emplace_front((char)std::tolower(NucleotideAtIndex(extension.second, k, i)));
+                simplitig.emplace_front(NucleotideAtIndex(extension.second, k, 0));
                 first = extension.second;
+                d_l = 1;
             }
         }
     }
-    superstring += simplitig;
-    for (auto x : simplitigMask) mask.push_back(x);
-    // Fill the remaining zeros of the last k-mer in the simplitig.
-    for (int i = 0; i < k - 1; ++i) mask.push_back(0);
+    for (int i = 1; i < k; ++i) simplitig.emplace_back((char)std::tolower(NucleotideAtIndex(last, k, i)));
+    of << std::string(simplitig.begin(), simplitig.end());
 }
 
 /// Compute the generalized simplitigs greedily.
 /// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses it is fast.
-KMerSet GreedyGeneralizedSimplitigs(std::vector<KMer> kMers, int k, int d_max, bool complements) {
-    std::string superstring;
-    std::vector<bool> mask;
-
+void GreedyGeneralizedSimplitigs(std::vector<KMer> kMers, std::ostream& of, int k, int d_max, bool complements) {
     std::unordered_set<int64_t> remainingKMers;
     for (auto &&kMer : kMers) remainingKMers.insert(KMerToNumber(kMer));
     if (complements) for (auto &&kMer : kMers) remainingKMers.insert(ReverseComplement(KMerToNumber(kMer), k));
-    while(!remainingKMers.empty()) NextGeneralizedSimplitig(remainingKMers, superstring, mask, k, d_max, complements);
-    return KMerSet{superstring, mask, k};
+    while(!remainingKMers.empty()) NextGeneralizedSimplitig(remainingKMers, of,  k, d_max, complements);
 }

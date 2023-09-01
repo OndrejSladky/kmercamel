@@ -23,7 +23,6 @@ void Streaming(std::string &path, std::ostream &of, int k, bool complements) {
     std::string kMer;
     int32_t used = 0;
     int32_t usedMask = (1 << (k - 1)) - 1;
-    of << ">superstring" << std::endl;
     if (fasta.is_open()) {
         while (std::getline(fasta, line)) {
             if (!line.empty() && line[0] == '>') {
@@ -60,7 +59,6 @@ void Streaming(std::string &path, std::ostream &of, int k, bool complements) {
         }
         Push(of, kMer, k, used);
         fasta.close();
-        of << std::endl;
     } else {
         throw std::invalid_argument("couldn't open file " + path);
     }
