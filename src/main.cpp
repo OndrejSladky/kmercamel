@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <string>
-#include <chrono>
 #include "unistd.h"
 
 void Help() {
@@ -30,6 +29,7 @@ int main(int argc, char **argv) {
     int k = 0;
     int d_max = 5;
     std::ofstream output;
+    std::ostream *of = &std::cout;
     std::string algorithm = "global";
     bool complements = false;
     bool d_set = false;
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
                     break;
                 case 'o':
                     output.open(optarg);
-                    std::cout.rdbuf(output.rdbuf());
+                    of = &output;
                     break;
                 case  'k':
                     k = std::stoi(optarg);
@@ -101,8 +101,8 @@ int main(int argc, char **argv) {
 
     // Handle streaming algorithm separately.
     if (algorithm == "streaming") {
-        WriteName(k);
-        Streaming(path, std::cout,  k , complements);
+        WriteName(k, *of);
+        Streaming(path, *of,  k , complements);
     }
     // Handle greedy separately so that it consumes less memory.
     else if (algorithm == "global") {
@@ -112,8 +112,8 @@ int main(int argc, char **argv) {
             Help();
             return 1;
         }
-        WriteName(k);
-        Greedy(kMers, std::cout, k, complements);
+        WriteName(k, *of);
+        Greedy(kMers, *of, k, complements);
     } else {
         auto data = ReadFasta(path);
         if (data.empty()) {
@@ -124,15 +124,15 @@ int main(int argc, char **argv) {
         d_max = std::min(k - 1, d_max);
 
         auto kMers = ConstructKMers(data, k, complements);
-        WriteName(k);
+        WriteName(k, *of);
         if (algorithm == "globalAC") {
-            GreedyAC(kMers, std::cout, complements);
+            GreedyAC(kMers, *of, complements);
         }
         else if (algorithm == "local") {
-            GreedyGeneralizedSimplitigs(kMers, std::cout, k, d_max, complements);
+            GreedyGeneralizedSimplitigs(kMers, *of, k, d_max, complements);
         }
         else if (algorithm == "localAC") {
-            GreedyGeneralizedSimplitigsAC(kMers, std::cout, k, d_max, complements);
+            GreedyGeneralizedSimplitigsAC(kMers, *of, k, d_max, complements);
         }
         else {
             std::cerr << "Algorithm '" << algorithm << "' not supported." << std::endl;
@@ -140,6 +140,6 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
-    std::cout << std::endl;
+    *of << std::endl;
     return 0;
 }
