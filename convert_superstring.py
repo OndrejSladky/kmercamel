@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import argparse
 from typing import List
+import sys
 
 
 def split_superstring(superstring: str, k: int) -> List[str]:
@@ -37,13 +39,21 @@ def get_k(superstring: str) -> int:
 
 def main():
     """
-    Read the superstring from standard input and print the SPSS representation.
+    Read the superstring from standard input and print the rSPSS representation.
     """
-    # Ignore fasta record header.
-    input()
-    superstring = input().strip()
+    parser = argparse.ArgumentParser(description="Convert a masked superstring to its rSPSS representation")
+    parser.add_argument("infile", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
+    args = parser.parse_args()
+
+    if not args.infile.readline().startswith(">"):
+        print("ERROR: Fasta file should start with '>'.", file=sys.stderr)
+        exit(1)
+
+    superstring = args.infile.readline().strip()
     k = get_k(superstring)
     split = split_superstring(superstring, k)
+
+    # Print the individual sequences.
     for i, s in enumerate(split):
         print(f">{i + 1}")
         print(s)
