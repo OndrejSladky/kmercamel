@@ -9,6 +9,9 @@
 #include <cstdint>
 
 #include "kmers.h"
+#include "khash.h"
+
+KHASH_MAP_INIT_INT64(P64, size_t)
 
 /// Represents oriented edge in the overlap graph.
 struct OverlapEdge {
@@ -36,20 +39,29 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
     for (size_t i = 0; i < kMers.size(); ++i) {
         first[i] = last[i] = i;
     }
-    std::unordered_map<int64_t, size_t> prefixes;
+    khash_t(P64)  *prefixes = kh_init(P64);
+    //std::unordered_map<int64_t, size_t> prefixes;
     for (int d = k - 1; d >= 0; --d) {
-        prefixes.clear();
+        kh_clear(P64, prefixes);
         for (size_t i = 0 ; i < kMers.size(); ++i) if(!prefixForbidden[i]) {
             next[i] = -1;
             int64_t prefix = BitPrefix(kMers[i], k, d);
-            if (prefixes.count(prefix) != 0) next[i] = prefixes[prefix];
-            prefixes[prefix] = i;
+            auto prefix_key = kh_get(P64, prefixes, prefix);
+            if (prefix_key != kh_end(prefixes)) {
+                next[i] = kh_val(prefixes, prefix_key);
+            } else {
+                int ret;
+                prefix_key = kh_put(P64, prefixes, prefix, &ret);
+
+            }
+            kh_value(prefixes, prefix_key) = i;
         }
         for (size_t i = 0 ; i < kMers.size(); ++i) if(!suffixForbidden[i]) {
             int64_t suffix = BitSuffix(kMers[i], d);
-            if (prefixes.count(suffix) == 0) continue;
-            size_t j = prefixes[suffix];
-            size_t previous = prefixes[suffix];
+            auto suffix_key = kh_get(P64, prefixes, suffix);
+            if (suffix_key == kh_end(prefixes)) continue;
+            size_t previous, j;
+            previous = j = kh_val(prefixes, suffix_key);
             // If the path forms a cycle, or is between k-mer and its reverse complement, or the k-mers complement was already selected skip this path.
             while (j != size_t(-1) && (first[i]%n == j%n || first[i]%n == last[j]%n || prefixForbidden[j])) {
                 size_t new_j = next[j];
