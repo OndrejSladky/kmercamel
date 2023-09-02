@@ -13,6 +13,8 @@
 
 KHASH_MAP_INIT_INT64(P64, size_t)
 
+constexpr int MEMORY_REDUCTION_FACTOR = 16;
+
 /// Represents oriented edge in the overlap graph.
 struct OverlapEdge {
     // Index of the first k-mer.
@@ -30,6 +32,7 @@ struct OverlapEdge {
 /// Moreover, if so, the resulting Hamiltonian path contains two superstrings which are reverse complements of one another.
 std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
     size_t n = kMers.size() / (1 + complements);
+    size_t batch_size = kMers.size() / MEMORY_REDUCTION_FACTOR + 1;
     std::vector<OverlapEdge> hamiltonianPath;
     hamiltonianPath.reserve(n);
     std::vector<bool> suffixForbidden(kMers.size(), false);
@@ -41,51 +44,59 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
         first[i] = last[i] = i;
     }
     khash_t(P64)  *prefixes = kh_init(P64);
-    kh_resize(P64, prefixes, kMers.size() * 100 / 77 );
+    kh_resize(P64, prefixes, (kMers.size() / MEMORY_REDUCTION_FACTOR + 1 ) * 100 / 77 );
     for (int d = k - 1; d >= 0; --d) {
-        kh_clear(P64, prefixes);
-        for (size_t i = 0 ; i < kMers.size(); ++i) if(!prefixForbidden[i]) {
-            next[i] = -1;
-            int64_t prefix = BitPrefix(kMers[i], k, d);
-            auto prefix_key = kh_get(P64, prefixes, prefix);
-            if (prefix_key != kh_end(prefixes)) {
-                next[i] = kh_val(prefixes, prefix_key);
-            } else {
-                int ret;
-                prefix_key = kh_put(P64, prefixes, prefix, &ret);
+        // In order to reduce memory requirements, the prefixes are not processed at once, but in batches.
+        // As a cost, this slows down the algorithm.
+        for (int part = 0; part < MEMORY_REDUCTION_FACTOR; part++) {
+            kh_clear(P64, prefixes);
+            size_t to = std::min(kMers.size(), (part + 1) * batch_size);
+            for (size_t i = part * batch_size; i < to; ++i)
+                if (!prefixForbidden[i]) {
+                    next[i] = -1;
+                    int64_t prefix = BitPrefix(kMers[i], k, d);
+                    auto prefix_key = kh_get(P64, prefixes, prefix);
+                    if (prefix_key != kh_end(prefixes)) {
+                        next[i] = kh_val(prefixes, prefix_key);
+                    } else {
+                        int ret;
+                        prefix_key = kh_put(P64, prefixes, prefix, &ret);
 
-            }
-            kh_value(prefixes, prefix_key) = i;
-        }
-        for (size_t i = 0 ; i < kMers.size(); ++i) if(!suffixForbidden[i]) {
-            int64_t suffix = BitSuffix(kMers[i], d);
-            auto suffix_key = kh_get(P64, prefixes, suffix);
-            if (suffix_key == kh_end(prefixes)) continue;
-            size_t previous, j;
-            previous = j = kh_val(prefixes, suffix_key);
-            // If the path forms a cycle, or is between k-mer and its reverse complement, or the k-mers complement was already selected skip this path.
-            while (j != size_t(-1) && (first[i]%n == j%n || first[i]%n == last[j]%n || prefixForbidden[j])) {
-                size_t new_j = next[j];
-                // If the k-mer is forbidden, remove it to keep the complexity linear.
-                // This is not done with the first k-mer but that is not a problem.
-                if (prefixForbidden[j]) next[previous] = new_j;
-                else previous = j;
-                j = new_j;
-            }
-            if (j == size_t(-1)) {
-                continue;
-            }
-            std::vector<std::pair<size_t,size_t>> new_edges ({{i, j}});
-            // Add also the edge between complementary k-mers in the opposite direction.
-            if (complements) new_edges.emplace_back((j + n) % kMers.size(), (i + n) % kMers.size());
-            for (auto [x, y] : new_edges) {
-                hamiltonianPath.push_back(OverlapEdge{x, y, d});
-                prefixForbidden[y] = true;
-                first[last[y]] = first[x];
-                last[first[x]] = last[y];
-                suffixForbidden[x] = true;
-            }
-            next[previous] = next[j];
+                    }
+                    kh_value(prefixes, prefix_key) = i;
+                }
+            for (size_t i = 0; i < kMers.size(); ++i)
+                if (!suffixForbidden[i]) {
+                    int64_t suffix = BitSuffix(kMers[i], d);
+                    auto suffix_key = kh_get(P64, prefixes, suffix);
+                    if (suffix_key == kh_end(prefixes)) continue;
+                    size_t previous, j;
+                    previous = j = kh_val(prefixes, suffix_key);
+                    // If the path forms a cycle, or is between k-mer and its reverse complement, or the k-mers complement was already selected skip this path.
+                    while (j != size_t(-1) &&
+                           (first[i] % n == j % n || first[i] % n == last[j] % n || prefixForbidden[j])) {
+                        size_t new_j = next[j];
+                        // If the k-mer is forbidden, remove it to keep the complexity linear.
+                        // This is not done with the first k-mer but that is not a problem.
+                        if (prefixForbidden[j]) next[previous] = new_j;
+                        else previous = j;
+                        j = new_j;
+                    }
+                    if (j == size_t(-1)) {
+                        continue;
+                    }
+                    std::vector<std::pair<size_t, size_t>> new_edges({{i, j}});
+                    // Add also the edge between complementary k-mers in the opposite direction.
+                    if (complements) new_edges.emplace_back((j + n) % kMers.size(), (i + n) % kMers.size());
+                    for (auto [x, y]: new_edges) {
+                        hamiltonianPath.push_back(OverlapEdge{x, y, d});
+                        prefixForbidden[y] = true;
+                        first[last[y]] = first[x];
+                        last[first[x]] = last[y];
+                        suffixForbidden[x] = true;
+                    }
+                    next[previous] = next[j];
+                }
         }
     }
 

@@ -197,7 +197,7 @@ static const double __ac_HASH_UPPER = 0.77;
  * fast and operation. For the use by global greedy, this is negligible however and the benefits by lower memory are
  * more important. */
 #ifndef TABLE_SIZE_POWER_OF_2
-//#define TABLE_SIZE_POWER_OF_2
+#define TABLE_SIZE_POWER_OF_2
 #endif
 
 #ifndef kroundup32c
