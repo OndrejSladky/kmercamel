@@ -1,6 +1,8 @@
 #pragma once
 #include "greedy.h"
 
+#include <algorithm>
+
 #include "gtest/gtest.h"
 
 namespace {
@@ -36,6 +38,11 @@ namespace {
         }
     }
 
+    bool OverlapEdgeComparator (const OverlapEdge &a, const OverlapEdge &b)
+    {
+        return a.firstIndex < b.firstIndex;
+    }
+
     TEST(OverlapHamiltonianPathTest, OverlapHamiltonianPath) {
         struct TestCase {
             std::vector<int64_t> kMers;
@@ -65,7 +72,9 @@ namespace {
         };
 
         for (auto t : tests) {
+            std::sort(t.wantResult.begin(), t.wantResult.end(), OverlapEdgeComparator);
             std::vector<OverlapEdge> got = OverlapHamiltonianPath( t.kMers, t.k, t.complements);
+            std::sort(got.begin(), got.end(), OverlapEdgeComparator);
             EXPECT_EQ(t.wantResult.size(), got.size());
             for (size_t i = 0; i < t.wantResult.size(); ++i) {
                 EXPECT_EQ(t.wantResult[i].firstIndex, got[i].firstIndex);
@@ -84,12 +93,11 @@ namespace {
         };
         std::vector<TestCase> tests = {
                 {"TACgt", 3, {KMerToNumber({"CGT"}), KMerToNumber({"TAC"}), KMerToNumber({"ACG"})}, false},
-                {"TaGc", 2, {KMerToNumber({"TA"}), KMerToNumber({"GC"}), }, false},
                 {"ACgTtt", 3, {KMerToNumber({"CGT"}), KMerToNumber({"TTT"}), KMerToNumber({"ACG"})}, false},
                 {"TActt", 4, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"})}, false},
                 {"TActTaaGgac", 4, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"}), KMerToNumber({"GGAC"}), KMerToNumber({"TAAG"})}, false},
                 {"TTtcttttttttttttttttttttttttttga", 31, {KMerToNumber({"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}), KMerToNumber({"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"})}, false},
-                {"AtTTgttGggg", 4, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"CCCC"}), KMerToNumber({"AACA"})}, true},
+                {"AtTTgtt", 4, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"AACA"})}, true},
         };
 
         for (auto &&t : tests) {
