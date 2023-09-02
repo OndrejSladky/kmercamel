@@ -41,7 +41,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
         first[i] = last[i] = i;
     }
     khash_t(P64)  *prefixes = kh_init(P64);
-    kh_resize(P64, prefixes, kMers.size() * 100 / 85 );
+    kh_resize(P64, prefixes, kMers.size() * 100 / 77 );
     for (int d = k - 1; d >= 0; --d) {
         kh_clear(P64, prefixes);
         for (size_t i = 0 ; i < kMers.size(); ++i) if(!prefixForbidden[i]) {

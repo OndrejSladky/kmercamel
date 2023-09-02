@@ -188,8 +188,7 @@ typedef khint_t khiter_t;
 #define kfree(P) free(P)
 #endif
 
-/* Ondřej Sladký: The original value used was 0.77 */
-static const double __ac_HASH_UPPER = 0.85;
+static const double __ac_HASH_UPPER = 0.77;
 
 /* Ondřej Sladký: It is possible to turn on the following define to obtain the original behaviour.
  * Otherwise, the size of hash table is not a power of 2, and it is required to know the max size beforehand.
