@@ -200,11 +200,11 @@ static const double __ac_HASH_UPPER = 0.77;
 //#define TABLE_SIZE_POWER_OF_2
 #endif
 
-#ifndef kroundup32
+#ifndef kroundup32c
 #ifdef TABLE_SIZE_POWER_OF_2
-#define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
+#define kroundup32c(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
 #else
-#define kroundup32(x) (void)(x)
+#define kroundup32c(x) (void)(x)
 #endif
 #endif
 
@@ -276,7 +276,7 @@ static const double __ac_HASH_UPPER = 0.77;
 		khint32_t *new_flags = 0;										\
 		khint_t j = 1;													\
 		{                                                               \
-			kroundup32(new_n_buckets); 									\
+			kroundup32c(new_n_buckets); 									\
 			if (new_n_buckets < 4) new_n_buckets = 4;					\
 			if (h->size >= (khint_t)(new_n_buckets * __ac_HASH_UPPER + 0.5)) j = 0;	/* requested size is too small */ \
 			else { /* hash table size to be changed (shrink or expand); rehash */ \
