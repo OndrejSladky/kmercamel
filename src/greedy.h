@@ -16,6 +16,10 @@
 #define access(field, index) (((field).size() > (index)) ? (field)[(index)] : \
         ReverseComplement((field)[(index) - (field).size()], k))
 
+/// Provide possibility to know first and last for reverse complements without storing them.
+#define accessFirstLast(a, b, index, n) (((n) > (index)) ? (a)[(index)] : \
+        (((b)[(index) - (n)]) + (n)) % (2*(n)))
+
 KHASH_MAP_INIT_INT64(P64, size_t)
 
 constexpr int MEMORY_REDUCTION_FACTOR = 16;
@@ -46,10 +50,12 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
     std::vector<unsigned char> overlaps(kMersCount, -1);
     std::vector<bool> suffixForbidden(kMersCount, false);
     std::vector<bool> prefixForbidden(kMersCount, false);
-    auto first = new size_t[kMersCount];
-    auto last = new size_t[kMersCount];
+    // For reverse complements, compute first from last and vice versa.
+    auto first = new size_t[n];
+    auto last = new size_t[n];
+    // Index next relative to the batch.
     auto next = new size_t[batchSize];
-    for (size_t i = 0; i < kMersCount; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         first[i] = last[i] = i;
     }
     khash_t(P64)  *prefixes = kh_init(P64);
@@ -66,7 +72,6 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
             size_t from = part * batchSize;
             for (size_t i = from; i < to; ++i)
                 if (!prefixForbidden[i]) {
-                    // Index next relative to the batch.
                     next[i - from] = -1;
                     int64_t prefix = BitPrefix(access(kMers,i), k, d);
                     auto prefix_key = kh_get(P64, prefixes, prefix);
@@ -87,8 +92,10 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
                     size_t previous, j;
                     previous = j = kh_val(prefixes, suffix_key);
                     // If the path forms a cycle, or is between k-mer and its reverse complement, or the k-mers complement was already selected skip this path.
-                    while (j != size_t(-1) &&
-                           (first[i] % n == j % n || first[i] % n == last[j] % n || prefixForbidden[j])) {
+                    while (j != size_t(-1) && \
+                           (accessFirstLast(first, last, i, n) % n == j % n \
+                           || accessFirstLast(first, last, i, n) % n == accessFirstLast(last, first, j, n) % n \
+                           || prefixForbidden[j])) {
                         size_t new_j = next[j - from];
                         // If the k-mer is forbidden, remove it to keep the complexity linear.
                         // This is not done with the first k-mer but that is not a problem.
@@ -106,8 +113,10 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
                         edgeFrom[x] = y;
                         overlaps[x] = d;
                         prefixForbidden[y] = true;
-                        first[last[y]] = first[x];
-                        last[first[x]] = last[y];
+                        auto lastY =  accessFirstLast(last, first, y, n);
+                        auto firstX = accessFirstLast(first, last, x, n);
+                        if (lastY < n) first[lastY] = firstX;
+                        if (firstX < n) last[firstX] = lastY;
                         suffixForbidden[x] = true;
                     }
                     next[previous - from] = next[j - from];
