@@ -22,6 +22,7 @@
 
 KHASH_MAP_INIT_INT64(P64, size_t)
 
+/// Determines which fraction of k-mers store its prefixes at one time.
 constexpr int MEMORY_REDUCTION_FACTOR = 16;
 
 /// Represents oriented edge in the overlap graph.
