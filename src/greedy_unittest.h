@@ -12,6 +12,7 @@ namespace {
             std::vector<int64_t> kMers;
             int k;
             std::string wantResult;
+            bool complements;
         };
         std::vector<TestCase> tests = {
                 {
@@ -19,20 +20,21 @@ namespace {
                         std::vector<int64_t>{KMerToNumber({"ACG"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
                         3,
                         "TAcGgc",
+                        false,
                 },
                 {
                         std::vector<OverlapEdge>{OverlapEdge{2, 1, 2},OverlapEdge{1, 3, 1}},
-                        std::vector<int64_t>{KMerToNumber({"GCC"}), KMerToNumber({"ACG"}), KMerToNumber({"TAC"}),
-                                          KMerToNumber({"GGC"}), KMerToNumber({"CGT"}), KMerToNumber({"GTA"})},
+                        std::vector<int64_t>{KMerToNumber({"GCC"}), KMerToNumber({"ACG"}), KMerToNumber({"TAC"})},
                         3,
                         "TAcGgc",
+                        true,
                 },
         };
 
         for (auto t : tests) {
             std::stringstream of;
 
-            SuperstringFromPath(t.path, t.kMers, of, t.k);
+            SuperstringFromPath(t.path, t.kMers, of, t.k, t.complements);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
@@ -52,7 +54,7 @@ namespace {
         };
         std::vector<TestCase> tests = {
                 {
-                        {KMerToNumber({"AT"}), KMerToNumber({"AT"}) },
+                        {KMerToNumber({"AT"})},
                         std::vector<OverlapEdge>{},
                         2,
                         true,
@@ -64,7 +66,7 @@ namespace {
                         false,
                 },
                 {
-                        {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"AACA"}), KMerToNumber({"TTGT"}), KMerToNumber({"AAAT"}), KMerToNumber({"TGTT"})},
+                        {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"AACA"})},
                         std::vector<OverlapEdge>{{2, 0, 3},{3, 5, 3},{0, 4, 2},{1, 3, 2}},
                         4,
                         true,

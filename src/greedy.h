@@ -11,6 +11,11 @@
 #include "kmers.h"
 #include "khash.h"
 
+
+/// Provide possibility to access reverse complements as if they were in the field.
+#define access(field, index) (((field).size() > (index)) ? (field)[(index)] : \
+        ReverseComplement((field)[(index) - (field).size()], k))
+
 KHASH_MAP_INIT_INT64(P64, size_t)
 
 constexpr int MEMORY_REDUCTION_FACTOR = 16;
@@ -28,10 +33,12 @@ struct OverlapEdge {
 /// Greedily find the approximate Hamiltonian path with longest overlaps.
 /// k is the size of one k-mer and n is the number of distinct k-mers.
 /// If complements are provided, treat k-mer and its complement as identical.
-/// If this is the case, k-mers are expected to contain both the k-mer and its reverse complement at positions i and i+size/2.
+/// If this is the case, k-mers are expected to contain only one k-mer from a complement pair.
 /// Moreover, if so, the resulting Hamiltonian path contains two superstrings which are reverse complements of one another.
 std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
-    size_t n = kMers.size() / (1 + complements);
+
+    size_t n = kMers.size();
+    size_t kMersCount = n * (1 + complements);
     size_t batch_size = kMers.size() / MEMORY_REDUCTION_FACTOR + 1;
     std::vector<OverlapEdge> hamiltonianPath;
     hamiltonianPath.reserve(n);
@@ -44,17 +51,17 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
         first[i] = last[i] = i;
     }
     khash_t(P64)  *prefixes = kh_init(P64);
-    kh_resize(P64, prefixes, (kMers.size() / MEMORY_REDUCTION_FACTOR + 1 ) * 100 / 77 );
+    kh_resize(P64, prefixes, (kMersCount / MEMORY_REDUCTION_FACTOR + 1 ) * 100 / 77 );
     for (int d = k - 1; d >= 0; --d) {
         // In order to reduce memory requirements, the prefixes are not processed at once, but in batches.
         // As a cost, this slows down the algorithm.
         for (int part = 0; part < MEMORY_REDUCTION_FACTOR; part++) {
             kh_clear(P64, prefixes);
-            size_t to = std::min(kMers.size(), (part + 1) * batch_size);
+            size_t to = std::min(kMersCount, (part + 1) * batch_size);
             for (size_t i = part * batch_size; i < to; ++i)
                 if (!prefixForbidden[i]) {
                     next[i] = -1;
-                    int64_t prefix = BitPrefix(kMers[i], k, d);
+                    int64_t prefix = BitPrefix(access(kMers,i), k, d);
                     auto prefix_key = kh_get(P64, prefixes, prefix);
                     if (prefix_key != kh_end(prefixes)) {
                         next[i] = kh_val(prefixes, prefix_key);
@@ -65,9 +72,9 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
                     }
                     kh_value(prefixes, prefix_key) = i;
                 }
-            for (size_t i = 0; i < kMers.size(); ++i)
+            for (size_t i = 0; i < kMersCount; ++i)
                 if (!suffixForbidden[i]) {
-                    int64_t suffix = BitSuffix(kMers[i], d);
+                    int64_t suffix = BitSuffix(access(kMers, i), d);
                     auto suffix_key = kh_get(P64, prefixes, suffix);
                     if (suffix_key == kh_end(prefixes)) continue;
                     size_t previous, j;
@@ -87,7 +94,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
                     }
                     std::vector<std::pair<size_t, size_t>> new_edges({{i, j}});
                     // Add also the edge between complementary k-mers in the opposite direction.
-                    if (complements) new_edges.emplace_back((j + n) % kMers.size(), (i + n) % kMers.size());
+                    if (complements) new_edges.emplace_back((j + n) % kMersCount, (i + n) % kMersCount);
                     for (auto [x, y]: new_edges) {
                         hamiltonianPath.push_back(OverlapEdge{x, y, d});
                         prefixForbidden[y] = true;
@@ -107,9 +114,10 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
 /// Construct the superstring and its mask from the given hamiltonian path in the overlap graph.
 /// If reverse complements are considered and the hamiltonian path contains two paths which are reverse complements of one another,
 /// return only one of them.
-void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<int64_t> &kMers, std::ostream& of, const int k) {
-    std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
-    std::vector<bool> isStart(kMers.size(), false);
+void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<int64_t> &kMers, std::ostream& of, const int k, const bool complements) {
+    size_t kMersCount = kMers.size() * (1 + complements);
+    std::vector<OverlapEdge> edgeFrom (kMersCount, OverlapEdge{size_t(-1),size_t(-1), -1});
+    std::vector<bool> isStart(kMersCount, false);
     for (auto edge : hamiltonianPath) {
         isStart[edge.firstIndex] = true;
         edgeFrom[edge.firstIndex] = edge;
@@ -120,13 +128,13 @@ void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const 
 
     // Find the vertex in the overlap graph with in-degree 0.
     size_t start = 0;
-    for (; start < kMers.size() && !isStart[start]; ++start);
+    for (; start < kMersCount && !isStart[start]; ++start);
 
     // Handle the edge case with no edges.
-    start %= kMers.size();
+    start %= kMersCount;
 
-    int64_t last = BitSuffix(kMers[start], k-1);
-    of << letters[BitPrefix(kMers[start], k, 1)];
+    int64_t last = BitSuffix(access(kMers, start), k-1);
+    of << letters[BitPrefix(access(kMers, start), k, 1)];
 
     // Move from the first k-mer to the last which has no successor.
     while(edgeFrom[start].secondIndex != size_t(-1)) {
@@ -136,8 +144,8 @@ void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const 
             std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
             of << unmaskedNucleotides;
         }
-        last = BitSuffix(kMers[edgeFrom[start].secondIndex], k-1);
-        of << letters[BitPrefix(kMers[edgeFrom[start].secondIndex], k, 1)];
+        last = BitSuffix(access(kMers, edgeFrom[start].secondIndex), k-1);
+        of << letters[BitPrefix(access(kMers, edgeFrom[start].secondIndex), k, 1)];
         start = edgeFrom[start].secondIndex;
     }
 
@@ -156,13 +164,9 @@ void Greedy(std::vector<int64_t> &kMers, std::ostream& of, int k, bool complemen
     if (kMers.empty()) {
         throw std::invalid_argument("input cannot be empty");
     }
-    if (complements) {
-        size_t n = kMers.size();
-        kMers.resize(2 * n);
-        for (size_t i = 0; i < n; ++i) {
-            kMers[i + n] = ReverseComplement(kMers[i], k);
-        }
-    }
     auto hamiltonianPath = OverlapHamiltonianPath(kMers, k, complements);
-    SuperstringFromPath(hamiltonianPath, kMers, of, k);
+    SuperstringFromPath(hamiltonianPath, kMers, of, k, complements);
 }
+
+// Undefine the access macro, so it does not interfere with other files.
+#undef access
