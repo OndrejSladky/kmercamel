@@ -30,18 +30,20 @@ struct OverlapEdge {
     int overlapLength;
 };
 
+typedef std::pair<std::vector<size_t>, std::vector<unsigned char>> overlapPath;
+
 /// Greedily find the approximate Hamiltonian path with longest overlaps.
 /// k is the size of one k-mer and n is the number of distinct k-mers.
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected to contain only one k-mer from a complement pair.
 /// Moreover, if so, the resulting Hamiltonian path contains two superstrings which are reverse complements of one another.
-std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
+overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
 
     size_t n = kMers.size();
     size_t kMersCount = n * (1 + complements);
     size_t batch_size = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
-    std::vector<OverlapEdge> hamiltonianPath;
-    hamiltonianPath.reserve(n);
+    std::vector<size_t> edgeFrom(kMersCount, -1);
+    std::vector<unsigned char> overlaps(kMersCount, -1);
     std::vector<bool> suffixForbidden(kMersCount, false);
     std::vector<bool> prefixForbidden(kMersCount, false);
     std::vector<size_t> first(kMersCount);
@@ -96,7 +98,8 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
                     // Add also the edge between complementary k-mers in the opposite direction.
                     if (complements) new_edges.emplace_back((j + n) % kMersCount, (i + n) % kMersCount);
                     for (auto [x, y]: new_edges) {
-                        hamiltonianPath.push_back(OverlapEdge{x, y, d});
+                        edgeFrom[x] = y;
+                        overlaps[x] = d;
                         prefixForbidden[y] = true;
                         first[last[y]] = first[x];
                         last[first[x]] = last[y];
@@ -108,46 +111,39 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
     }
 
     kh_destroy(P64, prefixes);
-    std::cout << hamiltonianPath.size();
-    return hamiltonianPath;
+    return {edgeFrom, overlaps};
 }
 
-/// Construct the superstring and its mask from the given hamiltonian path in the overlap graph.
-/// If reverse complements are considered and the hamiltonian path contains two paths which are reverse complements of one another,
+/// Construct the superstring and its mask from the given overlapPath path in the overlap graph.
+/// If reverse complements are considered and the overlapPath path contains two paths which are reverse complements of one another,
 /// return only one of them.
-void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<int64_t> &kMers, std::ostream& of, const int k, const bool complements) {
+void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<int64_t> &kMers, std::ostream& of, const int k, const bool complements) {
     size_t kMersCount = kMers.size() * (1 + complements);
-    std::vector<OverlapEdge> edgeFrom (kMersCount, OverlapEdge{size_t(-1),size_t(-1), -1});
-    std::vector<bool> isStart(kMersCount, false);
-    for (auto edge : hamiltonianPath) {
-        isStart[edge.firstIndex] = true;
-        edgeFrom[edge.firstIndex] = edge;
-    }
-    for (auto edge : hamiltonianPath) {
-        isStart[edge.secondIndex] = false;
-    }
+    auto edgeFrom = hamiltonianPath.first;
+    auto overlaps = hamiltonianPath.second;
 
     // Find the vertex in the overlap graph with in-degree 0.
+    std::vector<bool> isStart(kMersCount, true);
+    for (auto edge : edgeFrom) {
+        if (edge != size_t(-1)) isStart[edge] = false;
+    }
     size_t start = 0;
     for (; start < kMersCount && !isStart[start]; ++start);
-
-    // Handle the edge case with no edges.
-    start %= kMersCount;
 
     int64_t last = BitSuffix(access(kMers, start), k-1);
     of << letters[BitPrefix(access(kMers, start), k, 1)];
 
     // Move from the first k-mer to the last which has no successor.
-    while(edgeFrom[start].secondIndex != size_t(-1)) {
-        int overlapLength = edgeFrom[start].overlapLength;
+    while(edgeFrom[start] != size_t(-1)) {
+        int overlapLength = overlaps[start];
         if (overlapLength != k - 1) {
             std::string unmaskedNucleotides = NumberToKMer(BitPrefix(last, k-1, k-1-overlapLength), k-1-overlapLength);
             std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
             of << unmaskedNucleotides;
         }
-        last = BitSuffix(access(kMers, edgeFrom[start].secondIndex), k-1);
-        of << letters[BitPrefix(access(kMers, edgeFrom[start].secondIndex), k, 1)];
-        start = edgeFrom[start].secondIndex;
+        last = BitSuffix(access(kMers, edgeFrom[start]), k-1);
+        of << letters[BitPrefix(access(kMers, edgeFrom[start]), k, 1)];
+        start = edgeFrom[start];
     }
 
     // Print the trailing k-1 characters.
