@@ -41,14 +41,14 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
 
     size_t n = kMers.size();
     size_t kMersCount = n * (1 + complements);
-    size_t batch_size = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
+    size_t batchSize = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
     std::vector<size_t> edgeFrom(kMersCount, -1);
     std::vector<unsigned char> overlaps(kMersCount, -1);
     std::vector<bool> suffixForbidden(kMersCount, false);
     std::vector<bool> prefixForbidden(kMersCount, false);
-    std::vector<size_t> first(kMersCount);
-    std::vector<size_t> last(kMersCount);
-    std::vector<size_t> next(kMersCount, -1);
+    auto first = new size_t[kMersCount];
+    auto last = new size_t[kMersCount];
+    auto next = new size_t[batchSize];
     for (size_t i = 0; i < kMersCount; ++i) {
         first[i] = last[i] = i;
     }
@@ -59,14 +59,19 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
         // As a cost, this slows down the algorithm.
         for (int part = 0; part < MEMORY_REDUCTION_FACTOR; part++) {
             kh_clear(P64, prefixes);
-            size_t to = std::min(kMersCount, (part + 1) * batch_size);
-            for (size_t i = part * batch_size; i < to; ++i)
+            for (size_t i = 0; i < batchSize; ++i) {
+                next[i] = (size_t)-1;
+            }
+            size_t to = std::min(kMersCount, (part + 1) * batchSize);
+            size_t from = part * batchSize;
+            for (size_t i = from; i < to; ++i)
                 if (!prefixForbidden[i]) {
-                    next[i] = -1;
+                    // Index next relative to the batch.
+                    next[i - from] = -1;
                     int64_t prefix = BitPrefix(access(kMers,i), k, d);
                     auto prefix_key = kh_get(P64, prefixes, prefix);
                     if (prefix_key != kh_end(prefixes)) {
-                        next[i] = kh_val(prefixes, prefix_key);
+                        next[i - from] = kh_val(prefixes, prefix_key);
                     } else {
                         int ret;
                         prefix_key = kh_put(P64, prefixes, prefix, &ret);
@@ -84,10 +89,10 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
                     // If the path forms a cycle, or is between k-mer and its reverse complement, or the k-mers complement was already selected skip this path.
                     while (j != size_t(-1) &&
                            (first[i] % n == j % n || first[i] % n == last[j] % n || prefixForbidden[j])) {
-                        size_t new_j = next[j];
+                        size_t new_j = next[j - from];
                         // If the k-mer is forbidden, remove it to keep the complexity linear.
                         // This is not done with the first k-mer but that is not a problem.
-                        if (prefixForbidden[j]) next[previous] = new_j;
+                        if (prefixForbidden[j]) next[previous - from] = new_j;
                         else previous = j;
                         j = new_j;
                     }
@@ -105,12 +110,15 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
                         last[first[x]] = last[y];
                         suffixForbidden[x] = true;
                     }
-                    next[previous] = next[j];
+                    next[previous - from] = next[j - from];
                 }
         }
     }
 
     kh_destroy(P64, prefixes);
+    delete[](next);
+    delete[](first);
+    delete[](last);
     return {edgeFrom, overlaps};
 }
 
