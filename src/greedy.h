@@ -39,15 +39,15 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
 
     size_t n = kMers.size();
     size_t kMersCount = n * (1 + complements);
-    size_t batch_size = kMers.size() / MEMORY_REDUCTION_FACTOR + 1;
+    size_t batch_size = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
     std::vector<OverlapEdge> hamiltonianPath;
     hamiltonianPath.reserve(n);
-    std::vector<bool> suffixForbidden(kMers.size(), false);
-    std::vector<bool> prefixForbidden(kMers.size(), false);
-    std::vector<size_t> first(kMers.size());
-    std::vector<size_t> last(kMers.size());
-    std::vector<size_t> next(kMers.size(), -1);
-    for (size_t i = 0; i < kMers.size(); ++i) {
+    std::vector<bool> suffixForbidden(kMersCount, false);
+    std::vector<bool> prefixForbidden(kMersCount, false);
+    std::vector<size_t> first(kMersCount);
+    std::vector<size_t> last(kMersCount);
+    std::vector<size_t> next(kMersCount, -1);
+    for (size_t i = 0; i < kMersCount; ++i) {
         first[i] = last[i] = i;
     }
     khash_t(P64)  *prefixes = kh_init(P64);
@@ -108,6 +108,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
     }
 
     kh_destroy(P64, prefixes);
+    std::cout << hamiltonianPath.size();
     return hamiltonianPath;
 }
 
