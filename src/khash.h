@@ -23,8 +23,6 @@
    SOFTWARE.
 */
 
-/* The original file was modified by Ondřej Sladký */
-
 /*
   An example:
 
@@ -174,6 +172,9 @@ typedef khint_t khiter_t;
 
 #define __ac_fsize(m) ((m) < 16? 1 : (m)>>4)
 
+#ifndef kroundup32
+#define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
+#endif
 
 #ifndef kcalloc
 #define kcalloc(N,Z) calloc(N,Z)
@@ -189,37 +190,6 @@ typedef khint_t khiter_t;
 #endif
 
 static const double __ac_HASH_UPPER = 0.77;
-
-/* Ondřej Sladký: It is possible to turn on the following define to obtain the original behaviour.
- * Otherwise, the size of hash table is not a power of 2, and it is required to know the max size beforehand.
- * Or else it will resize the table after adding a single element which will make it very slow.
- * As in this implementation the table size is not a power of 2 the hash resizing is done by slow modulo instead of
- * fast and operation. For the use by global greedy, this is negligible however and the benefits by lower memory are
- * more important. */
-#ifndef TABLE_SIZE_POWER_OF_2
-#define TABLE_SIZE_POWER_OF_2
-#endif
-
-#ifndef kroundup32c
-#ifdef TABLE_SIZE_POWER_OF_2
-#define kroundup32c(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
-#else
-#define kroundup32c(x) (void)(x)
-#endif
-#endif
-
-#ifdef TABLE_SIZE_POWER_OF_2
-#define HASH_MODULO_SETUP(N) khint32_t mask = (N) - 1
-#else
-#define HASH_MODULO_SETUP(N) khint32_t buckets = (N)
-#endif
-
-#ifdef TABLE_SIZE_POWER_OF_2
-#define HASH_MODULO(K) ((K) & mask)
-#else
-#define HASH_MODULO(K) ((K) % buckets)
-#endif
-
 
 #define __KHASH_TYPE(name, khkey_t, khval_t) \
 	typedef struct kh_##name##_s { \
@@ -260,12 +230,12 @@ static const double __ac_HASH_UPPER = 0.77;
 	SCOPE khint_t kh_get_##name(const kh_##name##_t *h, khkey_t key) 	\
 	{																	\
 		if (h->n_buckets) {												\
-			khint_t k, i, last, step = 0; \
-			HASH_MODULO_SETUP(h->n_buckets);								\
-			k = __hash_func(key); i = HASH_MODULO(k);							\
+			khint_t k, i, last, mask, step = 0; \
+			mask = h->n_buckets - 1;									\
+			k = __hash_func(key); i = k & mask;							\
 			last = i; \
 			while (!__ac_isempty(h->flags, i) && (__ac_isdel(h->flags, i) || !__hash_equal(h->keys[i], key))) { \
-				i = HASH_MODULO(i + (++step)); \
+				i = (i + (++step)) & mask; \
 				if (i == last) return h->n_buckets;						\
 			}															\
 			return __ac_iseither(h->flags, i)? h->n_buckets : i;		\
@@ -275,8 +245,8 @@ static const double __ac_HASH_UPPER = 0.77;
 	{ /* This function uses 0.25*n_buckets bytes of working space instead of [sizeof(key_t+val_t)+.25]*n_buckets. */ \
 		khint32_t *new_flags = 0;										\
 		khint_t j = 1;													\
-		{                                                               \
-			kroundup32c(new_n_buckets); 									\
+		{																\
+			kroundup32(new_n_buckets); 									\
 			if (new_n_buckets < 4) new_n_buckets = 4;					\
 			if (h->size >= (khint_t)(new_n_buckets * __ac_HASH_UPPER + 0.5)) j = 0;	/* requested size is too small */ \
 			else { /* hash table size to be changed (shrink or expand); rehash */ \
@@ -300,14 +270,15 @@ static const double __ac_HASH_UPPER = 0.77;
 				if (__ac_iseither(h->flags, j) == 0) {					\
 					khkey_t key = h->keys[j];							\
 					khval_t val;										\
-                    HASH_MODULO_SETUP(new_n_buckets);                   \
+					khint_t new_mask;									\
+					new_mask = new_n_buckets - 1; 						\
 					if (kh_is_map) val = h->vals[j];					\
 					__ac_set_isdel_true(h->flags, j);					\
 					while (1) { /* kick-out process; sort of like in Cuckoo hashing */ \
 						khint_t k, i, step = 0; \
 						k = __hash_func(key);							\
-						i = HASH_MODULO(k);								\
-						while (!__ac_isempty(new_flags, i)) i = HASH_MODULO(i + (++step)); \
+						i = k & new_mask;								\
+						while (!__ac_isempty(new_flags, i)) i = (i + (++step)) & new_mask; \
 						__ac_set_isempty_false(new_flags, i);			\
 						if (i < h->n_buckets && __ac_iseither(h->flags, i) == 0) { /* kick out the existing element */ \
 							{ khkey_t tmp = h->keys[i]; h->keys[i] = key; key = tmp; } \
@@ -346,16 +317,14 @@ static const double __ac_HASH_UPPER = 0.77;
 			}															\
 		} /* TODO: to implement automatically shrinking; resize() already support shrinking */ \
 		{																\
-			khint_t k, i, site, last, step = 0;                                                    \
-            HASH_MODULO_SETUP(h->n_buckets);                                                                              \
-			x = site = h->n_buckets; k = __hash_func(key);                           \
-            i = HASH_MODULO(k);                                                            \
+			khint_t k, i, site, last, mask = h->n_buckets - 1, step = 0; \
+			x = site = h->n_buckets; k = __hash_func(key); i = k & mask; \
 			if (__ac_isempty(h->flags, i)) x = i; /* for speed up */	\
 			else {														\
 				last = i; \
 				while (!__ac_isempty(h->flags, i) && (__ac_isdel(h->flags, i) || !__hash_equal(h->keys[i], key))) { \
 					if (__ac_isdel(h->flags, i)) site = i;				\
-					i = HASH_MODULO(i + (++step)); \
+					i = (i + (++step)) & mask; \
 					if (i == last) { x = site; break; }					\
 				}														\
 				if (x == h->n_buckets) {								\
