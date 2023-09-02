@@ -31,6 +31,7 @@ struct OverlapEdge {
 std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
     size_t n = kMers.size() / (1 + complements);
     std::vector<OverlapEdge> hamiltonianPath;
+    hamiltonianPath.reserve(n);
     std::vector<bool> suffixForbidden(kMers.size(), false);
     std::vector<bool> prefixForbidden(kMers.size(), false);
     std::vector<size_t> first(kMers.size());
@@ -40,7 +41,7 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
         first[i] = last[i] = i;
     }
     khash_t(P64)  *prefixes = kh_init(P64);
-    //std::unordered_map<int64_t, size_t> prefixes;
+    kh_resize(P64, prefixes, kMers.size() * 100 / 85 );
     for (int d = k - 1; d >= 0; --d) {
         kh_clear(P64, prefixes);
         for (size_t i = 0 ; i < kMers.size(); ++i) if(!prefixForbidden[i]) {
@@ -87,6 +88,8 @@ std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, in
             next[previous] = next[j];
         }
     }
+
+    kh_destroy(P64, prefixes);
     return hamiltonianPath;
 }
 
