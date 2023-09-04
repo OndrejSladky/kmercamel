@@ -21,12 +21,12 @@ This is especially true of the implementations with the Aho-Corasick automaton w
 
 The following table summarizes the current state of development of these algorithms:
 
-| Algorithm                     | Support for complements | Optimizations       | 
-|-------------------------------|-------------------------|---------------------|
-| Global Greedy with AC         | YES                     | None yet            |
-| Global Greedy with hashing    | YES                     | Basic               |
-| Local Greedy with AC          | YES                     | None yet            |
-| Local Greedy with hashing     | YES                     | None yet            |
+| Algorithm                     | Support for complements | Optimizations | 
+|-------------------------------|-------------------------|---------------|
+| Global Greedy with AC         | YES                     | None yet      |
+| Global Greedy with hashing    | YES                     | Optimized     |
+| Local Greedy with AC          | YES                     | None yet      |
+| Local Greedy with hashing     | YES                     | None yet      |
 
 ### Mask optimization
 

@@ -111,7 +111,7 @@ struct ACAutomaton {
     }
 };
 
-/// Greedily find the approximate hamiltonian path with longest overlaps using the AC automaton.
+/// Greedily find the approximate overlapPath path with longest overlaps using the AC automaton.
 std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMers, bool complements) {
     size_t n = kMers.size() / (1 + complements);
     ACAutomaton automaton;
@@ -165,7 +165,7 @@ std::string Suffix(const KMer &kMer, const int overlap) {
 }
 
 
-/// Construct the superstring and the path from the given hamiltonian path in the overlap graph.
+/// Construct the superstring and the path from the given overlapPath path in the overlap graph.
 void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<KMer> &kMers, std::ostream& of, const int k) {
     std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
     std::vector<bool> isStart(kMers.size(), false);

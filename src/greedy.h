@@ -9,6 +9,21 @@
 #include <cstdint>
 
 #include "kmers.h"
+#include "khash.h"
+
+
+/// Provide possibility to access reverse complements as if they were in the field.
+#define access(field, index) (((field).size() > (index)) ? (field)[(index)] : \
+        ReverseComplement((field)[(index) - (field).size()], k))
+
+/// Provide possibility to know first and last for reverse complements without storing them.
+#define accessFirstLast(a, b, index, n) (((n) > (index)) ? (a)[(index)] : \
+        (((b)[(index) - (n)]) + (n)) % (2*(n)))
+
+KHASH_MAP_INIT_INT64(P64, size_t)
+
+/// Determines which fraction of k-mers store its prefixes at one time.
+constexpr int MEMORY_REDUCTION_FACTOR = 16;
 
 /// Represents oriented edge in the overlap graph.
 struct OverlapEdge {
@@ -20,99 +35,133 @@ struct OverlapEdge {
     int overlapLength;
 };
 
+typedef std::pair<std::vector<size_t>, std::vector<unsigned char>> overlapPath;
+
 /// Greedily find the approximate Hamiltonian path with longest overlaps.
 /// k is the size of one k-mer and n is the number of distinct k-mers.
 /// If complements are provided, treat k-mer and its complement as identical.
-/// If this is the case, k-mers are expected to contain both the k-mer and its reverse complement at positions i and i+size/2.
+/// If this is the case, k-mers are expected to contain only one k-mer from a complement pair.
 /// Moreover, if so, the resulting Hamiltonian path contains two superstrings which are reverse complements of one another.
-std::vector<OverlapEdge> OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
-    size_t n = kMers.size() / (1 + complements);
-    std::vector<OverlapEdge> hamiltonianPath;
-    std::vector<bool> suffixForbidden(kMers.size(), false);
-    std::vector<bool> prefixForbidden(kMers.size(), false);
-    std::vector<size_t> first(kMers.size());
-    std::vector<size_t> last(kMers.size());
-    std::vector<size_t> next(kMers.size(), -1);
-    for (size_t i = 0; i < kMers.size(); ++i) {
+overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
+
+    size_t n = kMers.size();
+    size_t kMersCount = n * (1 + complements);
+    size_t batchSize = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
+    std::vector<size_t> edgeFrom(kMersCount, -1);
+    std::vector<unsigned char> overlaps(kMersCount, -1);
+    std::vector<bool> suffixForbidden(kMersCount, false);
+    std::vector<bool> prefixForbidden(kMersCount, false);
+    // For reverse complements, compute first from last and vice versa.
+    auto first = new size_t[n];
+    auto last = new size_t[n];
+    // Index next relative to the batch.
+    auto next = new size_t[batchSize];
+    for (size_t i = 0; i < n; ++i) {
         first[i] = last[i] = i;
     }
-    std::unordered_map<int64_t, size_t> prefixes;
+    khash_t(P64)  *prefixes = kh_init(P64);
+    kh_resize(P64, prefixes, (kMersCount / MEMORY_REDUCTION_FACTOR + 1 ) * 100 / 77 );
     for (int d = k - 1; d >= 0; --d) {
-        prefixes.clear();
-        for (size_t i = 0 ; i < kMers.size(); ++i) if(!prefixForbidden[i]) {
-            next[i] = -1;
-            int64_t prefix = BitPrefix(kMers[i], k, d);
-            if (prefixes.count(prefix) != 0) next[i] = prefixes[prefix];
-            prefixes[prefix] = i;
-        }
-        for (size_t i = 0 ; i < kMers.size(); ++i) if(!suffixForbidden[i]) {
-            int64_t suffix = BitSuffix(kMers[i], d);
-            if (prefixes.count(suffix) == 0) continue;
-            size_t j = prefixes[suffix];
-            size_t previous = prefixes[suffix];
-            // If the path forms a cycle, or is between k-mer and its reverse complement, or the k-mers complement was already selected skip this path.
-            while (j != size_t(-1) && (first[i]%n == j%n || first[i]%n == last[j]%n || prefixForbidden[j])) {
-                size_t new_j = next[j];
-                // If the k-mer is forbidden, remove it to keep the complexity linear.
-                // This is not done with the first k-mer but that is not a problem.
-                if (prefixForbidden[j]) next[previous] = new_j;
-                else previous = j;
-                j = new_j;
+        // In order to reduce memory requirements, the prefixes are not processed at once, but in batches.
+        // As a cost, this slows down the algorithm.
+        for (int part = 0; part < MEMORY_REDUCTION_FACTOR; part++) {
+            kh_clear(P64, prefixes);
+            for (size_t i = 0; i < batchSize; ++i) {
+                next[i] = (size_t)-1;
             }
-            if (j == size_t(-1)) {
-                continue;
-            }
-            std::vector<std::pair<size_t,size_t>> new_edges ({{i, j}});
-            // Add also the edge between complementary k-mers in the opposite direction.
-            if (complements) new_edges.emplace_back((j + n) % kMers.size(), (i + n) % kMers.size());
-            for (auto [x, y] : new_edges) {
-                hamiltonianPath.push_back(OverlapEdge{x, y, d});
-                prefixForbidden[y] = true;
-                first[last[y]] = first[x];
-                last[first[x]] = last[y];
-                suffixForbidden[x] = true;
-            }
-            next[previous] = next[j];
+            size_t to = std::min(kMersCount, (part + 1) * batchSize);
+            size_t from = part * batchSize;
+            for (size_t i = from; i < to; ++i)
+                if (!prefixForbidden[i]) {
+                    next[i - from] = -1;
+                    int64_t prefix = BitPrefix(access(kMers,i), k, d);
+                    auto prefix_key = kh_get(P64, prefixes, prefix);
+                    if (prefix_key != kh_end(prefixes)) {
+                        next[i - from] = kh_val(prefixes, prefix_key);
+                    } else {
+                        int ret;
+                        prefix_key = kh_put(P64, prefixes, prefix, &ret);
+
+                    }
+                    kh_value(prefixes, prefix_key) = i;
+                }
+            for (size_t i = 0; i < kMersCount; ++i)
+                if (!suffixForbidden[i]) {
+                    int64_t suffix = BitSuffix(access(kMers, i), d);
+                    auto suffix_key = kh_get(P64, prefixes, suffix);
+                    if (suffix_key == kh_end(prefixes)) continue;
+                    size_t previous, j;
+                    previous = j = kh_val(prefixes, suffix_key);
+                    // If the path forms a cycle, or is between k-mer and its reverse complement, or the k-mers complement was already selected skip this path.
+                    while (j != size_t(-1) && \
+                           (accessFirstLast(first, last, i, n) % n == j % n \
+                           || accessFirstLast(first, last, i, n) % n == accessFirstLast(last, first, j, n) % n \
+                           || prefixForbidden[j])) {
+                        size_t new_j = next[j - from];
+                        // If the k-mer is forbidden, remove it to keep the complexity linear.
+                        // This is not done with the first k-mer but that is not a problem.
+                        if (prefixForbidden[j]) next[previous - from] = new_j;
+                        else previous = j;
+                        j = new_j;
+                    }
+                    if (j == size_t(-1)) {
+                        continue;
+                    }
+                    std::vector<std::pair<size_t, size_t>> new_edges({{i, j}});
+                    // Add also the edge between complementary k-mers in the opposite direction.
+                    if (complements) new_edges.emplace_back((j + n) % kMersCount, (i + n) % kMersCount);
+                    for (auto [x, y]: new_edges) {
+                        edgeFrom[x] = y;
+                        overlaps[x] = d;
+                        prefixForbidden[y] = true;
+                        auto lastY =  accessFirstLast(last, first, y, n);
+                        auto firstX = accessFirstLast(first, last, x, n);
+                        if (lastY < n) first[lastY] = firstX;
+                        if (firstX < n) last[firstX] = lastY;
+                        suffixForbidden[x] = true;
+                    }
+                    next[previous - from] = next[j - from];
+                }
         }
     }
-    return hamiltonianPath;
+
+    kh_destroy(P64, prefixes);
+    delete[](next);
+    delete[](first);
+    delete[](last);
+    return {edgeFrom, overlaps};
 }
 
-/// Construct the superstring and its mask from the given hamiltonian path in the overlap graph.
-/// If reverse complements are considered and the hamiltonian path contains two paths which are reverse complements of one another,
+/// Construct the superstring and its mask from the given overlapPath path in the overlap graph.
+/// If reverse complements are considered and the overlapPath path contains two paths which are reverse complements of one another,
 /// return only one of them.
-void SuperstringFromPath(const std::vector<OverlapEdge> &hamiltonianPath, const std::vector<int64_t> &kMers, std::ostream& of, const int k) {
-    std::vector<OverlapEdge> edgeFrom (kMers.size(), OverlapEdge{size_t(-1),size_t(-1), -1});
-    std::vector<bool> isStart(kMers.size(), false);
-    for (auto edge : hamiltonianPath) {
-        isStart[edge.firstIndex] = true;
-        edgeFrom[edge.firstIndex] = edge;
-    }
-    for (auto edge : hamiltonianPath) {
-        isStart[edge.secondIndex] = false;
-    }
+void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<int64_t> &kMers, std::ostream& of, const int k, const bool complements) {
+    size_t kMersCount = kMers.size() * (1 + complements);
+    auto edgeFrom = hamiltonianPath.first;
+    auto overlaps = hamiltonianPath.second;
 
     // Find the vertex in the overlap graph with in-degree 0.
+    std::vector<bool> isStart(kMersCount, true);
+    for (auto edge : edgeFrom) {
+        if (edge != size_t(-1)) isStart[edge] = false;
+    }
     size_t start = 0;
-    for (; start < kMers.size() && !isStart[start]; ++start);
+    for (; start < kMersCount && !isStart[start]; ++start);
 
-    // Handle the edge case with no edges.
-    start %= kMers.size();
-
-    int64_t last = BitSuffix(kMers[start], k-1);
-    of << letters[BitPrefix(kMers[start], k, 1)];
+    int64_t last = BitSuffix(access(kMers, start), k-1);
+    of << letters[BitPrefix(access(kMers, start), k, 1)];
 
     // Move from the first k-mer to the last which has no successor.
-    while(edgeFrom[start].secondIndex != size_t(-1)) {
-        int overlapLength = edgeFrom[start].overlapLength;
+    while(edgeFrom[start] != size_t(-1)) {
+        int overlapLength = overlaps[start];
         if (overlapLength != k - 1) {
             std::string unmaskedNucleotides = NumberToKMer(BitPrefix(last, k-1, k-1-overlapLength), k-1-overlapLength);
             std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
             of << unmaskedNucleotides;
         }
-        last = BitSuffix(kMers[edgeFrom[start].secondIndex], k-1);
-        of << letters[BitPrefix(kMers[edgeFrom[start].secondIndex], k, 1)];
-        start = edgeFrom[start].secondIndex;
+        last = BitSuffix(access(kMers, edgeFrom[start]), k-1);
+        of << letters[BitPrefix(access(kMers, edgeFrom[start]), k, 1)];
+        start = edgeFrom[start];
     }
 
     // Print the trailing k-1 characters.
@@ -130,13 +179,9 @@ void Greedy(std::vector<int64_t> &kMers, std::ostream& of, int k, bool complemen
     if (kMers.empty()) {
         throw std::invalid_argument("input cannot be empty");
     }
-    if (complements) {
-        size_t n = kMers.size();
-        kMers.resize(2 * n);
-        for (size_t i = 0; i < n; ++i) {
-            kMers[i + n] = ReverseComplement(kMers[i], k);
-        }
-    }
     auto hamiltonianPath = OverlapHamiltonianPath(kMers, k, complements);
-    SuperstringFromPath(hamiltonianPath, kMers, of, k);
+    SuperstringFromPath(hamiltonianPath, kMers, of, k, complements);
 }
+
+// Undefine the access macro, so it does not interfere with other files.
+#undef access
