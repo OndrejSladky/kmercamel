@@ -74,6 +74,16 @@ runs the Local Greedy on the streptococcus fasta file with `k=12` and `d=7`.
 
 Alternatively, if your operating system supports it, you can run `./🐫` instead of `./kmercamel`.
 
+Currently, Kmercamel does not support gziped files as an input.
+A possible workaround is to use `gzcat` and process substitution.
+
+```
+./kmercamel -k 13 -p <(gzcat fasta_file.fa.gz)
+```
+
+Note: on some systems you might need to use the name `zcat` instead of `gzcat`.
+
+
 ## Converting k-mer set superstring representation to the traditional one
 
 Run `./convert_superstring.py < input.fa`. This runs a Python script which inputs the superstring masked representation and outputs the SPSS representation.
