@@ -9,9 +9,10 @@
 #include <iostream>
 #include <string>
 #include "unistd.h"
+#include "version.h"
 
 void Help() {
-    std::cerr << "KmerCamel v0.2" << std::endl;
+    std::cerr << "KmerCamel version " << VERSION << std::endl;
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
     std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
@@ -20,8 +21,13 @@ void Help() {
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
+    std::cerr << "  -v               - print version" << std::endl;
     std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 13 -d 5 -a local" << std::endl;
     std::cerr << "Possible algorithms: global globalAC local localAC streaming" << std::endl;
+}
+
+void Version() {
+    std::cerr << VERSION << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -35,7 +41,7 @@ int main(int argc, char **argv) {
     bool d_set = false;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "p:k:d:a:o:hc"))  != -1) {
+        while ((opt = getopt(argc, argv, "p:k:d:a:o:hcv"))  != -1) {
             switch(opt) {
                 case  'p':
                     path = optarg;
@@ -62,6 +68,9 @@ int main(int argc, char **argv) {
                 case  'c':
                     complements = true;
                     break;
+                case 'v':
+                    Version();
+                    return 0;
                 case 'h':
                 default:
                     Help();
