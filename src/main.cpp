@@ -20,7 +20,7 @@ void Help() {
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
-    std::cerr << "Example usage:       ./kmers -p path_to_fasta -k 13 -d 5 -a global" << std::endl;
+    std::cerr << "Example usage:       ./kmers -p path_to_fasta -k 13 -d 5 -a local" << std::endl;
     std::cerr << "Possible algorithms: global globalAC local localAC streaming" << std::endl;
 }
 
