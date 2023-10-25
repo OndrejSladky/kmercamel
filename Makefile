@@ -23,6 +23,7 @@ converttest: convert_superstring_unittest.py
 	./convert_superstring_unittest.py
 
 kmercamel: $(SRC)/main.cpp $(SRC)/$(wildcard *.cpp *.h *.hpp) src/version.h
+	./create-version.sh
 	$(CXX) $(CXXFLAGS) $(SRC)/main.cpp -o $@ $(LDFLAGS)
 	cp kmercamel  🐫 || true
 
