@@ -43,7 +43,7 @@ def main():
     """
     Read the superstring from standard input and print the rSPSS representation.
     """
-    parser = argparse.ArgumentParser(description="Convert a masked superstring to its rSPSS representation.",
+    parser = argparse.ArgumentParser(description="Convert a masked superstring to rSPSS representation it induces.",
                                      usage="\nThe masked superstring is split at every position with 0 in the mask,\n"
                                      "which results in matchtigs (rSPSS) containing the same set of k-mers\n"
                                      "as was carried by the masked superstring (i.e. those k-mers masked with 1s)\n"
