@@ -113,16 +113,23 @@ int main(int argc, char **argv) {
         WriteName(k, *of);
         Streaming(path, *of,  k , complements);
     }
-    // Handle greedy separately so that it consumes less memory.
-    else if (algorithm == "global") {
+    // Handle hash table based separately so that it consumes less memory.
+    else if (algorithm == "global" || algorithm == "local") {
         auto kMers = ReadKMers(path, k, complements);
         if (kMers.empty()) {
             std::cerr << "Path '" << path << "' contains no k-mers." << std::endl;
             Help();
             return 1;
         }
+        d_max = std::min(k - 1, d_max);
         WriteName(k, *of);
-        Greedy(kMers, *of, k, complements);
+        if (algorithm == "global") {
+            auto kMerVec = std::vector<int64_t> (kMers.begin(), kMers.end());
+            kMers.clear();
+            kMers.reserve(0);
+            Greedy(kMerVec, *of, k, complements);
+        }
+        else  GreedyGeneralizedSimplitigs(kMers, *of, k, d_max, complements);
     } else {
         auto data = ReadFasta(path);
         if (data.empty()) {
@@ -136,9 +143,6 @@ int main(int argc, char **argv) {
         WriteName(k, *of);
         if (algorithm == "globalAC") {
             GreedyAC(kMers, *of, complements);
-        }
-        else if (algorithm == "local") {
-            GreedyGeneralizedSimplitigs(kMers, *of, k, d_max, complements);
         }
         else if (algorithm == "localAC") {
             GreedyGeneralizedSimplitigsAC(kMers, *of, k, d_max, complements);
