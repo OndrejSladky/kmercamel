@@ -89,6 +89,7 @@ void NextGeneralizedSimplitig(kh_P64_t *kMers, int64_t begin, std::ostream& of, 
 /// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses it is fast.
 void GreedyGeneralizedSimplitigs(std::vector<int64_t> &kMers, std::ostream& of, int k, int d_max, bool complements) {
     kh_P64_t *remainingKMers = kh_init_P64();
+    kh_resize_P64(remainingKMers, (kMers.size() + 1) * 100 / 77);
     for (auto &&kMer : kMers) {
         int ret;
         kh_put_P64(remainingKMers, kMer, &ret);

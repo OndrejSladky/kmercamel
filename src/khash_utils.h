@@ -17,7 +17,9 @@ bool containsKMer(kh_P64_t *kMers, int64_t kMer, int k, bool complements) {
 /// Remove the k-mer and its reverse complement.
 void eraseKMer(kh_P64_t *kMers, int64_t kMer, int k, bool complements) {
     auto key = kh_get_P64(kMers, kMer);
-    if (key != kh_end(kMers)) kh_del_P64(kMers, key);
+    if (key != kh_end(kMers)) {
+        kh_del_P64(kMers, key);
+    }
     if (complements) {
         int64_t reverseComplement = ReverseComplement(kMer, k);
         key = kh_get_P64(kMers, reverseComplement);
@@ -29,7 +31,7 @@ void eraseKMer(kh_P64_t *kMers, int64_t kMer, int k, bool complements) {
 int64_t nextKMer(kh_P64_t *kMers, size_t &lastIndex) {
     for (size_t i = kh_begin(kMers) + lastIndex; i != kh_end(kMers); ++i, ++lastIndex) {
         if (!kh_exist(kMers, i)) continue;
-        return kh_val(kMers, i);
+        return kh_key(kMers, i);
     }
     // No more k-mers.
     return -1;
