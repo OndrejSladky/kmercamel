@@ -123,7 +123,12 @@ int main(int argc, char **argv) {
         }
         d_max = std::min(k - 1, d_max);
         WriteName(k, *of);
-        if (algorithm == "global") Greedy(kMers, *of, k, complements);
+        if (algorithm == "global") {
+            auto kMerVec = std::vector<int64_t> (kMers.begin(), kMers.end());
+            kMers.clear();
+            kMers.reserve(0);
+            Greedy(kMerVec, *of, k, complements);
+        }
         else  GreedyGeneralizedSimplitigs(kMers, *of, k, d_max, complements);
     } else {
         auto data = ReadFasta(path);

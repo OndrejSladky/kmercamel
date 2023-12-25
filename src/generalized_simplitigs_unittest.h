@@ -110,8 +110,9 @@ namespace {
 
         for (auto t: tests) {
             std::stringstream of;
+            auto kMerSet = std::unordered_set<int64_t> (t.kMers.begin(), t.kMers.end());
 
-            GreedyGeneralizedSimplitigs(t.kMers, of, t.k, t.d_max, t.complements);
+            GreedyGeneralizedSimplitigs(kMerSet, of, t.k, t.d_max, t.complements);
 
             EXPECT_EQ(t.wantSuperstring, of.str());
         }

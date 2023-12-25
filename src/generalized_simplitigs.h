@@ -103,10 +103,6 @@ void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::ostream& 
 
 /// Compute the generalized simplitigs greedily.
 /// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses it is fast.
-void GreedyGeneralizedSimplitigs(std::vector<int64_t> &kMers, std::ostream& of, int k, int d_max, bool complements) {
-    std::unordered_set<int64_t> remainingKMers (kMers.begin(), kMers.end());
-    // Delete kMers to save space.
-    kMers.clear();
-    kMers.resize(0);
-    while(!remainingKMers.empty()) NextGeneralizedSimplitig(remainingKMers, of,  k, d_max, complements);
+void GreedyGeneralizedSimplitigs(std::unordered_set<int64_t> &kMers, std::ostream& of, int k, int d_max, bool complements) {
+    while(!kMers.empty()) NextGeneralizedSimplitig(kMers, of,  k, d_max, complements);
 }
