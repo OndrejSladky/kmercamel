@@ -1,5 +1,6 @@
 #pragma once
 #include "models.h"
+#include "khash_utils.h"
 
 #include <vector>
 #include <iostream>
@@ -12,6 +13,7 @@
 #include "khash.h"
 
 
+
 /// Provide possibility to access reverse complements as if they were in the field.
 #define access(field, index) (((field).size() > (index)) ? (field)[(index)] : \
         ReverseComplement((field)[(index) - (field).size()], k))
@@ -20,7 +22,6 @@
 #define accessFirstLast(a, b, index, n) (((n) > (index)) ? (a)[(index)] : \
         (((b)[(index) - (n)]) + (n)) % (2*(n)))
 
-KHASH_MAP_INIT_INT64(P64, size_t)
 
 /// Determines which fraction of k-mers store its prefixes at one time.
 constexpr int MEMORY_REDUCTION_FACTOR = 16;
