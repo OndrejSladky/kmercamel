@@ -93,16 +93,16 @@ namespace {
 
     TEST(GreedyGeneralizedSimplitigsTest, GreedyGeneralizedSimplitigs) {
         struct TestCase {
-            std::vector<KMer> kMers;
+            std::vector<int64_t> kMers;
             int k;
             int d_max;
             bool complements;
             std::string wantSuperstring;
         };
         std::vector<TestCase> tests = {
-                {{KMer{"GCT"}, KMer{"TAA"}, KMer{"AAA"}}, 3, 2, false, "GcTAaa"},
-                {{KMer{"TAA"}, KMer{"AAA"}, KMer{"GCT"}}, 3, 2, false, "GcTAaa"},
-                {{KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}, KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"}}, 31, 5, false,
+                {{KMerToNumber(KMer{"GCT"}), KMerToNumber(KMer{"TAA"}), KMerToNumber(KMer{"AAA"})}, 3, 2, false, "GcTAaa"},
+                {{KMerToNumber(KMer{"TAA"}), KMerToNumber(KMer{"AAA"}), KMerToNumber(KMer{"GCT"})}, 3, 2, false, "GcTAaa"},
+                {{KMerToNumber(KMer{"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}), KMerToNumber(KMer{"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"})}, 31, 5, false,
                  "TTtcttttttttttttttttttttttttttga"},
         };
 
