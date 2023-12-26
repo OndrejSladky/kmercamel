@@ -25,15 +25,17 @@ KHASH_MAP_INIT_INT64(P64, size_t)
 /// Determines which fraction of k-mers store its prefixes at one time.
 constexpr int MEMORY_REDUCTION_FACTOR = 16;
 /// Determines the number of prefix bits based on which the k-mers are presorted.
-constexpr int SORT_FIRST_BITS = 10;
-constexpr int DIFFERENT_PREFIXES_COUNT = 1 << SORT_FIRST_BITS;
-constexpr int64_t PREFIX_MASK = DIFFERENT_PREFIXES_COUNT - 1;
+constexpr int SORT_FIRST_BITS_DEFAULT = 8;
 
 typedef std::pair<std::vector<size_t>, std::vector<unsigned char>> overlapPath;
 
+/// Rearrange the k-mers so that k-mers next to each other in sorted order appear close so that they are in the same bucket.
 void PartialPreSort(std::vector<int64_t> &vals, int k) {
+    int SORT_FIRST_BITS = std::min(2 * k, SORT_FIRST_BITS_DEFAULT);
+    int DIFFERENT_PREFIXES_COUNT = 1 << SORT_FIRST_BITS;
+    int64_t PREFIX_MASK = DIFFERENT_PREFIXES_COUNT - 1;
     std::vector<size_t> counts(DIFFERENT_PREFIXES_COUNT, 0);
-    int shift = k - SORT_FIRST_BITS;
+    int shift = (2 * k) - SORT_FIRST_BITS;
     int64_t mask = PREFIX_MASK << shift;
     for (auto &&kMer : vals) counts[(kMer & mask) >> shift]++;
     std::vector<std::vector<int64_t>> distributed(DIFFERENT_PREFIXES_COUNT);
