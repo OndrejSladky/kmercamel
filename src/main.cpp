@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
         Help();
         return 1;
     } else if (d_set && (algorithm == "globalAC" || algorithm == "global" || algorithm == "streaming")) {
-        std::cerr << "Unsupported arguement d for algorithm '" + algorithm + "'." << std::endl;
+        std::cerr << "Unsupported argument d for algorithm '" + algorithm + "'." << std::endl;
         Help();
         return 1;
     }
@@ -128,6 +128,7 @@ int main(int argc, char **argv) {
         if (algorithm == "global") {
             auto kMerVec = kMersToVec(kMers);
             kh_destroy_S64(kMers);
+            PartialPreSort(kMerVec, k);
             Greedy(kMerVec, *of, k, complements);
         }
         else  GreedyGeneralizedSimplitigs(kMers, *of, k, d_max, complements);

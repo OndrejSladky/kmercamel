@@ -24,18 +24,32 @@ KHASH_MAP_INIT_INT64(P64, size_t)
 
 /// Determines which fraction of k-mers store its prefixes at one time.
 constexpr int MEMORY_REDUCTION_FACTOR = 16;
-
-/// Represents oriented edge in the overlap graph.
-struct OverlapEdge {
-    // Index of the first k-mer.
-    size_t firstIndex;
-    // Index of the second k-mer.
-    size_t secondIndex;
-    // Length of the overlap of the two k-mers.
-    int overlapLength;
-};
+/// Determines the number of prefix bits based on which the k-mers are presorted.
+constexpr int SORT_FIRST_BITS = 10;
+constexpr int DIFFERENT_PREFIXES_COUNT = 1 << SORT_FIRST_BITS;
+constexpr int64_t PREFIX_MASK = DIFFERENT_PREFIXES_COUNT - 1;
 
 typedef std::pair<std::vector<size_t>, std::vector<unsigned char>> overlapPath;
+
+void PartialPreSort(std::vector<int64_t> &vals, int k) {
+    std::vector<size_t> counts(DIFFERENT_PREFIXES_COUNT, 0);
+    int shift = k - SORT_FIRST_BITS;
+    int64_t mask = PREFIX_MASK << shift;
+    for (auto &&kMer : vals) counts[(kMer & mask) >> shift]++;
+    std::vector<std::vector<int64_t>> distributed(DIFFERENT_PREFIXES_COUNT);
+    for (int i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) distributed[i] = std::vector<int64_t> (counts[i]);
+    for (int i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) counts[i] = 0;
+    for (auto &&kMer : vals) {
+        int64_t index = (kMer & mask) >> shift;
+        distributed[index][counts[index]++] = kMer;
+    }
+    size_t index = 0;
+    for (auto && bucket : distributed) {
+        for (auto && kMer : bucket) {
+            vals[index++] = kMer;
+        }
+    }
+}
 
 /// Greedily find the approximate Hamiltonian path with longest overlaps.
 /// k is the size of one k-mer and n is the number of distinct k-mers.
@@ -43,7 +57,6 @@ typedef std::pair<std::vector<size_t>, std::vector<unsigned char>> overlapPath;
 /// If this is the case, k-mers are expected to contain only one k-mer from a complement pair.
 /// Moreover, if so, the resulting Hamiltonian path contains two superstrings which are reverse complements of one another.
 overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
-
     size_t n = kMers.size();
     size_t kMersCount = n * (1 + complements);
     size_t batchSize = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
