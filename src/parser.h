@@ -88,31 +88,6 @@ std::vector<KMer> ConstructKMers(std::vector<FastaRecord> &data, int k, bool com
     return result;
 }
 
-
-/// Create a list of unique k-mers encoded as integers in no particular order.
-/// This runs in O(k*data.size) expected time.
-void AddKMersFromSequence(std::unordered_set<int64_t> &kMers, std::string &data, int k, bool complements) {
-    // Convert the sequence to uppercase letters.
-    std::transform(data.begin(), data.end(), data.begin(), toupper);
-    size_t possibleKMerEnd = k;
-    int64_t currentKMer = 0;
-    int64_t mask = (((int64_t) 1) <<  (2 * k) ) - 1;
-    for (size_t i = 1; i <= data.size(); ++i) {
-        if (data[i-1] != 'A' && data[i-1] != 'C' && data[i-1] != 'G' && data[i-1] != 'T') {
-            // Skip this and the next k-1 k-mers.
-            possibleKMerEnd = i + k;
-            currentKMer = 0;
-        } else {
-            currentKMer <<= 2;
-            currentKMer &= mask;
-            currentKMer |= NucleotideToInt(data[i - 1]);
-        }
-        if (i >= possibleKMerEnd && (!complements || kMers.count(ReverseComplement(currentKMer, k)) == 0)) {
-            kMers.insert(currentKMer);
-        }
-    }
-}
-
 /// Read encoded k-mers from the given fasta file.
 /// Return unique k-mers in no particular order.
 /// If complements is set to true, the result contains only one of the complementary k-mers - it is not guaranteed which one.
@@ -131,7 +106,7 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements) {
             if (c == '>') {
                 readingHeader = true;
                 currentKMer = 0;
-                beforeKMerEnd = k-1;
+                beforeKMerEnd = k;
             }
             else if (c == '\n') readingHeader = false;
             if (readingHeader) continue;

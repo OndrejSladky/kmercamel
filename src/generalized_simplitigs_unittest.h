@@ -24,9 +24,14 @@ namespace {
         };
 
         for (auto t: tests) {
-            auto got = RightExtension(t.last, t.kMers, t.k, t.d, t.complements);
+            auto kMers = kh_init_S64();
+            int ret;
+            for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
+
+            auto got = RightExtension(t.last, kMers, t.k, t.d, t.complements);
             auto gotExt = got.first;
             auto gotNext = got.second;
+
             EXPECT_EQ(t.wantNext, gotNext);
             EXPECT_EQ(t.wantExt, gotExt);
         }
@@ -50,7 +55,11 @@ namespace {
         };
 
         for (auto t: tests) {
-            auto got = LeftExtension(t.first, t.kMers, t.k, t.d, t.complements);
+            auto kMers = kh_init_S64();
+            int ret;
+            for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
+
+            auto got = LeftExtension(t.first, kMers, t.k, t.d, t.complements);
             auto gotExt = got.first;
             auto gotNext = got.second;
             EXPECT_EQ(t.wantNext, gotNext);
@@ -61,7 +70,7 @@ namespace {
 
     TEST(NextGeneralizedSimplitigTest, NextGeneralizedSimplitig) {
         struct TestCase {
-            std::unordered_set<int64_t> kMers;
+            std::vector<int64_t> kMers;
             int k;
             int d_max;
             bool complements;
@@ -79,11 +88,15 @@ namespace {
 
         for (auto &&t: tests) {
             std::stringstream of;
+            auto kMers = kh_init_S64();
+            int ret;
+            for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
 
-            NextGeneralizedSimplitig(t.kMers, of, t.k, t.d_max, t.complements);
+            NextGeneralizedSimplitig(kMers, t.kMers.front(), of, t.k, t.d_max, t.complements);
             auto gotSuperstring = of.str();
+            auto remainingKmers = kMersToVec(kMers);
 
-            EXPECT_EQ(t.wantKMers, t.kMers);
+            EXPECT_EQ(t.wantKMers, std::unordered_set<int64_t>(remainingKmers.begin(), remainingKmers.end()));
             // Check that at least one valid superstring was returned.
             bool valid = false;
             for (size_t i = 0; i < t.wantSuperstring.size(); ++i) {
@@ -110,9 +123,11 @@ namespace {
 
         for (auto t: tests) {
             std::stringstream of;
-            auto kMerSet = std::unordered_set<int64_t> (t.kMers.begin(), t.kMers.end());
+            auto kMers = kh_init_S64();
+            int ret;
+            for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
 
-            GreedyGeneralizedSimplitigs(kMerSet, of, t.k, t.d_max, t.complements);
+            GreedyGeneralizedSimplitigs(kMers, of, t.k, t.d_max, t.complements);
 
             EXPECT_EQ(t.wantSuperstring, of.str());
         }
