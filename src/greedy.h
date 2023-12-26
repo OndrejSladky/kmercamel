@@ -12,7 +12,7 @@
 #include "kmers.h"
 #include "khash.h"
 
-
+KHASH_MAP_INIT_INT64(P64, size_t)
 
 /// Provide possibility to access reverse complements as if they were in the field.
 #define access(field, index) (((field).size() > (index)) ? (field)[(index)] : \

@@ -15,7 +15,7 @@
 /// Find the right extension to the provided last k-mer from the kMers.
 /// This extension has k-d overlap with the given simplitig.
 /// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
-std::pair<int64_t, int64_t> RightExtension(int64_t last, kh_P64_t *kMers, int k, int d, bool complements) {
+std::pair<int64_t, int64_t> RightExtension(int64_t last, kh_S64_t *kMers, int k, int d, bool complements) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
     for (int64_t ext = 0; ext < (1 << (d << 1)); ++ext) {
         int64_t next = BitSuffix(last, k - d) << (d << 1) | ext;
@@ -29,7 +29,7 @@ std::pair<int64_t, int64_t> RightExtension(int64_t last, kh_P64_t *kMers, int k,
 /// Find the left extension to the provided first k-mer from the kMers.
 /// This extension has k-d overlap with the given simplitig.
 /// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
-std::pair<int64_t, int64_t> LeftExtension(int64_t first, kh_P64_t *kMers, int k, int d, bool complements) {
+std::pair<int64_t, int64_t> LeftExtension(int64_t first, kh_S64_t *kMers, int k, int d, bool complements) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
     for (int64_t ext = 0; ext < (1 << (d << 1)); ++ext) {
         int64_t next = ext << ((k - d) << 1) | BitPrefix(first, k, k - d);
@@ -44,7 +44,7 @@ std::pair<int64_t, int64_t> LeftExtension(int64_t first, kh_P64_t *kMers, int k,
 /// Update the provided superstring and the mask.
 /// Also remove the used k-mers from kMers.
 /// If complements are true, it is expected that kMers only contain one k-mer from a complementary pair.
-void NextGeneralizedSimplitig(kh_P64_t *kMers, int64_t begin, std::ostream& of,  int k, int d_max, bool complements) {
+void NextGeneralizedSimplitig(kh_S64_t *kMers, int64_t begin, std::ostream& of,  int k, int d_max, bool complements) {
      // Maintain the first and last k-mer in the simplitig.
     int64_t last = begin, first = begin;
     std::list<char> simplitig {NucleotideAtIndex(first, k, 0)};
@@ -87,21 +87,12 @@ void NextGeneralizedSimplitig(kh_P64_t *kMers, int64_t begin, std::ostream& of, 
 
 /// Compute the generalized simplitigs greedily.
 /// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses it is fast.
-void GreedyGeneralizedSimplitigs(std::vector<int64_t> &kMers, std::ostream& of, int k, int d_max, bool complements) {
-    kh_P64_t *remainingKMers = kh_init_P64();
-    kh_resize_P64(remainingKMers, (kMers.size() + 1) * 100 / 77);
-    for (auto &&kMer : kMers) {
-        int ret;
-        kh_put_P64(remainingKMers, kMer, &ret);
-    }
-    // Delete kMers to save space.
-    kMers.clear();
-    kMers.resize(0);
+void GreedyGeneralizedSimplitigs(kh_S64_t *kMers, std::ostream& of, int k, int d_max, bool complements) {
     size_t lastIndex = 0;
     while(true) {
-        int64_t begin = nextKMer(remainingKMers, lastIndex);
+        int64_t begin = nextKMer(kMers, lastIndex);
         // No more k-mers.
         if (begin == -1) return;
-        NextGeneralizedSimplitig(remainingKMers, begin, of,  k, d_max, complements);
+        NextGeneralizedSimplitig(kMers, begin, of,  k, d_max, complements);
     }
 }

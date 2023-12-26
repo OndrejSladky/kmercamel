@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "streaming.h"
 #include "output.h"
+#include "khash_utils.h"
 
 #include <iostream>
 #include <string>
@@ -115,15 +116,20 @@ int main(int argc, char **argv) {
     }
     // Handle hash table based separately so that it consumes less memory.
     else if (algorithm == "global" || algorithm == "local") {
-        auto kMers = ReadKMers(path, k, complements);
-        if (kMers.empty()) {
+        kh_S64_t *kMers = kh_init_S64();
+        ReadKMers(kMers, path, k, complements);
+        if (!kh_size(kMers)) {
             std::cerr << "Path '" << path << "' contains no k-mers." << std::endl;
             Help();
             return 1;
         }
         d_max = std::min(k - 1, d_max);
         WriteName(k, *of);
-        if (algorithm == "global") Greedy(kMers, *of, k, complements);
+        if (algorithm == "global") {
+            auto kMerVec = kMersToVec(kMers);
+            kh_destroy_S64(kMers);
+            Greedy(kMerVec, *of, k, complements);
+        }
         else  GreedyGeneralizedSimplitigs(kMers, *of, k, d_max, complements);
     } else {
         auto data = ReadFasta(path);

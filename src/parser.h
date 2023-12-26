@@ -11,6 +11,7 @@ KSEQ_INIT(gzFile, gzread)
 
 #include "models.h"
 #include "kmers.h"
+#include "khash_utils.h"
 
 /// Record of one fasta sequence.
 struct FastaRecord {
@@ -116,27 +117,43 @@ void AddKMersFromSequence(std::unordered_set<int64_t> &kMers, std::string &data,
 /// Return unique k-mers in no particular order.
 /// If complements is set to true, the result contains only one of the complementary k-mers - it is not guaranteed which one.
 /// This runs in O(sequence length) expected time.
-std::vector<int64_t> ReadKMers(std::string &path, int k, bool complements) {
+void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements) {
     std::ifstream fasta(path);
-    std::unordered_set<int64_t> kMers;
     std::string sequence;
     std::string line;
     if (fasta.is_open()) {
-        while (std::getline(fasta, line)) {
-            // Add k-mers from the previous record.
-            if (!line.empty() && line[0] == '>') {
-                AddKMersFromSequence(kMers, sequence, k, complements);
-                sequence = "";
-            } else {
-                // Append to the last record.
-                sequence += line;
+        char c;
+        int beforeKMerEnd = k;
+        int64_t currentKMer = 0;
+        int64_t mask = (((int64_t) 1) <<  (2 * k) ) - 1;
+        bool readingHeader = false;
+        while (fasta >> std::noskipws >> c) {
+            if (c == '>') {
+                readingHeader = true;
+                currentKMer = 0;
+                beforeKMerEnd = k-1;
+            }
+            else if (c == '\n') readingHeader = false;
+            if (readingHeader) continue;
+            auto data = NucleotideToInt(c);
+            // Disregard white space.
+            if (c == '\n' || c == '\r' || c == ' ') continue;
+            if (data == -1) {
+                currentKMer = 0;
+                beforeKMerEnd = k;
+                continue;
+            }
+            currentKMer <<= 2;
+            currentKMer &= mask;
+            currentKMer |= data;
+            if(beforeKMerEnd > 0) --beforeKMerEnd;
+            if (beforeKMerEnd == 0 && (!complements || kh_get_S64(kMers, ReverseComplement(currentKMer, k)) == kh_end(kMers))) {
+                int ret;
+                kh_put_S64(kMers, currentKMer, &ret);
             }
         }
-        // Add k-mers from the last record.
-        AddKMersFromSequence(kMers, sequence, k, complements);
         fasta.close();
     } else {
         throw std::invalid_argument("couldn't open file " + path);
     }
-    return {kMers.begin(), kMers.end()};
 }
