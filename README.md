@@ -1,5 +1,5 @@
-# KmerCamel 🐫
-KmerCamel 🐫 provides implementations of algorithms for efficiently representing a set of k-mers as a [masked superstring](https://doi.org/10.1101/2023.02.01.526717), based on the following paper:
+# KmerCamel🐫
+KmerCamel🐫 provides implementations of algorithms for efficiently representing a set of k-mers as a [masked superstring](https://doi.org/10.1101/2023.02.01.526717), based on the following paper:
 
 > Ondřej Sladký, Pavel Veselý, and Karel Břinda: Masked superstrings as a unified framework for textual *k*-mer set representations. *bioRxiv* 2023.02.01.526717, 2023.
 [https://doi.org/10.1101/2023.02.01.526717](https://doi.org/10.1101/2023.02.01.526717)
@@ -17,8 +17,8 @@ They come in two different implementations (their results may differ due to the 
 Note that at this point only the implementations with hash table are optimized and that the Aho-Corasick automaton
 based versions of the algorithms are only experimental.
 
-The hashing based implementations of the default KmerCamel 🐫 (`./kmercamel`) support $k$-mer with $k$ at most 31,
-whereas the larger KmerCamel 🐫 supports $k$-mers with $k$ at most 63 (at the cost of slight slowdown).
+The hashing based implementations of the default KmerCamel🐫 (`./kmercamel`) support $k$-mer with $k$ at most 31,
+whereas the larger KmerCamel🐫 (`./kmercamel-large`) supports $k$-mers with $k$ at most 63 (at the cost of slight slowdown).
 
 All algorithms can be used to either work in the unidirectional model or in the bidirectional model
 (i.e. treat $k$-mer and its reverse complement as the same; in this case either of them appears in the result).
@@ -71,7 +71,7 @@ runs the Local Greedy in the bidirectional model on the streptococcus fasta file
 
 Alternatively, if your operating system supports it, you can run `./🐫` instead of `./kmercamel`.
 
-Currently, KmerCamel does not support gziped files as an input.
+Currently, KmerCamel🐫 does not support gziped files as an input.
 A possible workaround is to use `gzcat` and process substitution.
 
 ```
@@ -82,7 +82,7 @@ Note: on some systems you might need to use the name `zcat` instead of `gzcat`.
 
 ### Large $k$-mers
 
-The default version of KmerCamel does not support $k > 31$. For those values, use the large KmerCamel,
+The default version of KmerCamel🐫 does not support $k > 31$. For those values, use the large KmerCamel🐫,
 which supports $k < 64$.
 
 For example:
@@ -91,7 +91,7 @@ For example:
 ./kmercamel-large -p ./spneumoniae.fa -a global -k 63 -c
 ```
 
-Note: for smaller $k$ it is recommended to use default KmerCamel as it is faster.
+Note: for smaller $k$ it is recommended to use default KmerCamel🐫 as it is faster.
 
 ### Turn off memory optimizations for Global
 
