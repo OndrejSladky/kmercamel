@@ -10,7 +10,7 @@
 
 #include "models.h"
 #include "kmers.h"
-#include "greedy.h"
+#include "global.h"
 
 constexpr int INVALID_STATE = -1;
 struct ACState {

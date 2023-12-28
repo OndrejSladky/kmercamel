@@ -1,5 +1,5 @@
 #pragma once
-#include "greedy_ac.h"
+#include "global_ac.h"
 
 #include "gtest/gtest.h"
 

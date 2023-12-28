@@ -1,6 +1,6 @@
 #pragma once
 #include "models.h"
-#include "greedy_ac.h"
+#include "global_ac.h"
 
 #include <string>
 #include <vector>

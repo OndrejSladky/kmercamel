@@ -1,5 +1,5 @@
 #pragma once
-#include "generalized_simplitigs.h"
+#include "local.h"
 
 #include "gtest/gtest.h"
 

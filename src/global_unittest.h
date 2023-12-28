@@ -1,5 +1,5 @@
 #pragma once
-#include "greedy.h"
+#include "global.h"
 
 #include <algorithm>
 
