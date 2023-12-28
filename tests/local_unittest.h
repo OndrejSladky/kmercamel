@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(RightExtensionTest, RightExtension) {
+    TEST(Local, RightExtension) {
         struct TestCase {
             int64_t last;
             std::unordered_set<int64_t> kMers;
@@ -37,7 +37,7 @@ namespace {
         }
     }
 
-    TEST(LeftExtensionTest, LeftExtension) {
+    TEST(Local, LeftExtension) {
         struct TestCase {
             int64_t first;
             std::unordered_set<int64_t> kMers;
@@ -68,7 +68,7 @@ namespace {
     }
 
 
-    TEST(NextGeneralizedSimplitigTest, NextGeneralizedSimplitig) {
+    TEST(Local, NextGeneralizedSimplitig) {
         struct TestCase {
             std::vector<int64_t> kMers;
             int k;
@@ -106,7 +106,7 @@ namespace {
         }
     }
 
-    TEST(GreedyGeneralizedSimplitigsTest, GreedyGeneralizedSimplitigs) {
+    TEST(Local, Local) {
         struct TestCase {
             std::vector<int64_t> kMers;
             int k;

@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 
 
-TEST(ACAutomatonTest, ConstructTrie) {
+TEST(ACAutomaton, ConstructTrie) {
     ACAutomaton a;
     std::vector<ACState> wantStates = {
             ACState{std::list<size_t>{0, 1}, 1, 0, 0, 0, 0, 0, 0},
@@ -31,7 +31,7 @@ TEST(ACAutomatonTest, ConstructTrie) {
 ASSERT_EQ(wantEndStateIndices, a.endStateIndices);
 }
 
-TEST(ACAutomatonTest, ConstructBackwardEdges) {
+TEST(ACAutomaton, ConstructBackwardEdges) {
     ACAutomaton a;
     // Trie representing ["ACT", "ACA"].
     a.states = {
@@ -55,5 +55,5 @@ TEST(ACAutomatonTest, ConstructBackwardEdges) {
     for (size_t i = 0; i < wantStates.size(); ++i) {
         EXPECT_EQ(wantStates[i].backwardEdge, a.states[i].backwardEdge);
     }
-        EXPECT_EQ(wantReversedOrdering, a.reversedOrdering);
+    EXPECT_EQ(wantReversedOrdering, a.reversedOrdering);
 }

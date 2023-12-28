@@ -7,7 +7,7 @@ namespace {
 // Retrieving current path on Windows does not work as on linux
 // therefore the following unittest is linux-specific.
 #ifdef __unix__
-    TEST(StreamingTest, Streaming) {
+    TEST(Streaming, Streaming) {
         std::string path = std::filesystem::current_path();
         path += "/tests/testdata/test.fa";
         struct TestCase {
@@ -32,7 +32,7 @@ namespace {
         }
     }
 #endif
-    TEST(PushTest, Push) {
+    TEST(Streaming, Push) {
         struct TestCase {
             std::string current;
             int k;

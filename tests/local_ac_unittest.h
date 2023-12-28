@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(ExtensionACTest, ExtensionAC) {
+    TEST(LocalAC, ExtensionAC) {
         struct TestCase {
             std::vector<bool> forbidden;
             std::list<size_t> incidentKMers;
@@ -30,7 +30,7 @@ namespace {
         }
     }
 
-    TEST(GreedyGeneralizedSimplitigsACTest, GreedyGeneralizedSimplitigsAC) {
+    TEST(LocalAC, LocalAC) {
         struct TestCase {
             std::vector<KMer> kMers;
             int k;
