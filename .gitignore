@@ -4,6 +4,8 @@ kmers
 kmerstest
 kmercamel
 kmercameltest
+kmercamel-large
+kmercameltest-large
 src/version.h
 🐫
 bin/

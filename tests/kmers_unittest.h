@@ -56,7 +56,7 @@ namespace {
 
     TEST(KMers, NumberToKMer) {
         struct TestCase {
-            int64_t encoded;
+            kmer_t encoded;
             int d;
             std::string wantResult;
         };
@@ -76,7 +76,7 @@ namespace {
 
     TEST(KMers, KMerToNumber) {
         struct TestCase {
-            int64_t wantResult;
+            kmer_t wantResult;
             KMer kMer;
         };
         std::vector<TestCase> tests = {
@@ -87,7 +87,7 @@ namespace {
         };
 
         for (auto t: tests) {
-            int64_t gotResult = KMerToNumber(t.kMer);
+            kmer_t gotResult = KMerToNumber(t.kMer);
 
             EXPECT_EQ(t.wantResult, gotResult);
         }
@@ -95,9 +95,9 @@ namespace {
 
     TEST(KMers, Int) {
         struct TestCase {
-            int64_t input;
+            kmer_t input;
             int k;
-            int64_t wantResult;
+            kmer_t wantResult;
         };
         std::vector<TestCase> tests = {
                 {0b1001LL, 2, 0b1001LL},
@@ -107,7 +107,7 @@ namespace {
         };
 
         for (auto t: tests) {
-            int64_t gotResult = ReverseComplement(t.input, t.k);
+            kmer_t gotResult = ReverseComplement(t.input, t.k);
 
             EXPECT_EQ(t.wantResult, gotResult);
         }

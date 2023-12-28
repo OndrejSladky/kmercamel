@@ -12,8 +12,18 @@
 #include "unistd.h"
 #include "version.h"
 
+
+#ifdef LARGE_KMERS
+    constexpr int MAX_K = 63;
+    const std::string VARIANT = "(128bit k-mer variant)";
+#else
+    constexpr int MAX_K = 31;
+    const std::string VARIANT = "(default 64bit k-mer variant)";
+#endif
+
+
 void Help() {
-    std::cerr << "KmerCamel version " << VERSION << std::endl;
+    std::cerr << "KmerCamel " << VARIANT << " version " << VERSION << std::endl;
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
     std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
@@ -99,8 +109,8 @@ int main(int argc, char **argv) {
         std::cerr << "d must be non-negative." << std::endl;
         Help();
         return 1;
-    } else if (k > 31 && (algorithm == "local" || algorithm == "global")) {
-        std::cerr << "k > 31 not supported for the algorithm '" + algorithm + "'. Use its AC version instead." << std::endl;
+    } else if (k > MAX_K && (algorithm == "local" || algorithm == "global")) {
+        std::cerr << "k > " << MAX_K << " not supported for the algorithm '" + algorithm + "'. Use the 128bit version of KmerCamel or the AC version of the algorithm instead." << std::endl;
         Help();
         return 1;
     } else if (d_set && (algorithm == "globalAC" || algorithm == "global" || algorithm == "streaming")) {
