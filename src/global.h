@@ -1,5 +1,4 @@
 #pragma once
-#include "models.h"
 
 #include <vector>
 #include <iostream>
@@ -8,6 +7,7 @@
 #include <algorithm>
 #include <cstdint>
 
+#include "models.h"
 #include "kmers.h"
 #include "khash.h"
 

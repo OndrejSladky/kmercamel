@@ -1,6 +1,4 @@
 #pragma once
-#include "models.h"
-#include "global_ac.h"
 
 #include <string>
 #include <vector>
@@ -8,6 +6,9 @@
 #include <list>
 #include <algorithm>
 #include <fstream>
+
+#include "models.h"
+#include "ac_automaton.h"
 
 /// Find the index of the first extending k-mer from the incidentKMers which is not forbidden.
 /// Mark this k-mer forbidden and remove all the k-mers in incidentKMers which are forbidden.
