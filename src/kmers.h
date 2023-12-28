@@ -5,14 +5,15 @@
 
 #include "models.h"
 
+#define LARGE_KMERS
 #ifdef LARGE_KMERS
-    typedef __int128_t kmer_t;
+    typedef __uint128_t kmer_t;
 #else
     typedef uint64_t kmer_t;
 #endif
 
 /// Convert the given basic nucleotide to int so it can be used for indexing in AC.
-/// If nonexisting nucleotide is given, return -1.
+/// If non-existing nucleotide is given, return -1.
 int NucleotideToInt (char c) {
     switch (c) {
         case 'A': return 0;
@@ -68,7 +69,12 @@ inline kmer_t word_reverse_complement(kmer_t w) {
     w = ((w >> 4)  & cmask<U, 4 >::v) | ((w & cmask<U, 4 >::v) << 4);
     w = ((w >> 8)  & cmask<U, 8 >::v) | ((w & cmask<U, 8 >::v) << 8);
     w = ((w >> 16) & cmask<U, 16>::v) | ((w & cmask<U, 16>::v) << 16);
+#ifdef LARGE_KMERS
+    w = ((w >> 32) & cmask<U, 32>::v) | ((w & cmask<U, 32>::v) << 32);
+    w = ( w >> 64                   ) | ( w                    << 64);
+#else
     w = ( w >> 32                   ) | ( w                    << 32);
+#endif
     return ((U)-1) - w;
 }
 

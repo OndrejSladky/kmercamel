@@ -5,7 +5,26 @@
 
 #include <vector>
 
-KHASH_SET_INIT_INT64(S64)
+#define kh_int128_hash_func(key) kh_int64_hash_func((khint64_t)((key)>>65^(key)^(key)<<21))
+#define kh_int128_hash_equal(a, b) ((a) == (b))
+
+#define KHASH_MAP_INIT_INT128(name, khval_t)								\
+	KHASH_INIT(name, __uint128_t, khval_t, 1, kh_int128_hash_func, kh_int128_hash_equal)
+
+#define KHASH_SET_INIT_INT128(name)										\
+	KHASH_INIT(name, __uint128_t, char, 0, kh_int128_hash_func, kh_int128_hash_equal)
+
+#ifdef LARGE_KMERS
+    KHASH_SET_INIT_INT128(S64)
+#else
+    KHASH_SET_INIT_INT64(S64)
+#endif
+
+#ifdef LARGE_KMERS
+    KHASH_MAP_INIT_INT128(P64, size_t)
+#else
+    KHASH_MAP_INIT_INT64(P64, size_t)
+#endif
 
 /// Determine whether the k-mer or its reverse complement is present.
 bool containsKMer(kh_S64_t *kMers, kmer_t kMer, int k, bool complements) {
