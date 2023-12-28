@@ -6,13 +6,13 @@
 namespace {
     TEST(Local, RightExtension) {
         struct TestCase {
-            int64_t last;
-            std::unordered_set<int64_t> kMers;
+            kmer_t last;
+            std::unordered_set<kmer_t> kMers;
             int k;
             int d;
             bool complements;
-            int64_t wantExt;
-            int64_t  wantNext;
+            kmer_t wantExt;
+            kmer_t  wantNext;
         };
         std::vector<TestCase> tests = {
                 // ACT; {TCC, CTA, ACT, CCT}; A; CTA
@@ -39,13 +39,13 @@ namespace {
 
     TEST(Local, LeftExtension) {
         struct TestCase {
-            int64_t first;
-            std::unordered_set<int64_t> kMers;
+            kmer_t first;
+            std::unordered_set<kmer_t> kMers;
             int k;
             int d;
             bool complements;
-            int64_t wantExt;
-            int64_t  wantNext;
+            kmer_t wantExt;
+            kmer_t  wantNext;
         };
         std::vector<TestCase> tests = {
                 // ACT; {TCC, ACT, CCT}
@@ -70,12 +70,12 @@ namespace {
 
     TEST(Local, NextGeneralizedSimplitig) {
         struct TestCase {
-            std::vector<int64_t> kMers;
+            std::vector<kmer_t> kMers;
             int k;
             int d_max;
             bool complements;
             std::vector<std::string> wantSuperstring;
-            std::unordered_set<int64_t> wantKMers;
+            std::unordered_set<kmer_t> wantKMers;
         };
         std::vector<TestCase> tests = {
                 // {ACAA, AACA}
@@ -96,7 +96,7 @@ namespace {
             auto gotSuperstring = of.str();
             auto remainingKmers = kMersToVec(kMers);
 
-            EXPECT_EQ(t.wantKMers, std::unordered_set<int64_t>(remainingKmers.begin(), remainingKmers.end()));
+            EXPECT_EQ(t.wantKMers, std::unordered_set<kmer_t>(remainingKmers.begin(), remainingKmers.end()));
             // Check that at least one valid superstring was returned.
             bool valid = false;
             for (size_t i = 0; i < t.wantSuperstring.size(); ++i) {
@@ -108,7 +108,7 @@ namespace {
 
     TEST(Local, Local) {
         struct TestCase {
-            std::vector<int64_t> kMers;
+            std::vector<kmer_t> kMers;
             int k;
             int d_max;
             bool complements;

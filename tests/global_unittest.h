@@ -8,9 +8,9 @@ typedef unsigned char byte;
 namespace {
     TEST(Global, PartialPreSort) {
         struct TestCase {
-            std::vector<int64_t> kMers;
+            std::vector<kmer_t> kMers;
             int k;
-            std::vector<int64_t> wantResult;
+            std::vector<kmer_t> wantResult;
         };
         std::vector<TestCase> tests = {
                 {
@@ -41,7 +41,7 @@ namespace {
     TEST(Global, SuperstringFromPath) {
         struct TestCase {
             overlapPath path;
-            std::vector<int64_t> kMers;
+            std::vector<kmer_t> kMers;
             int k;
             std::string wantResult;
             bool complements;
@@ -49,14 +49,14 @@ namespace {
         std::vector<TestCase> tests = {
                 {
                         {{2, 0, (size_t)-1}, {1, 2, (byte)-1}},
-                        std::vector<int64_t>{KMerToNumber({"ACG"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
+                        std::vector<kmer_t>{KMerToNumber({"ACG"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
                         3,
                         "TAcGgc",
                         false,
                 },
                 {
                         {{4, 3, 1, (size_t)-1, 5, (size_t)-1}, {1 ,2, 1, (byte)-1, 2, (byte)-1}},
-                        std::vector<int64_t>{KMerToNumber({"GCC"}), KMerToNumber({"ACG"}), KMerToNumber({"TAC"})},
+                        std::vector<kmer_t>{KMerToNumber({"GCC"}), KMerToNumber({"ACG"}), KMerToNumber({"TAC"})},
                         3,
                         "GcCGta",
                         true,
@@ -74,7 +74,7 @@ namespace {
 
     TEST(Global, OverlapHamiltonianPath) {
         struct TestCase {
-            std::vector<int64_t> kMers;
+            std::vector<kmer_t> kMers;
             overlapPath wantResult;
             int k;
             bool complements;
@@ -111,7 +111,7 @@ namespace {
         struct TestCase {
             std::string wantResult;
             int k;
-            std::vector<int64_t> input;
+            std::vector<kmer_t> input;
             bool complements;
         };
         std::vector<TestCase> tests = {

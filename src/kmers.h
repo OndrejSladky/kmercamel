@@ -5,6 +5,12 @@
 
 #include "models.h"
 
+#ifdef LARGE_KMERS
+    typedef __int128 kmer_t;
+#else
+    typedef int64_t kmer_t;
+#endif
+
 /// Convert the given basic nucleotide to int so it can be used for indexing in AC.
 /// If nonexisting nucleotide is given, return -1.
 int NucleotideToInt (char c) {
@@ -22,8 +28,8 @@ int NucleotideToInt (char c) {
 }
 
 /// Convert the given k-mer to its representation as a number.
-int64_t KMerToNumber(const KMer &kMer) {
-    int64_t ret = 0;
+kmer_t KMerToNumber(const KMer &kMer) {
+    kmer_t ret = 0;
     for (char c : kMer.value) {
         ret <<= 2;
         ret |= NucleotideToInt(c);
@@ -32,12 +38,12 @@ int64_t KMerToNumber(const KMer &kMer) {
 }
 
 /// Compute the prefix of size d of the given k-mer.
-int64_t BitPrefix(int64_t kMer, int k, int d) {
+kmer_t BitPrefix(kmer_t kMer, int k, int d) {
     return kMer >> ((k - d) << 1LL);
 }
 
 /// Compute the suffix of size d of the given k-mer.
-int64_t BitSuffix(int64_t kMer, int d) {
+kmer_t BitSuffix(kmer_t kMer, int d) {
     return kMer & ((1LL << (d << 1LL)) - 1LL);
 }
 
@@ -67,8 +73,8 @@ inline uint64_t word_reverse_complement(uint64_t w) {
 }
 
 /// Compute the reverse complement of the given k-mer.
-int64_t ReverseComplement(int64_t kMer, int k) {
-    return (((int64_t)word_reverse_complement(kMer)) >> (64LL - (k << 1LL))) & ((1LL << (k << 1LL)) - 1LL);
+kmer_t ReverseComplement(kmer_t kMer, int k) {
+    return (((kmer_t)word_reverse_complement(kMer)) >> (64LL - (k << 1LL))) & ((1LL << (k << 1LL)) - 1LL);
 }
 
 /// Return the complementary nucleotide for the given one.
@@ -93,12 +99,12 @@ KMer ReverseComplement(const KMer &kMer) {
 const char letters[4] {'A', 'C', 'G', 'T'};
 
 /// Return the index-th nucleotide from the encoded k-mer.
-inline char NucleotideAtIndex(int64_t encoded, int k, int index) {
+inline char NucleotideAtIndex(kmer_t encoded, int k, int index) {
     return letters[(encoded >> ((k - index - 1LL) << 1LL)) & 3LL];
 }
 
 /// Convert the encoded KMer representation to string.
-std::string NumberToKMer(int64_t encoded, int length) {
+std::string NumberToKMer(kmer_t encoded, int length) {
     std::string ret(length, 'N');
     for (int i = 0; i < length; ++i) {
         // The last two bits correspond to one nucleotide.

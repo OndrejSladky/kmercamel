@@ -30,19 +30,19 @@ constexpr int SORT_FIRST_BITS_DEFAULT = 8;
 typedef std::pair<std::vector<size_t>, std::vector<unsigned char>> overlapPath;
 
 /// Rearrange the k-mers so that k-mers next to each other in sorted order appear close so that they are in the same bucket.
-void PartialPreSort(std::vector<int64_t> &vals, int k) {
+void PartialPreSort(std::vector<kmer_t> &vals, int k) {
     int SORT_FIRST_BITS = std::min(2 * k, SORT_FIRST_BITS_DEFAULT);
     int DIFFERENT_PREFIXES_COUNT = 1 << SORT_FIRST_BITS;
-    int64_t PREFIX_MASK = DIFFERENT_PREFIXES_COUNT - 1;
+    kmer_t PREFIX_MASK = DIFFERENT_PREFIXES_COUNT - 1;
     std::vector<size_t> counts(DIFFERENT_PREFIXES_COUNT, 0);
     int shift = (2 * k) - SORT_FIRST_BITS;
-    int64_t mask = PREFIX_MASK << shift;
+    kmer_t mask = PREFIX_MASK << shift;
     for (auto &&kMer : vals) counts[(kMer & mask) >> shift]++;
-    std::vector<std::vector<int64_t>> distributed(DIFFERENT_PREFIXES_COUNT);
-    for (int i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) distributed[i] = std::vector<int64_t> (counts[i]);
+    std::vector<std::vector<kmer_t>> distributed(DIFFERENT_PREFIXES_COUNT);
+    for (int i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) distributed[i] = std::vector<kmer_t> (counts[i]);
     for (int i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) counts[i] = 0;
     for (auto &&kMer : vals) {
-        int64_t index = (kMer & mask) >> shift;
+        kmer_t index = (kMer & mask) >> shift;
         distributed[index][counts[index]++] = kMer;
     }
     size_t index = 0;
@@ -58,7 +58,7 @@ void PartialPreSort(std::vector<int64_t> &vals, int k) {
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected to contain only one k-mer from a complement pair.
 /// Moreover, if so, the resulting Hamiltonian path contains two superstrings which are reverse complements of one another.
-overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool complements) {
+overlapPath OverlapHamiltonianPath (std::vector<kmer_t> &kMers, int k, bool complements) {
     size_t n = kMers.size();
     size_t kMersCount = n * (1 + complements);
     size_t batchSize = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
@@ -89,7 +89,7 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
             for (size_t i = from; i < to; ++i)
                 if (!prefixForbidden[i]) {
                     next[i - from] = -1;
-                    int64_t prefix = BitPrefix(access(kMers,i), k, d);
+                    kmer_t prefix = BitPrefix(access(kMers,i), k, d);
                     auto prefix_key = kh_get(P64, prefixes, prefix);
                     if (prefix_key != kh_end(prefixes)) {
                         next[i - from] = kh_val(prefixes, prefix_key);
@@ -102,7 +102,7 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
                 }
             for (size_t i = 0; i < kMersCount; ++i)
                 if (!suffixForbidden[i]) {
-                    int64_t suffix = BitSuffix(access(kMers, i), d);
+                    kmer_t suffix = BitSuffix(access(kMers, i), d);
                     auto suffix_key = kh_get(P64, prefixes, suffix);
                     if (suffix_key == kh_end(prefixes)) continue;
                     size_t previous, j;
@@ -150,7 +150,7 @@ overlapPath OverlapHamiltonianPath (std::vector<int64_t> &kMers, int k, bool com
 /// Construct the superstring and its mask from the given overlapPath path in the overlap graph.
 /// If reverse complements are considered and the overlapPath path contains two paths which are reverse complements of one another,
 /// return only one of them.
-void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<int64_t> &kMers, std::ostream& of, const int k, const bool complements) {
+void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<kmer_t> &kMers, std::ostream& of, const int k, const bool complements) {
     size_t kMersCount = kMers.size() * (1 + complements);
     auto edgeFrom = hamiltonianPath.first;
     auto overlaps = hamiltonianPath.second;
@@ -163,7 +163,7 @@ void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<i
     size_t start = 0;
     for (; start < kMersCount && !isStart[start]; ++start);
 
-    int64_t last = BitSuffix(access(kMers, start), k-1);
+    kmer_t last = BitSuffix(access(kMers, start), k-1);
     of << letters[BitPrefix(access(kMers, start), k, 1)];
 
     // Move from the first k-mer to the last which has no successor.
@@ -191,7 +191,7 @@ void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<i
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected not to contain both k-mer and its complement.
 /// Warning: this will destroy kMers.
-void Global(std::vector<int64_t> &kMers, std::ostream& of, int k, bool complements) {
+void Global(std::vector<kmer_t> &kMers, std::ostream& of, int k, bool complements) {
     if (kMers.empty()) {
         throw std::invalid_argument("input cannot be empty");
     }

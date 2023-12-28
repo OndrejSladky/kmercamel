@@ -99,8 +99,8 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements) {
     if (fasta.is_open()) {
         char c;
         int beforeKMerEnd = k;
-        int64_t currentKMer = 0;
-        int64_t mask = (((int64_t) 1) <<  (2 * k) ) - 1;
+        kmer_t currentKMer = 0;
+        kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
         bool readingHeader = false;
         while (fasta >> std::noskipws >> c) {
             if (c == '>') {
