@@ -83,6 +83,7 @@ void NextGeneralizedSimplitig(kh_S64_t *kMers, int64_t begin, std::ostream& of, 
     }
     for (int i = 1; i < k; ++i) simplitig.emplace_back((char)std::tolower(NucleotideAtIndex(last, k, i)));
     of << std::string(simplitig.begin(), simplitig.end());
+    of.flush();
 }
 
 /// Compute the generalized simplitigs greedily.
