@@ -31,10 +31,11 @@ size_t ExtensionAC(std::vector<bool> &forbidden, std::list<size_t> &incidentKMer
     return -1;
 }
 
-/// Compute the generalized simplitigs greedily using the Aho-Corasick automaton.
+/// Get the approximated shortest superstring of the given k-mers using the local greedy algorithm with Aho-Corasick automaton.
+///
 /// This runs in O(n k), where n is the number of k-mers.
 /// If complements are provided, it is expected that kMers do not contain both k-mer and its reverse complement.
-void GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, std::ostream& of, int k, int d_max, bool complements) {
+void LocalAC(std::vector<KMer> kMers, std::ostream& of, int k, int d_max, bool complements) {
     // Add complementary k-mers.
     size_t n = kMers.size();
     kMers.resize(n * (1 + complements));

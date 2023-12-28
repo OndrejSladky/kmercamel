@@ -58,7 +58,7 @@ namespace {
         for (auto t: tests) {
             std::stringstream of;
 
-            GreedyGeneralizedSimplitigsAC(t.kMers, of, t.k, t.d_max, t.complements);
+            LocalAC(t.kMers, of, t.k, t.d_max, t.complements);
 
             EXPECT_EQ(t.wantSuperstring, of.str());
         }

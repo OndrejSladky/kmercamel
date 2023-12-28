@@ -127,7 +127,7 @@ namespace {
             int ret;
             for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
 
-            GreedyGeneralizedSimplitigs(kMers, of, t.k, t.d_max, t.complements);
+            Local(kMers, of, t.k, t.d_max, t.complements);
 
             EXPECT_EQ(t.wantSuperstring, of.str());
         }

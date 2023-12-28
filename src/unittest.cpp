@@ -1,7 +1,7 @@
 #include "parser_unittest.h"
 #include "kmers_unittest.h"
 #include "global_unittest.h"
-#include "global_ac_unittes.h"
+#include "global_ac_unittest.h"
 #include "local_unittest.h"
 #include "local_ac_unittest.h"
 #include "streaming_unittest.h"

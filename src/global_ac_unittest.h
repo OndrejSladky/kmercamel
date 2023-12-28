@@ -146,7 +146,7 @@ namespace {
         for (auto &&t : tests) {
             std::stringstream of;
 
-            GreedyAC(t.input, of,  t.complements);
+            GlobalAC(t.input, of,  t.complements);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
