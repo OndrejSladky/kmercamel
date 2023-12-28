@@ -35,12 +35,6 @@ namespace {
     TEST(ReadKMersTest, ReadKMers) {
         std::string path = std::filesystem::current_path();
         path += "/tests/test.fa";
-        std::vector<FastaRecord> wantResult = {
-                FastaRecord{">1", "ACCCGAAC"},
-                FastaRecord{">2", "CGTANATGC"},
-                FastaRecord{">3 with description", "ACCCGTTTAACG"},
-                FastaRecord{">4", "A"},
-        };
         struct TestCase {
             int k;
             bool complements;
@@ -55,8 +49,11 @@ namespace {
         };
 
         for (auto &t: tests) {
-            auto gotResult = ReadKMers(path, t.k, t.complements);
-            EXPECT_EQ(t.wantResultSize, gotResult.size());
+            auto kMers  = kh_init_S64();
+
+            ReadKMers(kMers, path, t.k, t.complements);
+
+            EXPECT_EQ(t.wantResultSize, kh_size(kMers));
         }
 
     }
@@ -86,30 +83,6 @@ namespace {
             AddKMersFromSequence(t.initialKMers, t.data, t.k);
             for (auto &&kMer : t.initialKMers) EXPECT_EQ(1, t.wantResult.count(kMer));
             for (auto &&kMer : t.wantResult) EXPECT_EQ(1, t.initialKMers.count(kMer));
-        }
-    }
-
-    TEST(AddKMersFromSequenceTest, Number) {
-        struct TestCase {
-            std::string data;
-            std::unordered_set<int64_t> initialKMers;
-            int k;
-            bool complements;
-            size_t wantResultSize;
-        };
-        std::vector<TestCase> tests = {
-                {"AAAA", {}, 2, true, 1},
-                {"ACGTA", {}, 3, true, 2},
-                {"ACGTA", {}, 3, false, 3},
-                {"acgTa", {}, 3, false, 3},
-                {"ACGNMTTA", {}, 3, true, 2},
-                {"ACCCGTTTAACG", {}, 10, true, 3},
-                {"ACC", {}, 10, true, 0},
-
-        };
-        for (auto t: tests) {
-            AddKMersFromSequence(t.initialKMers, t.data, t.k, t.complements);
-            EXPECT_EQ(t.wantResultSize, t.initialKMers.size());
         }
     }
 

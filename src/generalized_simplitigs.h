@@ -1,6 +1,7 @@
 #pragma once
 #include "models.h"
 #include "kmers.h"
+#include "khash_utils.h"
 
 #include <string>
 #include <unordered_set>
@@ -11,27 +12,10 @@
 #include <fstream>
 
 
-/// Determine whether the k-mer or its reverse complement is present.
-bool containsKMer(std::unordered_set<int64_t> &kMers, int64_t kMer, int k, bool complements) {
-    bool ret = kMers.count(kMer) > 0;
-    if (complements) ret |= kMers.count(ReverseComplement(kMer, k)) > 0;
-    return ret;
-}
-
-/// Remove the k-mer and its reverse complement.
-void eraseKMer(std::unordered_set<int64_t> &kMers, int64_t kMer, int k, bool complements) {
-    if (kMers.count(kMer) > 0) kMers.erase(kMer);
-    if (complements) {
-        int64_t reverseComplement = ReverseComplement(kMer, k);
-        if (kMers.count(reverseComplement) > 0) kMers.erase(reverseComplement);
-    }
-}
-
-
 /// Find the right extension to the provided last k-mer from the kMers.
 /// This extension has k-d overlap with the given simplitig.
 /// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
-std::pair<int64_t, int64_t> RightExtension(int64_t last, std::unordered_set<int64_t> &kMers, int k, int d, bool complements) {
+std::pair<int64_t, int64_t> RightExtension(int64_t last, kh_S64_t *kMers, int k, int d, bool complements) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
     for (int64_t ext = 0; ext < (1 << (d << 1)); ++ext) {
         int64_t next = BitSuffix(last, k - d) << (d << 1) | ext;
@@ -45,7 +29,7 @@ std::pair<int64_t, int64_t> RightExtension(int64_t last, std::unordered_set<int6
 /// Find the left extension to the provided first k-mer from the kMers.
 /// This extension has k-d overlap with the given simplitig.
 /// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
-std::pair<int64_t, int64_t> LeftExtension(int64_t first, std::unordered_set<int64_t> &kMers, int k, int d, bool complements) {
+std::pair<int64_t, int64_t> LeftExtension(int64_t first, kh_S64_t *kMers, int k, int d, bool complements) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
     for (int64_t ext = 0; ext < (1 << (d << 1)); ++ext) {
         int64_t next = ext << ((k - d) << 1) | BitPrefix(first, k, k - d);
@@ -60,9 +44,9 @@ std::pair<int64_t, int64_t> LeftExtension(int64_t first, std::unordered_set<int6
 /// Update the provided superstring and the mask.
 /// Also remove the used k-mers from kMers.
 /// If complements are true, it is expected that kMers only contain one k-mer from a complementary pair.
-void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::ostream& of,  int k, int d_max, bool complements) {
+void NextGeneralizedSimplitig(kh_S64_t *kMers, int64_t begin, std::ostream& of,  int k, int d_max, bool complements) {
      // Maintain the first and last k-mer in the simplitig.
-    int64_t last = *kMers.begin(), first = last;
+    int64_t last = begin, first = begin;
     std::list<char> simplitig {NucleotideAtIndex(first, k, 0)};
     eraseKMer(kMers, last, k, complements);
     int d_l = 1, d_r = 1;
@@ -103,6 +87,12 @@ void NextGeneralizedSimplitig(std::unordered_set<int64_t> &kMers, std::ostream& 
 
 /// Compute the generalized simplitigs greedily.
 /// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses it is fast.
-void GreedyGeneralizedSimplitigs(std::unordered_set<int64_t> &kMers, std::ostream& of, int k, int d_max, bool complements) {
-    while(!kMers.empty()) NextGeneralizedSimplitig(kMers, of,  k, d_max, complements);
+void GreedyGeneralizedSimplitigs(kh_S64_t *kMers, std::ostream& of, int k, int d_max, bool complements) {
+    size_t lastIndex = 0;
+    while(true) {
+        int64_t begin = nextKMer(kMers, lastIndex);
+        // No more k-mers.
+        if (begin == -1) return;
+        NextGeneralizedSimplitig(kMers, begin, of,  k, d_max, complements);
+    }
 }

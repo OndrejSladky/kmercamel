@@ -111,6 +111,17 @@ struct ACAutomaton {
     }
 };
 
+/// Represents oriented edge in the overlap graph.
+struct OverlapEdge {
+    // Index of the first k-mer.
+    size_t firstIndex;
+    // Index of the second k-mer.
+    size_t secondIndex;
+    // Length of the overlap of the two k-mers.
+    int overlapLength;
+};
+
+
 /// Greedily find the approximate overlapPath path with longest overlaps using the AC automaton.
 std::vector<OverlapEdge> OverlapHamiltonianPathAC (const std::vector<KMer> &kMers, bool complements) {
     size_t n = kMers.size() / (1 + complements);

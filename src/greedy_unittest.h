@@ -6,6 +6,38 @@
 #include "gtest/gtest.h"
 typedef unsigned char byte;
 namespace {
+    TEST(PartialPreSort, PartialPreSort) {
+        struct TestCase {
+            std::vector<int64_t> kMers;
+            int k;
+            std::vector<int64_t> wantResult;
+        };
+        std::vector<TestCase> tests = {
+                {
+                        {KMerToNumber({"GTA"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
+                        3,
+                        {KMerToNumber({"GGC"}), KMerToNumber({"GTA"}), KMerToNumber({"TAC"})},
+                },
+                {
+                        {KMerToNumber({"TTTTTTTTTTTTT"}),KMerToNumber({"AAAAAAAAAAAAA"}),  KMerToNumber({"GCGCGCGCGCGCG"})},
+                        13,
+                        {KMerToNumber({"AAAAAAAAAAAAA"}), KMerToNumber({"GCGCGCGCGCGCG"}), KMerToNumber({"TTTTTTTTTTTTT"})},
+                },
+                {
+                    // Sorting is done only based on the first 11 chars.
+                        {KMerToNumber({"AAAAAAAAAAAAT"}),KMerToNumber({"AAAAAAAAAAAAA"})},
+                        13,
+                        {KMerToNumber({"AAAAAAAAAAAAT"}),KMerToNumber({"AAAAAAAAAAAAA"})},
+                },
+        };
+
+        for (auto t : tests) {
+            PartialPreSort(t.kMers, t.k);
+
+            EXPECT_EQ(t.wantResult, t.kMers);
+        }
+    }
+
     TEST(SuperstringFromPathTest, Number) {
         struct TestCase {
             overlapPath path;
