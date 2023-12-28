@@ -1,5 +1,5 @@
 #pragma once
-#include "parser.h"
+#include "../src/parser.h"
 
 #include <algorithm>
 #include <vector>
@@ -13,9 +13,9 @@ namespace {
 // Retrieving current path on Windows does not work as on linux
 // therefore the following two unittests are linux-specific.
 #ifdef __unix__
-    TEST(ReadFastaTest, ReadFasta) {
+    TEST(Parser, ReadFasta) {
         std::string path = std::filesystem::current_path();
-        path += "/tests/test.fa";
+        path += "/tests/testdata/test.fa";
         std::vector<FastaRecord> wantResult = {
                 FastaRecord{"1", "ACCCGAAC"},
                 FastaRecord{"2", "CGTANATGC"},
@@ -32,9 +32,9 @@ namespace {
         }
     }
 
-    TEST(ReadKMersTest, ReadKMers) {
+    TEST(Parser, ReadKMers) {
         std::string path = std::filesystem::current_path();
-        path += "/tests/test.fa";
+        path += "/tests/testdata/test.fa";
         struct TestCase {
             int k;
             bool complements;
@@ -59,7 +59,7 @@ namespace {
     }
 #endif
 
-    TEST(AddKMersFromSequenceTest, String) {
+    TEST(Parser, AddKMersFromSequence) {
         struct TestCase {
             std::string data;
             std::unordered_set<std::string> initialKMers;
@@ -86,7 +86,7 @@ namespace {
         }
     }
 
-    TEST(FilterKMersWithComplementTest, FilterKMersWithComplement) {
+    TEST(Parser, FilterKMersWithComplement) {
         struct TestCase {
             std::unordered_set<std::string> kMers;
             size_t wantResultSize;
@@ -103,7 +103,7 @@ namespace {
         }
     }
 
-    TEST(ConstructKMersTest, ConstructKMers) {
+    TEST(Parser, ConstructKMers) {
         struct TestCase {
             std::vector<FastaRecord> data;
             int k;

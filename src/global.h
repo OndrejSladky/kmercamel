@@ -1,5 +1,4 @@
 #pragma once
-#include "models.h"
 
 #include <vector>
 #include <iostream>
@@ -8,6 +7,7 @@
 #include <algorithm>
 #include <cstdint>
 
+#include "models.h"
 #include "kmers.h"
 #include "khash.h"
 
@@ -185,12 +185,13 @@ void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<i
     of << unmaskedNucleotides;
 }
 
-/// Get the approximated shortest superstring of the given k-mers using the GREEDY algorithm.
+/// Get the approximated shortest superstring of the given k-mers using the global greedy algorithm.
+///
 /// This runs in O(n k), where n is the number of k-mers.
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected not to contain both k-mer and its complement.
 /// Warning: this will destroy kMers.
-void Greedy(std::vector<int64_t> &kMers, std::ostream& of, int k, bool complements) {
+void Global(std::vector<int64_t> &kMers, std::ostream& of, int k, bool complements) {
     if (kMers.empty()) {
         throw std::invalid_argument("input cannot be empty");
     }

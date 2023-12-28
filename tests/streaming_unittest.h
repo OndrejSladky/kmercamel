@@ -1,15 +1,15 @@
 #pragma once
 
-#include "streaming.h"
+#include "../src/streaming.h"
 #include "gtest/gtest.h"
 namespace {
 
 // Retrieving current path on Windows does not work as on linux
 // therefore the following unittest is linux-specific.
 #ifdef __unix__
-    TEST(StreamingTest, Streaming) {
+    TEST(Streaming, Streaming) {
         std::string path = std::filesystem::current_path();
-        path += "/tests/test.fa";
+        path += "/tests/testdata/test.fa";
         struct TestCase {
             int k;
             bool complements;
@@ -32,7 +32,7 @@ namespace {
         }
     }
 #endif
-    TEST(PushTest, Push) {
+    TEST(Streaming, Push) {
         struct TestCase {
             std::string current;
             int k;

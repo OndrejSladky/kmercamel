@@ -2,9 +2,10 @@
 
 CXX=         g++
 CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2
-GTEST=       googletest/googletest
 LDFLAGS=     -lz
 SRC=         src
+TESTS=			 tests
+GTEST=       $(TESTS)/googletest/googletest
 
 all: kmercamel
 
@@ -27,8 +28,8 @@ kmercamel: $(SRC)/main.cpp $(SRC)/$(wildcard *.cpp *.h *.hpp) src/version.h
 	$(CXX) $(CXXFLAGS) $(SRC)/main.cpp -o $@ $(LDFLAGS)
 	cp kmercamel  🐫 || true
 
-kmercameltest: $(SRC)/unittest.cpp gtest-all.o $(SRC)/$(wildcard *.cpp *.h *.hpp)
-	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include $(SRC)/unittest.cpp gtest-all.o -pthread -o $@ $(LDFLAGS)
+kmercameltest: $(TESTS)/unittest.cpp gtest-all.o $(SRC)/$(wildcard *.cpp *.h *.hpp) $(TESTS)/$(wildcard *.cpp *.h *.hpp)
+	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include $(TESTS)/unittest.cpp gtest-all.o -pthread -o $@ $(LDFLAGS)
 
 gtest-all.o: $(GTEST)/src/gtest-all.cc $(wildcard *.cpp *.h *.hpp)
 	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include -I $(GTEST) -DGTEST_CREATE_SHARED_LIBRARY=1 -c -pthread $(GTEST)/src/gtest-all.cc -o $@

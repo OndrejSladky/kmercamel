@@ -1,6 +1,4 @@
 #pragma once
-#include "models.h"
-#include "greedy_ac.h"
 
 #include <string>
 #include <vector>
@@ -8,6 +6,9 @@
 #include <list>
 #include <algorithm>
 #include <fstream>
+
+#include "models.h"
+#include "ac_automaton.h"
 
 /// Find the index of the first extending k-mer from the incidentKMers which is not forbidden.
 /// Mark this k-mer forbidden and remove all the k-mers in incidentKMers which are forbidden.
@@ -31,10 +32,11 @@ size_t ExtensionAC(std::vector<bool> &forbidden, std::list<size_t> &incidentKMer
     return -1;
 }
 
-/// Compute the generalized simplitigs greedily using the Aho-Corasick automaton.
+/// Get the approximated shortest superstring of the given k-mers using the local greedy algorithm with Aho-Corasick automaton.
+///
 /// This runs in O(n k), where n is the number of k-mers.
 /// If complements are provided, it is expected that kMers do not contain both k-mer and its reverse complement.
-void GreedyGeneralizedSimplitigsAC(std::vector<KMer> kMers, std::ostream& of, int k, int d_max, bool complements) {
+void LocalAC(std::vector<KMer> kMers, std::ostream& of, int k, int d_max, bool complements) {
     // Add complementary k-mers.
     size_t n = kMers.size();
     kMers.resize(n * (1 + complements));

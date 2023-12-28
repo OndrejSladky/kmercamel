@@ -86,9 +86,13 @@ void NextGeneralizedSimplitig(kh_S64_t *kMers, int64_t begin, std::ostream& of, 
     of.flush();
 }
 
-/// Compute the generalized simplitigs greedily.
-/// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses it is fast.
-void GreedyGeneralizedSimplitigs(kh_S64_t *kMers, std::ostream& of, int k, int d_max, bool complements) {
+/// Get the approximated shortest superstring of the given k-mers using the local greedy algorithm.
+///
+/// This runs in O(n d_max ^ k), where n is the number of k-mers, but for practical uses it is faster than AC version.
+/// If complements are provided, treat k-mer and its complement as identical.
+/// If this is the case, k-mers are expected not to contain both k-mer and its complement.
+/// Warning: this will destroy kMers.
+void Local(kh_S64_t *kMers, std::ostream& of, int k, int d_max, bool complements) {
     size_t lastIndex = 0;
     while(true) {
         int64_t begin = nextKMer(kMers, lastIndex);

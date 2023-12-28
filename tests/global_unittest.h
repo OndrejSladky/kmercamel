@@ -1,12 +1,12 @@
 #pragma once
-#include "greedy.h"
+#include "../src/global.h"
 
 #include <algorithm>
 
 #include "gtest/gtest.h"
 typedef unsigned char byte;
 namespace {
-    TEST(PartialPreSort, PartialPreSort) {
+    TEST(Global, PartialPreSort) {
         struct TestCase {
             std::vector<int64_t> kMers;
             int k;
@@ -38,7 +38,7 @@ namespace {
         }
     }
 
-    TEST(SuperstringFromPathTest, Number) {
+    TEST(Global, SuperstringFromPath) {
         struct TestCase {
             overlapPath path;
             std::vector<int64_t> kMers;
@@ -72,7 +72,7 @@ namespace {
         }
     }
 
-    TEST(OverlapHamiltonianPathTest, OverlapHamiltonianPath) {
+    TEST(Global, OverlapHamiltonianPath) {
         struct TestCase {
             std::vector<int64_t> kMers;
             overlapPath wantResult;
@@ -107,7 +107,7 @@ namespace {
         }
     }
 
-    TEST(GreedyTest, Greedy) {
+    TEST(Global, Global) {
         struct TestCase {
             std::string wantResult;
             int k;
@@ -126,7 +126,7 @@ namespace {
         for (auto &&t : tests) {
             std::stringstream of;
 
-            Greedy(t.input, of, t.k, t.complements);
+            Global(t.input, of, t.k, t.complements);
 
             EXPECT_EQ(t.wantResult, of.str());
         }

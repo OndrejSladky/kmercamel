@@ -1,10 +1,10 @@
 #pragma once
-#include "kmers.h"
+#include "../src/kmers.h"
 
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(BitSuffixTest, BitSuffix) {
+    TEST(KMers, BitSuffix) {
         EXPECT_EQ(0b011110, BitSuffix(0b1100011110, 3));
         EXPECT_EQ(0b1110, BitSuffix(0b1110, 2));
         EXPECT_EQ(0b0, BitSuffix(0b1110, 0));
@@ -12,7 +12,7 @@ namespace {
         EXPECT_EQ(0b111111'11111110LL, BitSuffix(0b111111'01111111'11111111'11111111'11111111'11111111'11111111'11111110LL, 7));
     }
 
-    TEST(BitPrefixTest, BitPrefix) {
+    TEST(KMers, BitPrefix) {
         EXPECT_EQ(0b110001, BitPrefix(0b1100011110, 5, 3));
         EXPECT_EQ(0b1110, BitPrefix(0b1110, 2, 2));
         EXPECT_EQ(0b0, BitPrefix(0b1110, 2, 0));
@@ -20,7 +20,7 @@ namespace {
         EXPECT_EQ(0b111111'01111111LL, BitPrefix(0b111111'01111111'11111111'11111111'11111111'11111111'11111111'11111110LL, 31, 7));
     }
 
-    TEST(NucleotideToIntTest, NucleotideToInt) {
+    TEST(KMers, NucleotideToInt) {
         struct TestCase {
             char nucleotide;
             int wantResult;
@@ -39,14 +39,14 @@ namespace {
         }
     }
 
-    TEST(ComplementaryNucleotideTest, ComplementaryNucleotide) {
+    TEST(KMers, ComplementaryNucleotide) {
         EXPECT_EQ('A', ComplementaryNucleotide('T'));
         EXPECT_EQ('T', ComplementaryNucleotide('A'));
         EXPECT_EQ('C', ComplementaryNucleotide('G'));
         EXPECT_EQ('G', ComplementaryNucleotide('C'));
     }
 
-    TEST(NucleotideAtIndexTest, NucleotideAtIndex) {
+    TEST(KMers, NucleotideAtIndex) {
         EXPECT_EQ('G', NucleotideAtIndex(0b111001, 3, 1));
         EXPECT_EQ('G', NucleotideAtIndex(0b11100111, 4, 1));
         EXPECT_EQ('C', NucleotideAtIndex(0b11100001, 4, 3));
@@ -54,7 +54,7 @@ namespace {
         EXPECT_EQ('T', NucleotideAtIndex(0b11, 1, 0));
     }
 
-    TEST(NumberToKMerTest, NumberToKMer) {
+    TEST(KMers, NumberToKMer) {
         struct TestCase {
             int64_t encoded;
             int d;
@@ -74,7 +74,7 @@ namespace {
         }
     }
 
-    TEST(KMerToNumberTest, KMerToNumber) {
+    TEST(KMers, KMerToNumber) {
         struct TestCase {
             int64_t wantResult;
             KMer kMer;
@@ -93,7 +93,7 @@ namespace {
         }
     }
 
-    TEST(ReverseComplementTest, Int) {
+    TEST(KMers, Int) {
         struct TestCase {
             int64_t input;
             int k;
@@ -113,7 +113,7 @@ namespace {
         }
     }
 
-    TEST(ReverseComplementTest, String) {
+    TEST(KMers, ReverseComplement) {
         struct TestCase {
             KMer input;
             KMer wantResult;

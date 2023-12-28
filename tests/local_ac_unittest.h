@@ -1,10 +1,10 @@
 #pragma once
-#include "generalized_simplitigs_ac.h"
+#include "../src/local_ac.h"
 
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(ExtensionACTest, ExtensionAC) {
+    TEST(LocalAC, ExtensionAC) {
         struct TestCase {
             std::vector<bool> forbidden;
             std::list<size_t> incidentKMers;
@@ -30,7 +30,7 @@ namespace {
         }
     }
 
-    TEST(GreedyGeneralizedSimplitigsACTest, GreedyGeneralizedSimplitigsAC) {
+    TEST(LocalAC, LocalAC) {
         struct TestCase {
             std::vector<KMer> kMers;
             int k;
@@ -58,7 +58,7 @@ namespace {
         for (auto t: tests) {
             std::stringstream of;
 
-            GreedyGeneralizedSimplitigsAC(t.kMers, of, t.k, t.d_max, t.complements);
+            LocalAC(t.kMers, of, t.k, t.d_max, t.complements);
 
             EXPECT_EQ(t.wantSuperstring, of.str());
         }

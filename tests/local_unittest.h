@@ -1,10 +1,10 @@
 #pragma once
-#include "generalized_simplitigs.h"
+#include "../src/local.h"
 
 #include "gtest/gtest.h"
 
 namespace {
-    TEST(RightExtensionTest, RightExtension) {
+    TEST(Local, RightExtension) {
         struct TestCase {
             int64_t last;
             std::unordered_set<int64_t> kMers;
@@ -37,7 +37,7 @@ namespace {
         }
     }
 
-    TEST(LeftExtensionTest, LeftExtension) {
+    TEST(Local, LeftExtension) {
         struct TestCase {
             int64_t first;
             std::unordered_set<int64_t> kMers;
@@ -68,7 +68,7 @@ namespace {
     }
 
 
-    TEST(NextGeneralizedSimplitigTest, NextGeneralizedSimplitig) {
+    TEST(Local, NextGeneralizedSimplitig) {
         struct TestCase {
             std::vector<int64_t> kMers;
             int k;
@@ -106,7 +106,7 @@ namespace {
         }
     }
 
-    TEST(GreedyGeneralizedSimplitigsTest, GreedyGeneralizedSimplitigs) {
+    TEST(Local, Local) {
         struct TestCase {
             std::vector<int64_t> kMers;
             int k;
@@ -127,7 +127,7 @@ namespace {
             int ret;
             for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
 
-            GreedyGeneralizedSimplitigs(kMers, of, t.k, t.d_max, t.complements);
+            Local(kMers, of, t.k, t.d_max, t.complements);
 
             EXPECT_EQ(t.wantSuperstring, of.str());
         }

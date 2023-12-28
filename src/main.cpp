@@ -1,7 +1,7 @@
-#include "greedy_ac.h"
-#include "greedy.h"
-#include "generalized_simplitigs.h"
-#include "generalized_simplitigs_ac.h"
+#include "global_ac.h"
+#include "global.h"
+#include "local.h"
+#include "local_ac.h"
 #include "parser.h"
 #include "streaming.h"
 #include "output.h"
@@ -129,9 +129,9 @@ int main(int argc, char **argv) {
             auto kMerVec = kMersToVec(kMers);
             kh_destroy_S64(kMers);
             PartialPreSort(kMerVec, k);
-            Greedy(kMerVec, *of, k, complements);
+            Global(kMerVec, *of, k, complements);
         }
-        else  GreedyGeneralizedSimplitigs(kMers, *of, k, d_max, complements);
+        else Local(kMers, *of, k, d_max, complements);
     } else {
         auto data = ReadFasta(path);
         if (data.empty()) {
@@ -144,10 +144,10 @@ int main(int argc, char **argv) {
         auto kMers = ConstructKMers(data, k, complements);
         WriteName(k, *of);
         if (algorithm == "globalAC") {
-            GreedyAC(kMers, *of, complements);
+            GlobalAC(kMers, *of, complements);
         }
         else if (algorithm == "localAC") {
-            GreedyGeneralizedSimplitigsAC(kMers, *of, k, d_max, complements);
+            LocalAC(kMers, *of, k, d_max, complements);
         }
         else {
             std::cerr << "Algorithm '" << algorithm << "' not supported." << std::endl;
