@@ -1,32 +1,27 @@
 # KmerCamel 🐫
-KmerCamel provides implementations of algorithms for efficiently representing a set of k-mers as a [masked superstring](https://doi.org/10.1101/2023.02.01.526717), based on the following paper:
+KmerCamel 🐫 provides implementations of algorithms for efficiently representing a set of k-mers as a [masked superstring](https://doi.org/10.1101/2023.02.01.526717), based on the following paper:
 
 > Ondřej Sladký, Pavel Veselý, and Karel Břinda: Masked superstrings as a unified framework for textual *k*-mer set representations. *bioRxiv* 2023.02.01.526717, 2023.
 [https://doi.org/10.1101/2023.02.01.526717](https://doi.org/10.1101/2023.02.01.526717)
 
-Note that this is an experimental program, focused mainly on bacterial genomes and pangenomes. See [supplementary materials](https://github.com/karel-brinda/masked-superstrings-supplement) of the aforementioned paper for experimental results with KmerCamel🐫.
+See [supplementary materials](https://github.com/karel-brinda/masked-superstrings-supplement) of the aforementioned paper for experimental results with KmerCamel🐫.
 
 The implemented algorithms are the following:
 - Local Greedy algorithm	 - constructs the superstring by locally finding and appending an unused k-mer with the largest overlap.
-
-- Global Greedy algorithm - constructs the superstring by running the GREEDY algorithm to find the approximated shortest common superstring.
+- Global Greedy algorithm - constructs the superstring by merging two k-mers with the largest overlap
 
 They come in two different implementations (their results may differ due to the differences in used data structures):
 - Encoding the k-mers as integers and using fast prefix/suffix equality checks.
 - Using the Aho-Corasick automaton.
 
-In general, the hashing algorithms are faster than those using the Aho-Corasick automaton.
-Note also that all the algorithms have high memory requirements at this point.
-This is especially true of the implementations with the Aho-Corasick automaton which are only experimental at this stage.
+Note that at this point only the implementations with hash table are optimized and that the Aho-Corasick automaton
+based versions of the algorithms are only experimental.
 
-The following table summarizes the current state of development of these algorithms:
+The hashing based implementations of the default KmerCamel 🐫 (`./kmercamel`) support $k$-mer with $k$ at most 31,
+whereas the larger KmerCamel 🐫 supports $k$-mers with $k$ at most 63 (at the cost of slight slowdown).
 
-| Algorithm                     | Support for complements | Optimizations | 
-|-------------------------------|-------------------------|---------------|
-| Global Greedy with AC         | YES                     | None yet      |
-| Global Greedy with hashing    | YES                     | Optimized     |
-| Local Greedy with AC          | YES                     | None yet      |
-| Local Greedy with hashing     | YES                     | None yet      |
+All algorithms can be used to either work in the unidirectional model or in the bidirectional model
+(i.e. treat $k$-mer and its reverse complement as the same; in this case either of them appears in the result).
 
 ### Mask optimization
 
@@ -59,7 +54,9 @@ The versions with AC use Aho-Corasick automaton. Default `global`.
 - `-o output_path` - the path to output file. If not specified, output is printed to stdout.
 - `-d value_of_d` - d_max used in Local Greedy. Default 5. Increasing `d` beyond `k` has no effect.
 - `-c` - treat k-mer and its reverse complement as equal.
+- `-m` - turn off memory optimizations for `global`.
 - `-h` - print help.
+- `-h` - print version.
 
 
 The output contains the resulting superstring - capital letters indicate that at given position, a k-mer starts.
@@ -67,14 +64,14 @@ The output contains the resulting superstring - capital letters indicate that at
 For example:
 
 ```
-./kmercamel -p ./spneumoniae.fa -a localAC -k 12 -d 7
+./kmercamel -p ./spneumoniae.fa -a local -k 12 -d 7 -c
 ```
 
-runs the Local Greedy on the streptococcus fasta file with `k=12` and `d=7`.
+runs the Local Greedy in the bidirectional model on the streptococcus fasta file with `k=12` and `d=7`.
 
 Alternatively, if your operating system supports it, you can run `./🐫` instead of `./kmercamel`.
 
-Currently, Kmercamel does not support gziped files as an input.
+Currently, KmerCamel does not support gziped files as an input.
 A possible workaround is to use `gzcat` and process substitution.
 
 ```
@@ -83,10 +80,30 @@ A possible workaround is to use `gzcat` and process substitution.
 
 Note: on some systems you might need to use the name `zcat` instead of `gzcat`.
 
+### Large $k$-mers
 
-## Converting k-mer set superstring representation to the traditional one
+The default version of KmerCamel does not support $k > 31$. For those values, use the large KmerCamel,
+which supports $k < 64$.
 
-Run `./convert_superstring.py < input.fa`. This runs a Python script which inputs the superstring masked representation and outputs the SPSS representation.
+For example:
+
+```
+./kmercamel-large -p ./spneumoniae.fa -a global -k 63 -c
+```
+
+Note: for smaller $k$ it is recommended to use default KmerCamel as it is faster.
+
+### Turn off memory optimizations for Global
+
+In order to reduce the memory footprint of hash-table based Global Greedy,
+it uses several optimizations that reduce memory but increase the running time.
+If memory is not the bottleneck, turning off the memory optimizations might be desirable.
+This in practice about halves the running time.
+
+
+## Converting k-mer set superstring representation to the (r)SPSS representations
+
+Run `./convert_superstring.py < input.fa`. This runs a Python script which inputs the superstring masked representation and outputs the (r)SPSS representation.
 
 ## How to test
 
