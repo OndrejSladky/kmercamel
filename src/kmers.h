@@ -6,9 +6,9 @@
 #include "models.h"
 
 #ifdef LARGE_KMERS
-    typedef __int128 kmer_t;
+    typedef __int128_t kmer_t;
 #else
-    typedef int64_t kmer_t;
+    typedef uint64_t kmer_t;
 #endif
 
 /// Convert the given basic nucleotide to int so it can be used for indexing in AC.
@@ -62,8 +62,8 @@ struct cmask<U, len, 0> {
 
 /// Compute the reverse complement of a word.
 /// Copyright: Jellyfish GPL-3.0
-inline uint64_t word_reverse_complement(uint64_t w) {
-    typedef uint64_t U;
+inline kmer_t word_reverse_complement(kmer_t w) {
+    typedef kmer_t U;
     w = ((w >> 2)  & cmask<U, 2 >::v) | ((w & cmask<U, 2 >::v) << 2);
     w = ((w >> 4)  & cmask<U, 4 >::v) | ((w & cmask<U, 4 >::v) << 4);
     w = ((w >> 8)  & cmask<U, 8 >::v) | ((w & cmask<U, 8 >::v) << 8);

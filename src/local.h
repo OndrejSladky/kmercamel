@@ -17,7 +17,7 @@
 /// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
 std::pair<kmer_t, kmer_t> RightExtension(kmer_t last, kh_S64_t *kMers, int k, int d, bool complements) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
-    for (kmer_t ext = 0; ext < (1 << (d << 1)); ++ext) {
+    for (kmer_t ext = 0; ext < (kmer_t(1) << (d << 1)); ++ext) {
         kmer_t next = BitSuffix(last, k - d) << (d << 1) | ext;
         if (containsKMer(kMers, next, k, complements)) {
             return {ext, next};
@@ -31,7 +31,7 @@ std::pair<kmer_t, kmer_t> RightExtension(kmer_t last, kh_S64_t *kMers, int k, in
 /// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
 std::pair<kmer_t, kmer_t> LeftExtension(kmer_t first, kh_S64_t *kMers, int k, int d, bool complements) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
-    for (kmer_t ext = 0; ext < (1 << (d << 1)); ++ext) {
+    for (kmer_t ext = 0; ext < (kmer_t(1) << (d << 1)); ++ext) {
         kmer_t next = ext << ((k - d) << 1) | BitPrefix(first, k, k - d);
         if (containsKMer(kMers, next, k, complements)) {
             return {ext, next};
@@ -54,7 +54,7 @@ void NextGeneralizedSimplitig(kh_S64_t *kMers, kmer_t begin, std::ostream& of,  
         if (d_r <= d_l) {
             auto extension = RightExtension(last, kMers, k, d_r, complements);
             kmer_t ext = extension.first;
-            if (ext == -1) {
+            if (ext == kmer_t(-1)) {
                 // No right extension found.
                 ++d_r;
             } else {
@@ -68,7 +68,7 @@ void NextGeneralizedSimplitig(kh_S64_t *kMers, kmer_t begin, std::ostream& of,  
         } else {
             auto extension = LeftExtension(first, kMers, k, d_l, complements);
             kmer_t ext = extension.first;
-            if (ext == -1) {
+            if (ext == kmer_t(-1)) {
                 // No left extension found.
                 ++d_l;
             } else {
@@ -97,7 +97,7 @@ void Local(kh_S64_t *kMers, std::ostream& of, int k, int d_max, bool complements
     while(true) {
         kmer_t begin = nextKMer(kMers, lastIndex);
         // No more k-mers.
-        if (begin == -1) return;
+        if (begin == kmer_t(-1)) return;
         NextGeneralizedSimplitig(kMers, begin, of,  k, d_max, complements);
     }
 }

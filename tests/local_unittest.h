@@ -20,7 +20,7 @@ namespace {
                 // ACT; {TCC, ACT, CCT}; CC; TCC
                 {0b111111, {0b110101, 0b000111, 0b010111}, 3, 2,   false, 0b0101, 0b110101},
                 // ACT; {TCC, ACT, CCT}
-                {0b000111, {0b110101, 0b000111, 0b010111}, 3, 1,  false,  -1, -1},
+                {0b000111, {0b110101, 0b000111, 0b010111}, 3, 1,  false,  kmer_t(-1), kmer_t(-1)},
         };
 
         for (auto t: tests) {
@@ -49,7 +49,7 @@ namespace {
         };
         std::vector<TestCase> tests = {
                 // ACT; {TCC, ACT, CCT}
-                {0b000111, {0b110101, 0b000111, 0b010111}, 3, 1, false,   -1, -1},
+                {0b000111, {0b110101, 0b000111, 0b010111}, 3, 1, false,   kmer_t(-1), kmer_t(-1)},
                 // TAC; {TCC, CTA, ACT, CCT}; C; CTA
                 {0b110001, {0b110101, 0b011100, 0b000111, 0b010111}, 3, 1, false, 0b01, 0b011100},
         };
