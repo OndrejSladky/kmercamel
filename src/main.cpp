@@ -3,7 +3,7 @@
 #include "local.h"
 #include "local_ac.h"
 #include "parser.h"
-//#include "streaming.h"
+#include "streaming.h"
 #include "output.h"
 #include "khash_utils.h"
 
@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
     // Handle streaming algorithm separately.
     if (algorithm == "streaming") {
         WriteName(k, *of);
-        //Streaming(path, *of,  k , complements);
+        Streaming(path, *of,  k , complements);
     }
     // Handle hash table based separately so that it consumes less memory.
     else if (algorithm == "global" || algorithm == "local") {
