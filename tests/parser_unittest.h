@@ -59,7 +59,7 @@ namespace {
     }
 #endif
 
-    TEST(Parser, AddKMersFromSequenceTestString) {
+    TEST(Parser, AddKMersFromSequence) {
         struct TestCase {
             std::string data;
             std::unordered_set<std::string> initialKMers;
