@@ -1,5 +1,5 @@
 #pragma once
-#include "parser.h"
+#include "../src/parser.h"
 
 #include <algorithm>
 #include <vector>
@@ -15,7 +15,7 @@ namespace {
 #ifdef __unix__
     TEST(ReadFastaTest, ReadFasta) {
         std::string path = std::filesystem::current_path();
-        path += "/tests/test.fa";
+        path += "/tests/testdata/test.fa";
         std::vector<FastaRecord> wantResult = {
                 FastaRecord{"1", "ACCCGAAC"},
                 FastaRecord{"2", "CGTANATGC"},
@@ -34,7 +34,7 @@ namespace {
 
     TEST(ReadKMersTest, ReadKMers) {
         std::string path = std::filesystem::current_path();
-        path += "/tests/test.fa";
+        path += "/tests/testdata/test.fa";
         struct TestCase {
             int k;
             bool complements;

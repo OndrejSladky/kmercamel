@@ -1,5 +1,5 @@
 #pragma once
-#include "global.h"
+#include "../src/global.h"
 
 #include <algorithm>
 

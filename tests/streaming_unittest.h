@@ -1,6 +1,6 @@
 #pragma once
 
-#include "streaming.h"
+#include "../src/streaming.h"
 #include "gtest/gtest.h"
 namespace {
 
@@ -9,7 +9,7 @@ namespace {
 #ifdef __unix__
     TEST(StreamingTest, Streaming) {
         std::string path = std::filesystem::current_path();
-        path += "/tests/test.fa";
+        path += "/tests/testdata/test.fa";
         struct TestCase {
             int k;
             bool complements;
