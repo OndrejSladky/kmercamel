@@ -7,7 +7,7 @@ namespace {
     TEST(Local, RightExtension) {
         struct TestCase {
             kmer_t last;
-            std::unordered_set<kmer_t> kMers;
+            std::vector<kmer_t> kMers;
             int k;
             int d;
             bool complements;
@@ -40,7 +40,7 @@ namespace {
     TEST(Local, LeftExtension) {
         struct TestCase {
             kmer_t first;
-            std::unordered_set<kmer_t> kMers;
+            std::vector<kmer_t> kMers;
             int k;
             int d;
             bool complements;
@@ -75,7 +75,8 @@ namespace {
             int d_max;
             bool complements;
             std::vector<std::string> wantSuperstring;
-            std::unordered_set<kmer_t> wantKMers;
+            // Sorted k-mers.
+            std::vector<kmer_t> wantKMers;
         };
         std::vector<TestCase> tests = {
                 // {ACAA, AACA}
@@ -95,8 +96,9 @@ namespace {
             NextGeneralizedSimplitig(kMers, t.kMers.front(), of, t.k, t.d_max, t.complements);
             auto gotSuperstring = of.str();
             auto remainingKmers = kMersToVec(kMers);
+            std::sort(remainingKmers.begin(), remainingKmers.end());
 
-            EXPECT_EQ(t.wantKMers, std::unordered_set<kmer_t>(remainingKmers.begin(), remainingKmers.end()));
+            EXPECT_EQ(t.wantKMers, remainingKmers);
             // Check that at least one valid superstring was returned.
             bool valid = false;
             for (size_t i = 0; i < t.wantSuperstring.size(); ++i) {

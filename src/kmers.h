@@ -5,11 +5,12 @@
 
 #include "models.h"
 
-#define LARGE_KMERS
 #ifdef LARGE_KMERS
     typedef __uint128_t kmer_t;
+    constexpr int KMER_T_SIZE = 128;
 #else
     typedef uint64_t kmer_t;
+    constexpr int KMER_T_SIZE = 64;
 #endif
 
 /// Convert the given basic nucleotide to int so it can be used for indexing in AC.
@@ -40,12 +41,12 @@ kmer_t KMerToNumber(const KMer &kMer) {
 
 /// Compute the prefix of size d of the given k-mer.
 kmer_t BitPrefix(kmer_t kMer, int k, int d) {
-    return kMer >> ((k - d) << 1LL);
+    return kMer >> ((k - d) << kmer_t(1));
 }
 
 /// Compute the suffix of size d of the given k-mer.
 kmer_t BitSuffix(kmer_t kMer, int d) {
-    return kMer & ((1LL << (d << 1LL)) - 1LL);
+    return kMer & ((kmer_t(1) << (d << kmer_t(1))) - kmer_t(1));
 }
 
 /// Checkered mask. cmask<uint16_t, 1> is every other bit on
@@ -80,7 +81,7 @@ inline kmer_t word_reverse_complement(kmer_t w) {
 
 /// Compute the reverse complement of the given k-mer.
 kmer_t ReverseComplement(kmer_t kMer, int k) {
-    return (((kmer_t)word_reverse_complement(kMer)) >> (64LL - (k << 1LL))) & ((1LL << (k << 1LL)) - 1LL);
+    return (((kmer_t)word_reverse_complement(kMer)) >> (KMER_T_SIZE - (k << kmer_t(1)))) & ((kmer_t(1) << (k << kmer_t (1))) - kmer_t(1));
 }
 
 /// Return the complementary nucleotide for the given one.
@@ -106,7 +107,7 @@ const char letters[4] {'A', 'C', 'G', 'T'};
 
 /// Return the index-th nucleotide from the encoded k-mer.
 inline char NucleotideAtIndex(kmer_t encoded, int k, int index) {
-    return letters[(encoded >> ((k - index - 1LL) << 1LL)) & 3LL];
+    return letters[(encoded >> ((k - index - kmer_t(1)) << kmer_t(1))) & kmer_t(3)];
 }
 
 /// Convert the encoded KMer representation to string.
