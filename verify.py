@@ -12,12 +12,12 @@ def print_help():
     print("example usage: ./verify.py ./spneumoniae.fa")
 
 
-def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool) -> bool:
+def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, large: bool) -> bool:
     """
     Check if running superstring algorithm on given fasta file produces the same set of k-mers as the original one.
     """
     with open("./bin/kmercamel.txt", "w") as k_mers:
-        args = ["./kmercamel", "-p", fasta_path, "-k", f"{k}", "-a", algorithm]
+        args = ["./kmercamel-large" if large else "./kmercamel", "-p", fasta_path, "-k", f"{k}", "-a", algorithm]
         if complements:
             args.append("-c")
         subprocess.run(args, stdout=k_mers)
@@ -80,9 +80,11 @@ def main():
     for a in ["global", "local", "globalAC", "localAC", "streaming"]:
         print(f"Testing {a}:")
         for complements in [True, False]:
-            for k in ([5, 8, 12] if args.quick else range(2, 32)):
-                success &= verify_instance(args.path, k, a, complements)
-            print("")
+            for large in [True, False]:
+                for k in ( ([5, 8, 12] if a not in ["local", "global"] else [5, 8, 12, 17, 31, 43, 51, 63]) if args.quick else range(2, 64)):
+                    if not large and k >= 32: continue
+                    success &= verify_instance(args.path, k, a, complements, large)
+                print("")
 
     # Print status.
     if not success:

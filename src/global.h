@@ -31,15 +31,15 @@ typedef std::pair<std::vector<size_t>, std::vector<unsigned char>> overlapPath;
 /// Rearrange the k-mers so that k-mers next to each other in sorted order appear close so that they are in the same bucket.
 void PartialPreSort(std::vector<kmer_t> &vals, int k) {
     int SORT_FIRST_BITS = std::min(2 * k, SORT_FIRST_BITS_DEFAULT);
-    int DIFFERENT_PREFIXES_COUNT = 1 << SORT_FIRST_BITS;
-    kmer_t PREFIX_MASK = DIFFERENT_PREFIXES_COUNT - 1;
+    kmer_t DIFFERENT_PREFIXES_COUNT = kmer_t(1) << SORT_FIRST_BITS;
+    kmer_t PREFIX_MASK = DIFFERENT_PREFIXES_COUNT - kmer_t(1);
     std::vector<size_t> counts(DIFFERENT_PREFIXES_COUNT, 0);
     int shift = (2 * k) - SORT_FIRST_BITS;
     kmer_t mask = PREFIX_MASK << shift;
     for (auto &&kMer : vals) counts[(kMer & mask) >> shift]++;
     std::vector<std::vector<kmer_t>> distributed(DIFFERENT_PREFIXES_COUNT);
-    for (int i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) distributed[i] = std::vector<kmer_t> (counts[i]);
-    for (int i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) counts[i] = 0;
+    for (kmer_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) distributed[i] = std::vector<kmer_t> (counts[i]);
+    for (kmer_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) counts[i] = 0;
     for (auto &&kMer : vals) {
         kmer_t index = (kMer & mask) >> shift;
         distributed[index][counts[index]++] = kMer;
