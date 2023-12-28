@@ -22,7 +22,7 @@
 
 
 /// Determines which fraction of k-mers store its prefixes at one time.
-constexpr int MEMORY_REDUCTION_FACTOR = 16;
+int MEMORY_REDUCTION_FACTOR = 16;
 /// Determines the number of prefix bits based on which the k-mers are presorted.
 constexpr int SORT_FIRST_BITS_DEFAULT = 8;
 

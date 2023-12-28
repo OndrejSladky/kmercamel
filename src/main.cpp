@@ -31,6 +31,7 @@ void Help() {
     std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
+    std::cerr << "  -m               - turn off the memory optimizations for global" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
     std::cerr << "  -v               - print version" << std::endl;
     std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 13 -d 5 -a local" << std::endl;
@@ -49,10 +50,11 @@ int main(int argc, char **argv) {
     std::ostream *of = &std::cout;
     std::string algorithm = "global";
     bool complements = false;
+    bool optimize_memory = true;
     bool d_set = false;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "p:k:d:a:o:hcv"))  != -1) {
+        while ((opt = getopt(argc, argv, "p:k:d:a:o:hcvm"))  != -1) {
             switch(opt) {
                 case  'p':
                     path = optarg;
@@ -78,6 +80,9 @@ int main(int argc, char **argv) {
                     break;
                 case  'c':
                     complements = true;
+                    break;
+                case 'm':
+                    optimize_memory = false;
                     break;
                 case 'v':
                     Version();
@@ -117,6 +122,10 @@ int main(int argc, char **argv) {
         std::cerr << "Unsupported argument d for algorithm '" + algorithm + "'." << std::endl;
         Help();
         return 1;
+    } else if (!optimize_memory && algorithm != "global") {
+        std::cerr << "Memory optimization turn-off only supported for hash table global." << std::endl;
+        Help();
+        return 1;
     }
 
     // Handle streaming algorithm separately.
@@ -138,7 +147,9 @@ int main(int argc, char **argv) {
         if (algorithm == "global") {
             auto kMerVec = kMersToVec(kMers);
             kh_destroy_S64(kMers);
-            PartialPreSort(kMerVec, k);
+            // Turn off the memory optimizations if optimize_memory is set to false.
+            if(optimize_memory) PartialPreSort(kMerVec, k);
+            else MEMORY_REDUCTION_FACTOR = 1;
             Global(kMerVec, *of, k, complements);
         }
         else Local(kMers, *of, k, d_max, complements);
