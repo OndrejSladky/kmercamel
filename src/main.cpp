@@ -6,6 +6,7 @@
 #include "streaming.h"
 #include "output.h"
 #include "khash_utils.h"
+#include "lower_bound.h"
 
 #include <iostream>
 #include <string>
@@ -32,6 +33,7 @@ void Help() {
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -m               - turn off the memory optimizations for global" << std::endl;
+    std::cerr << "  -l               - compute the cycle cover lower bound instead of masked superstring" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
     std::cerr << "  -v               - print version" << std::endl;
     std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 13 -d 5 -a local" << std::endl;
@@ -52,9 +54,10 @@ int main(int argc, char **argv) {
     bool complements = false;
     bool optimize_memory = true;
     bool d_set = false;
+    bool lower_bound = false;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "p:k:d:a:o:hcvm"))  != -1) {
+        while ((opt = getopt(argc, argv, "p:k:d:a:o:hcvml"))  != -1) {
             switch(opt) {
                 case  'p':
                     path = optarg;
@@ -83,6 +86,9 @@ int main(int argc, char **argv) {
                     break;
                 case 'm':
                     optimize_memory = false;
+                    break;
+                case 'l':
+                    lower_bound = true;
                     break;
                 case 'v':
                     Version();
@@ -126,6 +132,10 @@ int main(int argc, char **argv) {
         std::cerr << "Memory optimization turn-off only supported for hash table global." << std::endl;
         Help();
         return 1;
+    } else if (lower_bound && algorithm != "global") {
+        std::cerr << "Lower bound computation supported only for hash table global." << std::endl;
+        Help();
+        return 1;
     }
 
     // Handle streaming algorithm separately.
@@ -143,14 +153,15 @@ int main(int argc, char **argv) {
             return 1;
         }
         d_max = std::min(k - 1, d_max);
-        WriteName(k, *of);
+        if (!lower_bound) WriteName(k, *of);
         if (algorithm == "global") {
             auto kMerVec = kMersToVec(kMers);
             kh_destroy_S64(kMers);
             // Turn off the memory optimizations if optimize_memory is set to false.
-            if(optimize_memory) PartialPreSort(kMerVec, k);
+            if (optimize_memory) PartialPreSort(kMerVec, k);
             else MEMORY_REDUCTION_FACTOR = 1;
-            Global(kMerVec, *of, k, complements);
+            if (lower_bound) std::cout << LowerBoundLength(kMerVec, k, complements);
+            else Global(kMerVec, *of, k, complements);
         }
         else Local(kMers, *of, k, d_max, complements);
     } else {

@@ -57,7 +57,7 @@ void PartialPreSort(std::vector<kmer_t> &vals, int k) {
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected to contain only one k-mer from a complement pair.
 /// Moreover, if so, the resulting Hamiltonian path contains two superstrings which are reverse complements of one another.
-overlapPath OverlapHamiltonianPath (std::vector<kmer_t> &kMers, int k, bool complements) {
+overlapPath OverlapHamiltonianPath (std::vector<kmer_t> &kMers, int k, bool complements, bool lower_bound = false) {
     size_t n = kMers.size();
     size_t kMersCount = n * (1 + complements);
     size_t batchSize = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
@@ -106,10 +106,12 @@ overlapPath OverlapHamiltonianPath (std::vector<kmer_t> &kMers, int k, bool comp
                     if (suffix_key == kh_end(prefixes)) continue;
                     size_t previous, j;
                     previous = j = kh_val(prefixes, suffix_key);
-                    // If the path forms a cycle, or is between k-mer and its reverse complement, or the k-mers complement was already selected skip this path.
                     while (j != size_t(-1) && \
-                           (accessFirstLast(first, last, i, n) % n == j % n \
-                           || accessFirstLast(first, last, i, n) % n == accessFirstLast(last, first, j, n) % n \
+                            // k-mers are complementary
+                           ((i + n) % (2 * n) == j \
+                           // forms a cycle
+                           || (!lower_bound && accessFirstLast(first, last, i, n) == j) \
+                           // k-mer is already used
                            || prefixForbidden[j])) {
                         size_t new_j = next[j - from];
                         // If the k-mer is forbidden, remove it to keep the complexity linear.

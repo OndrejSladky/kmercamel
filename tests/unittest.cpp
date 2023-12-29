@@ -6,6 +6,7 @@
 #include "local_ac_unittest.h"
 #include "streaming_unittest.h"
 #include "ac_automaton_unittest.h"
+#include "lower_bound_unittest.h"
 
 #include "gtest/gtest.h"
 
