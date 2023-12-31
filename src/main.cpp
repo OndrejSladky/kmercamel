@@ -6,6 +6,7 @@
 #include "streaming.h"
 #include "output.h"
 #include "khash_utils.h"
+#include "masks.h"
 
 #include <iostream>
 #include <string>
@@ -36,6 +37,16 @@ void Help() {
     std::cerr << "  -v               - print version" << std::endl;
     std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 13 -d 5 -a local" << std::endl;
     std::cerr << "Possible algorithms: global globalAC local localAC streaming" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "For optimization of masks use `kmercamel optimize`."  << std::endl;
+    std::cerr << "Accepted arguments:" << std::endl;
+    std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
+    std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
+    std::cerr << "  -a algorithm     - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
+    std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
+    std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
+    std::cerr << "  -h               - print help" << std::endl;
+    std::cerr << "  -v               - print version" << std::endl;
 }
 
 void Version() {
@@ -48,7 +59,14 @@ int main(int argc, char **argv) {
     int d_max = 5;
     std::ofstream output;
     std::ostream *of = &std::cout;
+    bool masks = false;
     std::string algorithm = "global";
+    if (argc > 1 && std::string(argv[1]) == "optimize") {
+        masks = true;
+        argv++;
+        argc--;
+        algorithm = "ones";
+    }
     bool complements = false;
     bool optimize_memory = true;
     bool d_set = false;
@@ -126,6 +144,16 @@ int main(int argc, char **argv) {
         std::cerr << "Memory optimization turn-off only supported for hash table global." << std::endl;
         Help();
         return 1;
+    } else if (masks && (d_set || !optimize_memory)) {
+        std::cerr << "Not supported flags for optimize." << std::endl;
+        Help();
+        return 1;
+    }
+
+    if (masks) {
+        int ret = Optimize(algorithm, path, *of, k, complements);
+        if (ret) Help();
+        return ret;
     }
 
     // Handle streaming algorithm separately.
