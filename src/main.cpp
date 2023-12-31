@@ -6,6 +6,7 @@
 #include "streaming.h"
 #include "output.h"
 #include "khash_utils.h"
+#include "masks.h"
 
 #include <iostream>
 #include <string>
@@ -48,7 +49,14 @@ int main(int argc, char **argv) {
     int d_max = 5;
     std::ofstream output;
     std::ostream *of = &std::cout;
+    bool masks = false;
     std::string algorithm = "global";
+    if (argc > 1 && std::string(argv[1]) == "optimize") {
+        masks = true;
+        argv++;
+        argc--;
+        algorithm = "ones";
+    }
     bool complements = false;
     bool optimize_memory = true;
     bool d_set = false;
@@ -126,6 +134,16 @@ int main(int argc, char **argv) {
         std::cerr << "Memory optimization turn-off only supported for hash table global." << std::endl;
         Help();
         return 1;
+    } else if (masks && (d_set || !optimize_memory)) {
+        std::cerr << "Not supported flags for optimize." << std::endl;
+        Help();
+        return 1;
+    }
+
+    if (masks) {
+        int ret = Optimize(algorithm, path, *of, k, complements);
+        if (ret) Help();
+        return ret;
     }
 
     // Handle streaming algorithm separately.
