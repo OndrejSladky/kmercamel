@@ -37,6 +37,16 @@ void Help() {
     std::cerr << "  -v               - print version" << std::endl;
     std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 13 -d 5 -a local" << std::endl;
     std::cerr << "Possible algorithms: global globalAC local localAC streaming" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "For optimization of masks use `kmercamel optimize`."  << std::endl;
+    std::cerr << "Accepted arguments:" << std::endl;
+    std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
+    std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
+    std::cerr << "  -a algorithm     - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
+    std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
+    std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
+    std::cerr << "  -h               - print help" << std::endl;
+    std::cerr << "  -v               - print version" << std::endl;
 }
 
 void Version() {
