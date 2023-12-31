@@ -92,13 +92,14 @@ std::vector<KMer> ConstructKMers(std::vector<FastaRecord> &data, int k, bool com
 /// Return unique k-mers in no particular order.
 /// If complements is set to true, the result contains only one of the complementary k-mers - it is not guaranteed which one.
 /// This runs in O(sequence length) expected time.
-void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool case_sensitive = false) {
+void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements) {
     std::ifstream fasta(path);
+    std::string sequence;
+    std::string line;
     if (fasta.is_open()) {
         char c;
         int beforeKMerEnd = k;
         kmer_t currentKMer = 0;
-        kmer_t cases = 0;
         kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
         bool readingHeader = false;
         while (fasta >> std::noskipws >> c) {
@@ -118,16 +119,12 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool
                 continue;
             }
             currentKMer <<= 2;
-            // K-mer is present if it is upper case or case-insensitive.
-            cases |= !case_sensitive || c <= 'Z';
-            cases <<= 1;
             currentKMer &= mask;
             currentKMer |= data;
             if(beforeKMerEnd > 0) --beforeKMerEnd;
             if (beforeKMerEnd == 0 && (!complements || kh_get_S64(kMers, ReverseComplement(currentKMer, k)) == kh_end(kMers))) {
                 int ret;
-                // If the k-mer was masked as present.
-                if (cases & (1 << k)) kh_put_S64(kMers, currentKMer, &ret);
+                kh_put_S64(kMers, currentKMer, &ret);
             }
         }
         fasta.close();

@@ -19,7 +19,7 @@ namespace {
         std::vector<FastaRecord> wantResult = {
                 FastaRecord{"1", "ACCCGAAC"},
                 FastaRecord{"2", "CGTANATGC"},
-                FastaRecord{"3", "AcCCGTTTAACG"},
+                FastaRecord{"3", "ACCCGTTTAACG"},
                 FastaRecord{"4", "A"},
         };
 
@@ -38,22 +38,20 @@ namespace {
         struct TestCase {
             int k;
             bool complements;
-            bool case_sensitive;
             size_t wantResultSize;
         };
         std::vector<TestCase> tests = {
-                {10, true, false,3},
-                {10, true, true,2},
-                {5, true, false, 11},
-                {5, false, false, 11},
-                {2, true, false, 9},
-                {2, false, false, 11},
+                {10, true, 3},
+                {5, true, 11},
+                {5, false, 11},
+                {2, true, 9},
+                {2, false, 11},
         };
 
         for (auto &t: tests) {
             auto kMers  = kh_init_S64();
 
-            ReadKMers(kMers, path, t.k, t.complements, t.case_sensitive);
+            ReadKMers(kMers, path, t.k, t.complements);
 
             EXPECT_EQ(t.wantResultSize, kh_size(kMers));
         }
