@@ -16,15 +16,14 @@
 
 #ifdef LARGE_KMERS
     KHASH_SET_INIT_INT128(S64)
+    KHASH_MAP_INIT_INT128(P64, size_t)
+    KHASH_MAP_INIT_INT128(O64, std::list<size_t>)
 #else
     KHASH_SET_INIT_INT64(S64)
+    KHASH_MAP_INIT_INT64(P64, size_t)
+    KHASH_MAP_INIT_INT64(O64, std::list<size_t>)
 #endif
 
-#ifdef LARGE_KMERS
-    KHASH_MAP_INIT_INT128(P64, size_t)
-#else
-    KHASH_MAP_INIT_INT64(P64, size_t)
-#endif
 
 /// Determine whether the k-mer or its reverse complement is present.
 bool containsKMer(kh_S64_t *kMers, kmer_t kMer, int k, bool complements) {
@@ -65,6 +64,23 @@ std::vector<kmer_t> kMersToVec(kh_S64_t *kMers) {
         res[index++] = kh_key(kMers, i);
     }
     return res;
+}
+
+bool appendInterval(kh_O64_t *intervals, kmer_t kMer, size_t index, int k, bool complements) {
+    if (complements) kMer = std::min(kMer, ReverseComplement(kMer, k));
+    auto key = kh_get_O64(intervals, kMer);
+    if (key == kh_end(intervals)) {
+        int ret;
+        kh_put_O64(intervals, kMer, &ret);
+        key = kh_get_O64(intervals, kMer);
+        auto l = std::list<size_t>();
+        kh_value(intervals, key) = l;
+    }
+    if (kh_value(intervals, key).empty() || kh_value(intervals, key).back() != index) {
+        kh_value(intervals, key).push_back(index);
+        return true;
+    }
+    return false;
 }
 
 

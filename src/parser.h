@@ -135,3 +135,66 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool
         throw std::invalid_argument("couldn't open file " + path);
     }
 }
+
+std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, std::string &path, int k, bool complements, std::ostream &of, bool* setIntervals = nullptr) {
+    std::ifstream fasta(path);
+    if (fasta.is_open()) {
+        bool reading = setIntervals == nullptr;
+        size_t occurrences = 0;
+        char c;
+        int beforeKMerEnd = k;
+        kmer_t currentKMer = 0;
+        kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
+        size_t current_interval = 0;
+        bool interval_used = false;
+        bool readingHeader = false;
+        while (fasta >> std::noskipws >> c) {
+            if (c == '>') {
+                readingHeader = true;
+                currentKMer = 0;
+                beforeKMerEnd = k;
+                current_interval += interval_used;
+                interval_used = false;
+            }
+            else if (c == '\n') readingHeader = false;
+            if (readingHeader) continue;
+            auto data = NucleotideToInt(c);
+            // Disregard white space.
+            if (c == '\n' || c == '\r' || c == ' ') continue;
+            if (data == -1) {
+                currentKMer = 0;
+                beforeKMerEnd = k;
+                current_interval += interval_used;
+                interval_used = false;
+                continue;
+            }
+            currentKMer <<= 2;
+            currentKMer &= mask;
+            currentKMer |= data;
+            if(beforeKMerEnd > 0) --beforeKMerEnd;
+            if (beforeKMerEnd == 0) {
+                bool represented = kh_get_S64(kMers, currentKMer) != kh_end(kMers);
+                bool set = false;
+                if (represented) {
+                    if (reading) occurrences += appendInterval(intervals, currentKMer, current_interval, k, complements);
+                    else set = setIntervals[current_interval];
+                } else {
+                    current_interval += interval_used;
+                    interval_used = false;
+                }
+                if (!reading) {
+                    if (set && c >= 'a') {
+                        c += 'A' - 'a';
+                    } else if (!set && c <= 'Z') {
+                        c -= 'A' - 'a';
+                    }
+                    of << c;
+                }
+            }
+        }
+        fasta.close();
+        return {occurrences, current_interval + interval_used};
+    } else {
+        throw std::invalid_argument("couldn't open file " + path);
+    }
+}

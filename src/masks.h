@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iostream>
+#include <glpk.h>
 
 #include "parser.h"
 #include "khash_utils.h"
@@ -63,7 +64,52 @@ void OptimizeOnes(std::ifstream &in, std::ostream &of, kh_S64_t *kMers, int k, b
     }
     currentKMer &= mask >> 1;
     for (char ch : NumberToKMer(currentKMer, k - beforeKMerEnd)) of << UpperToLower(ch);
-    of << "\n";
+    of << std::endl;
+}
+
+/// For the given masked superstring output the same superstring with mask with minimal number of runs of ones.
+void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bool complements) {
+    kh_O64_t *intervals = kh_init_O64();
+    auto [size, rows] = ReadIntervals(intervals, kMers, path, k, complements, of, nullptr);
+    glp_prob *lp;
+    lp = glp_create_prob();
+    auto *ia = new int[size + 1];
+    auto *ja = new int[size + 1];
+    auto *ar = new double[size + 1];
+    glp_set_obj_dir(lp, GLP_MIN);
+    glp_add_rows(lp, rows);
+    for (size_t i = 0; i < rows; ++i) {
+        glp_set_row_bnds(lp, i + 1, GLP_LO, 1.0, 0.0);
+    }
+    glp_add_cols(lp, kh_size(intervals));
+    for (size_t i = 0; i < kh_size(intervals); ++i) {
+        glp_set_col_bnds(lp, i + 1, GLP_DB, 0.0, 1.0);
+        glp_set_obj_coef(lp, i + 1, 1.0);
+    }
+    size_t index = 0;
+    size_t kMer = 0;
+    for (auto i = kh_begin(intervals); i != kh_end(intervals); ++i) {
+        if (!kh_exist(intervals, i)) continue;
+        auto key = kh_key(intervals, i);
+        for (auto j : kh_value(intervals, key)) {
+            ia[index + 1] = j + 1;
+            ja[index + 1] = kMer + 1;
+            ar[index + 1] = 1.0;
+            ++index;
+        }
+        ++kMer;
+    }
+    glp_load_matrix(lp, index, ia, ja, ar);
+    glp_simplex(lp, nullptr);
+
+    bool *intervalsSet = new bool[rows];
+
+    for (size_t i = 0; i < rows; ++i) {
+        intervalsSet[i] = glp_get_col_prim(lp, i + 1) > 0.5;
+    }
+
+    ReadIntervals(nullptr, kMers, path, k, complements, of, intervalsSet);
+    of << std::endl;
 }
 
 int Optimize(std::string &algorithm, std::string path, std::ostream &of,  int k, bool complements) {
@@ -76,14 +122,10 @@ int Optimize(std::string &algorithm, std::string path, std::ostream &of,  int k,
             OptimizeOnes(in, of, kMers, k, complements, false);
         } else if (algorithm == "zeros") {
             OptimizeOnes(in, of, kMers, k, complements, true);
+        } else if (algorithm == "runs") {
+            OptimizeRuns(path, kMers, of, k, complements);
         } else {
-            if (algorithm == "runs") {
-                std::cerr
-                        << "Minimization of the number of runs of ones is not supported. Please use the Python script from supplement."
-                        << std::endl;
-            } else {
-                std::cerr << "Algorithm '" + algorithm + "' not recognized." << std::endl;
-            }
+            std::cerr << "Algorithm '" + algorithm + "' not recognized." << std::endl;
             in.close();
             return 1;
         }
