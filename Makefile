@@ -7,6 +7,7 @@ LARGEFLAGS=  -DLARGE_KMERS
 SRC=         src
 TESTS=       tests
 GTEST=       $(TESTS)/googletest/googletest
+DATA=        data
 
 
 all: kmercamel kmercamel-large
@@ -14,10 +15,12 @@ all: kmercamel kmercamel-large
 test: cpptest converttest verify
 
 verify: verify.py kmercamel
-	./verify.py ./spneumoniae.fa
+	./verify.py $(DATA)/spneumoniae.fa
+	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
 
 quick-verify: verify.py kmercamel
-	./verify.py --quick ./spneumoniae.fa
+	./verify.py --quick $(DATA)/spneumoniae.fa
+	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
 
 cpptest: kmercameltest kmercameltest-large
 	./kmercameltest
