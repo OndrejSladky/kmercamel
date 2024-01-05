@@ -17,8 +17,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: glpk
-      run: sudo apt install glpk-utils
     - name: make
       run: make
     - name: submodule
@@ -33,8 +31,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
-    - name: glpk
-      run: sudo apt install glpk-utils
     - name: make
       run: make
     - name: jellyfish
