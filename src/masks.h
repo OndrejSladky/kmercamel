@@ -67,6 +67,8 @@ void OptimizeOnes(std::ifstream &in, std::ostream &of, kh_S64_t *kMers, int k, b
     of << std::endl;
 }
 
+/// Pre-solve to the ILP in minimizing the number of runs.
+/// Set the intervals with single-occurring k-mers to 1 and remove k-mers from those intervals.
 std::pair<std::vector<int>, std::vector<int>> HeuristicPreSolve(std::vector<std::list<size_t>> &intervalsForKMer, size_t intervalCount, int &mappedSize, size_t &totalIntervals, int &newIntervals) {
     std::vector<int> mapping(intervalsForKMer.size());
     std::vector<int> intervalMapping(intervalCount);

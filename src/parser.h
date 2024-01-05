@@ -134,6 +134,7 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool
     }
 }
 
+/// Print the k-mer tail that has [beforeKMerEnd] steps to become a full k-mer.
 void PrintRemainingKMer(kmer_t currentKMer, int beforeKMerEnd, int k, std::ostream &of) {
     currentKMer <<= 2 * beforeKMerEnd;
     for (int i = 0; i < k - beforeKMerEnd; ++i) {
@@ -142,6 +143,9 @@ void PrintRemainingKMer(kmer_t currentKMer, int beforeKMerEnd, int k, std::ostre
     }
 }
 
+/// Read or set the intervals.
+/// If [setIntervals] is provided reprint the given files with the corresponding intervals set to 1.
+/// Otherwise, read the intervals in which each k-mer occurs.
 std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, std::vector<std::list<size_t>> &intervalsForKmer,
                                         std::string &path, int k, bool complements, std::ostream &of, const bool* setIntervals = nullptr) {
     std::ifstream fasta(path);
@@ -152,7 +156,7 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
         int beforeKMerEnd = k;
         kmer_t currentKMer = 0;
         kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
-        size_t current_interval = 0;
+        size_t currentInterval = 0;
         bool interval_used = false;
         bool readingHeader = false;
         while (fasta >> std::noskipws >> c) {
@@ -161,7 +165,7 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
                 readingHeader = true;
                 currentKMer = 0;
                 beforeKMerEnd = k;
-                current_interval += interval_used;
+                currentInterval += interval_used;
                 interval_used = false;
             }
             else if (c == '\n') readingHeader = false;
@@ -173,7 +177,7 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
                 if (!reading) PrintRemainingKMer(currentKMer, beforeKMerEnd, k, of);
                 currentKMer = 0;
                 beforeKMerEnd = k;
-                current_interval += interval_used;
+                currentInterval += interval_used;
                 interval_used = false;
                 continue;
             }
@@ -186,10 +190,10 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
                 bool set = false;
                 if (represented) {
                     interval_used = true;
-                    if (reading) occurrences += appendInterval(intervals, intervalsForKmer, currentKMer, current_interval, k, complements);
-                    else set = setIntervals[current_interval];
+                    if (reading) occurrences += appendInterval(intervals, intervalsForKmer, currentKMer, currentInterval, k, complements);
+                    else set = setIntervals[currentInterval];
                 } else {
-                    current_interval += interval_used;
+                    currentInterval += interval_used;
                     interval_used = false;
                 }
                 if (!reading) {
@@ -206,7 +210,7 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
         }
         if (!reading) PrintRemainingKMer(currentKMer, beforeKMerEnd, k, of);
         fasta.close();
-        return {occurrences, current_interval + interval_used};
+        return {occurrences, currentInterval + interval_used};
     } else {
         throw std::invalid_argument("couldn't open file " + path);
     }
