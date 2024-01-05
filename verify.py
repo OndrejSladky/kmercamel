@@ -5,19 +5,12 @@ import os
 import argparse
 
 
-def print_help():
-    print("verify accepts a single argument - a path to the fasta file.")
-    print("verify then checks whether ./kmers outputs a superstring which contains the same set of k-mers as"
-          "the original sequence on this fasta file")
-    print("example usage: ./verify.py ./spneumoniae.fa")
-
-
-def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, large: bool) -> bool:
+def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, large: bool, masked_superstring: str) -> bool:
     """
     Check if running superstring algorithm on given fasta file produces the same set of k-mers as the original one.
     """
     with open("./bin/kmercamel.txt", "w") as k_mers:
-        args = ["./kmercamel-large" if large else "./kmercamel", "-p", fasta_path, "-k", f"{k}", "-a", algorithm]
+        args = ["./kmercamel-large" if large else "./kmercamel"] + (["optimize"] if masked_superstring else []) + ["-p", (masked_superstring if masked_superstring != "" else fasta_path), "-k", f"{k}", "-a", algorithm]
         if complements:
             args.append("-c")
         subprocess.run(args, stdout=k_mers)
@@ -55,7 +48,7 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
         print("F")
         print(f"Failed: k={k}: expected orginal_distinct_count={stats[1][distinct_key]}, result_distinct_count={stats[0][distinct_key]} and merged_distinct_count={stats[2][distinct_key]} to be equal.")
         return False
-    elif complements and stats[0][distinct_key] != stats[0][total_key]:
+    elif complements and stats[0][distinct_key] != stats[0][total_key] and masked_superstring == "":
         print("W")
         print(f"Warning: k={k}: number of masked k-mers={stats[0][total_key]} is not minimal possible (minimum is {stats[0][distinct_key]}).")
     else:
@@ -69,22 +62,34 @@ def main():
     if not os.path.exists("bin"):
         os.makedirs("bin")
 
-    parser = argparse.ArgumentParser("check whether ./kmers outputs a superstring which contains the same set of k-mers"
+    parser = argparse.ArgumentParser("check whether ./kmercamel(-large) (optimize) outputs a superstring which contains the same set of k-mers"
                                      "as the original sequence")
     parser.add_argument("path", help="path to the fasta file on which ./kmers is verified")
     parser.add_argument("--quick", help="if set do not check for full range of k", action="store_true")
+    parser.add_argument("--superstring_path", help="the path to the masked superstring to test masks")
+    parser.add_argument("--k", help="the value of k for mask verification")
     args = parser.parse_args()
 
-    # Do the tests.
     success = True
-    for a in ["global", "local", "globalAC", "localAC", "streaming"]:
-        print(f"Testing {a}:")
-        for complements in [True, False]:
+    if args.superstring_path is None:
+        # Do the tests on superstring algoritms.
+        for a in ["global", "local", "globalAC", "localAC", "streaming"]:
+            print(f"Testing {a}:")
+            for complements in [True, False]:
+                for large in [True, False]:
+                    for k in ( ([5, 8, 12] if a not in ["local", "global"] else [5, 8, 12, 17, 31, 43, 51, 63]) if args.quick else range(2, 64)):
+                        if not large and k >= 32: continue
+                        success &= verify_instance(args.path, k, a, complements, large, "")
+                    print("")
+    else:
+        k = int(args.k)
+        # Do the tests on mask optimization.
+        for a in ["runs", "ones", "zeros"]:
+            print(f"Testing {a}:")
             for large in [True, False]:
-                for k in ( ([5, 8, 12] if a not in ["local", "global"] else [5, 8, 12, 17, 31, 43, 51, 63]) if args.quick else range(2, 64)):
-                    if not large and k >= 32: continue
-                    success &= verify_instance(args.path, k, a, complements, large)
-                print("")
+                if not large and k >= 32: continue
+                success &= verify_instance(args.path, k, a, True, large, args.superstring_path)
+            print("")
 
     # Print status.
     if not success:

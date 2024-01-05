@@ -132,4 +132,24 @@ namespace {
             }
         }
     }
+
+    TEST(Parser, PrintRemainingKMer) {
+        struct TestCase {
+            kmer_t currentKMer;
+            int k;
+            int beforeKMerEnd;
+            std::string wantResult;
+        };
+        std::vector<TestCase> tests = {
+                {KMerToNumber({"TAC"}), 3, 1, "ac"},
+                {KMerToNumber({"TAC"}), 3, 2, "c"},
+                {KMerToNumber({"TAC"}), 3, 3, ""},
+        };
+
+        for (auto t: tests) {
+            std::stringstream of;
+            PrintRemainingKMer(t.currentKMer, t.beforeKMerEnd, t.k, of);
+            EXPECT_EQ(t.wantResult, of.str());
+        }
+    }
 }

@@ -23,18 +23,16 @@ struct FastaRecord {
 
 /// Read fasta file with given path.
 std::vector<FastaRecord> ReadFasta(std::string &path) {
-
     gzFile fp;
     kseq_t *seq;
     std::vector<FastaRecord> records;
-    int l;
 
     fp = gzopen(path.c_str(), "r");
-    if (fp == 0) {
+    if (fp == nullptr) {
         throw std::invalid_argument("couldn't open file " + path);
     }
     seq = kseq_init(fp);
-    while ((l = kseq_read(seq)) >= 0) {
+    while (kseq_read(seq) >= 0) {
         records.push_back(FastaRecord{
             seq->name.s,
             seq->seq.s,
@@ -131,6 +129,88 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool
             }
         }
         fasta.close();
+    } else {
+        throw std::invalid_argument("couldn't open file " + path);
+    }
+}
+
+/// Print the k-mer tail that has [beforeKMerEnd] steps to become a full k-mer.
+void PrintRemainingKMer(kmer_t currentKMer, int beforeKMerEnd, int k, std::ostream &of) {
+    currentKMer <<= 2 * beforeKMerEnd;
+    for (int i = 0; i < k - beforeKMerEnd; ++i) {
+        char c = NucleotideAtIndex(currentKMer, k, i) - 'A' + 'a';
+        of << c;
+    }
+}
+
+/// Read or set the intervals.
+/// If [setIntervals] is provided reprint the given files with the corresponding intervals set to 1.
+/// Otherwise, read the intervals in which each k-mer occurs.
+std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, std::vector<std::list<size_t>> &intervalsForKmer,
+                                        std::string &path, int k, bool complements, std::ostream &of, const bool* setIntervals = nullptr) {
+    std::ifstream fasta(path);
+    if (fasta.is_open()) {
+        bool reading = setIntervals == nullptr;
+        size_t occurrences = 0;
+        char c;
+        int beforeKMerEnd = k;
+        kmer_t currentKMer = 0;
+        kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
+        size_t currentInterval = 0;
+        bool interval_used = false;
+        bool readingHeader = false;
+        while (fasta >> std::noskipws >> c) {
+            if (c == '>') {
+                if (!reading) PrintRemainingKMer(currentKMer, beforeKMerEnd, k, of);
+                readingHeader = true;
+                currentKMer = 0;
+                beforeKMerEnd = k;
+                currentInterval += interval_used;
+                interval_used = false;
+            }
+            else if (c == '\n') readingHeader = false;
+            if (readingHeader) continue;
+            auto data = NucleotideToInt(c);
+            // Disregard white space.
+            if (c == '\n' || c == '\r' || c == ' ') continue;
+            if (data == -1) {
+                if (!reading) PrintRemainingKMer(currentKMer, beforeKMerEnd, k, of);
+                currentKMer = 0;
+                beforeKMerEnd = k;
+                currentInterval += interval_used;
+                interval_used = false;
+                continue;
+            }
+            currentKMer <<= 2;
+            currentKMer &= mask;
+            currentKMer |= data;
+            --beforeKMerEnd;
+            if (beforeKMerEnd == 0) {
+                bool represented = kh_get_S64(kMers, currentKMer) != kh_end(kMers);
+                bool set = false;
+                if (represented) {
+                    interval_used = true;
+                    if (reading) occurrences += appendInterval(intervals, intervalsForKmer, currentKMer, currentInterval, k, complements);
+                    else set = setIntervals[currentInterval];
+                } else {
+                    currentInterval += interval_used;
+                    interval_used = false;
+                }
+                if (!reading) {
+                    char toPrint = NucleotideAtIndex(currentKMer, k, 0);
+                    if (set && toPrint >= 'a') {
+                        toPrint += 'A' - 'a';
+                    } else if (!set && toPrint <= 'Z') {
+                        toPrint -= 'A' - 'a';
+                    }
+                    of << toPrint;
+                }
+                beforeKMerEnd++;
+            }
+        }
+        if (!reading) PrintRemainingKMer(currentKMer, beforeKMerEnd, k, of);
+        fasta.close();
+        return {occurrences, currentInterval + interval_used};
     } else {
         throw std::invalid_argument("couldn't open file " + path);
     }

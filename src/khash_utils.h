@@ -1,9 +1,11 @@
 #pragma once
 
+#include <vector>
+#include <list>
+
 #include "kmers.h"
 #include "khash.h"
 
-#include <vector>
 
 #define kh_int128_hash_func(key) kh_int64_hash_func((khint64_t)((key)>>65^(key)^(key)<<21))
 #define kh_int128_hash_equal(a, b) ((a) == (b))
@@ -15,16 +17,17 @@
 	KHASH_INIT(name, __uint128_t, char, 0, kh_int128_hash_func, kh_int128_hash_equal)
 
 #ifdef LARGE_KMERS
+    // Use 128-bit integers for k-mers to allow for larger k.
     KHASH_SET_INIT_INT128(S64)
+    KHASH_MAP_INIT_INT128(P64, size_t)
+    KHASH_MAP_INIT_INT128(O64, size_t)
 #else
+    // Use 64-bits integers for k-mers for faster operations and less memory usage.
     KHASH_SET_INIT_INT64(S64)
+    KHASH_MAP_INIT_INT64(P64, size_t)
+    KHASH_MAP_INIT_INT64(O64, size_t)
 #endif
 
-#ifdef LARGE_KMERS
-    KHASH_MAP_INIT_INT128(P64, size_t)
-#else
-    KHASH_MAP_INIT_INT64(P64, size_t)
-#endif
 
 /// Determine whether the k-mer or its reverse complement is present.
 bool containsKMer(kh_S64_t *kMers, kmer_t kMer, int k, bool complements) {
@@ -65,6 +68,28 @@ std::vector<kmer_t> kMersToVec(kh_S64_t *kMers) {
         res[index++] = kh_key(kMers, i);
     }
     return res;
+}
+
+/// Add an interval with given index to the given k-mer.
+///
+/// [intervalsForKMer] store the intervals and [intervals] maps the k-mer to the index in [intervalsForKMer].
+bool appendInterval(kh_O64_t *intervals, std::vector<std::list<size_t>> &intervalsForKMer, kmer_t kMer, size_t index, int k, bool complements) {
+    if (complements) kMer = std::min(kMer, ReverseComplement(kMer, k));
+    auto key = kh_get_O64(intervals, kMer);
+    if (key == kh_end(intervals)) {
+        int ret;
+        kh_put_O64(intervals, kMer, &ret);
+        key = kh_get_O64(intervals, kMer);
+        kh_value(intervals, key) = intervalsForKMer.size();
+        intervalsForKMer.emplace_back(std::list<size_t>());
+    }
+    key = kh_get_O64(intervals, kMer);
+    auto position = kh_value(intervals, key);
+    if (intervalsForKMer[position].empty() || intervalsForKMer[position].back() != index) {
+        intervalsForKMer[position].push_back(index);
+        return true;
+    }
+    return false;
 }
 
 

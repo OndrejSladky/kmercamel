@@ -1,7 +1,4 @@
 #pragma once
-#include "models.h"
-#include "kmers.h"
-#include "khash_utils.h"
 
 #include <string>
 #include <unordered_set>
@@ -10,6 +7,10 @@
 #include <cstdint>
 #include <algorithm>
 #include <fstream>
+
+#include "models.h"
+#include "kmers.h"
+#include "khash_utils.h"
 
 
 /// Find the right extension to the provided last k-mer from the kMers.
