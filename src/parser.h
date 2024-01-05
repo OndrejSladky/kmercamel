@@ -176,6 +176,7 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
                 bool represented = kh_get_S64(kMers, currentKMer) != kh_end(kMers);
                 bool set = false;
                 if (represented) {
+                    interval_used = true;
                     if (reading) occurrences += appendInterval(intervals, currentKMer, current_interval, k, complements);
                     else set = setIntervals[current_interval];
                 } else {

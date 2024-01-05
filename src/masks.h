@@ -70,7 +70,9 @@ void OptimizeOnes(std::ifstream &in, std::ostream &of, kh_S64_t *kMers, int k, b
 /// For the given masked superstring output the same superstring with mask with minimal number of runs of ones.
 void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bool complements) {
     kh_O64_t *intervals = kh_init_O64();
-    auto [size, rows] = ReadIntervals(intervals, kMers, path, k, complements, of, nullptr);
+    auto x = ReadIntervals(intervals, kMers, path, k, complements, of, nullptr);
+    auto size = x.first;
+    auto rows = x.second;
     glp_prob *lp;
     lp = glp_create_prob();
     auto *ia = new int[size + 1];
@@ -88,10 +90,9 @@ void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bo
     }
     size_t index = 0;
     size_t kMer = 0;
-    for (auto i = kh_begin(intervals); i != kh_end(intervals); ++i) {
-        if (!kh_exist(intervals, i)) continue;
-        auto key = kh_key(intervals, i);
-        for (auto j : kh_value(intervals, key)) {
+    for (auto key = kh_begin(intervals); key != kh_end(intervals); ++key) {
+        if (!kh_exist(intervals, key)) continue;
+        for (auto j : intervalsForKMer[kh_value(intervals, key)]) {
             ia[index + 1] = j + 1;
             ja[index + 1] = kMer + 1;
             ar[index + 1] = 1.0;
