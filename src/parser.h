@@ -136,7 +136,15 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool
     }
 }
 
-std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, std::string &path, int k, bool complements, std::ostream &of, bool* setIntervals = nullptr) {
+void PrintRemainingKMer(kmer_t currentKMer, int beforeKMerEnd, int k, std::ostream &of) {
+    currentKMer <<= 2 * beforeKMerEnd;
+    for (int i = 0; i < k - beforeKMerEnd; ++i) {
+        char c = NucleotideAtIndex(currentKMer, k, i) - 'A' + 'a';
+        of << c;
+    }
+}
+
+std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, std::vector<std::list<size_t>> &intervalsForKmer, std::string &path, int k, bool complements, std::ostream &of, bool* setIntervals = nullptr) {
     std::ifstream fasta(path);
     if (fasta.is_open()) {
         bool reading = setIntervals == nullptr;
@@ -150,6 +158,7 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
         bool readingHeader = false;
         while (fasta >> std::noskipws >> c) {
             if (c == '>') {
+                if (!reading) PrintRemainingKMer(currentKMer, beforeKMerEnd, k, of);
                 readingHeader = true;
                 currentKMer = 0;
                 beforeKMerEnd = k;
@@ -162,6 +171,7 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
             // Disregard white space.
             if (c == '\n' || c == '\r' || c == ' ') continue;
             if (data == -1) {
+                if (!reading) PrintRemainingKMer(currentKMer, beforeKMerEnd, k, of);
                 currentKMer = 0;
                 beforeKMerEnd = k;
                 current_interval += interval_used;
@@ -171,28 +181,31 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
             currentKMer <<= 2;
             currentKMer &= mask;
             currentKMer |= data;
-            if(beforeKMerEnd > 0) --beforeKMerEnd;
+            --beforeKMerEnd;
             if (beforeKMerEnd == 0) {
                 bool represented = kh_get_S64(kMers, currentKMer) != kh_end(kMers);
                 bool set = false;
                 if (represented) {
                     interval_used = true;
-                    if (reading) occurrences += appendInterval(intervals, currentKMer, current_interval, k, complements);
+                    if (reading) occurrences += appendInterval(intervals, intervalsForKmer, currentKMer, current_interval, k, complements);
                     else set = setIntervals[current_interval];
                 } else {
                     current_interval += interval_used;
                     interval_used = false;
                 }
                 if (!reading) {
-                    if (set && c >= 'a') {
-                        c += 'A' - 'a';
-                    } else if (!set && c <= 'Z') {
-                        c -= 'A' - 'a';
+                    char toPrint = NucleotideAtIndex(currentKMer, k, 0);
+                    if (set && toPrint >= 'a') {
+                        toPrint += 'A' - 'a';
+                    } else if (!set && toPrint <= 'Z') {
+                        toPrint -= 'A' - 'a';
                     }
-                    of << c;
+                    of << toPrint;
                 }
+                beforeKMerEnd++;
             }
         }
+        if (!reading) PrintRemainingKMer(currentKMer, beforeKMerEnd, k, of);
         fasta.close();
         return {occurrences, current_interval + interval_used};
     } else {

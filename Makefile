@@ -1,7 +1,7 @@
 .PHONY: all clean test cpptest converttest verify quick-verify
 
 CXX=         g++
-CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2
+CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -g3
 LDFLAGS=     -lz -lglpk
 LARGEFLAGS=  -DLARGE_KMERS
 SRC=         src

@@ -67,49 +67,102 @@ void OptimizeOnes(std::ifstream &in, std::ostream &of, kh_S64_t *kMers, int k, b
     of << std::endl;
 }
 
+std::pair<std::vector<int>, std::vector<int>> HeuristicPreSolve(std::vector<std::list<size_t>> &intervalsForKMer, size_t intervalCount, int &mappedSize, size_t &totalIntervals, int &newIntervals) {
+    std::vector<int> mapping(intervalsForKMer.size());
+    std::vector<int> intervalMapping(intervalCount);
+
+    // Set undecided intervals with a single-occurring k-mer to 1s.
+    for (size_t i = 0; i < intervalsForKMer.size(); ++i) {
+        if (intervalsForKMer[i].size() == 1) {
+            mapping[i] = -1;
+            intervalMapping[intervalsForKMer[i].front()] = -1;
+        }
+    }
+
+    // Remove k-mers from decided intervals.
+    for (size_t i = 0; i < intervalsForKMer.size(); ++i) {
+        for (auto j : intervalsForKMer[i]) {
+            if (intervalMapping[j] == -1) {
+                mapping[i] = -1;
+            }
+        }
+    }
+
+    totalIntervals = 0;
+    int newIndex = 0;
+    for (size_t i = 0; i < intervalsForKMer.size(); ++i) {
+        if (mapping[i] == -1) continue;
+        mapping[i] = newIndex++;
+        totalIntervals += intervalsForKMer[i].size();
+    }
+    mappedSize = newIndex;
+
+    int newIntervalIndex = 0;
+    for (size_t i = 0; i < intervalCount; ++i) {
+        if (intervalMapping[i] == -1) continue;
+        intervalMapping[i] = newIntervalIndex++;
+    }
+    newIntervals = newIntervalIndex;
+
+
+    return {mapping, intervalMapping};
+}
+
+
 /// For the given masked superstring output the same superstring with mask with minimal number of runs of ones.
 void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bool complements) {
     kh_O64_t *intervals = kh_init_O64();
-    auto x = ReadIntervals(intervals, kMers, path, k, complements, of, nullptr);
-    auto size = x.first;
-    auto rows = x.second;
+    std::vector<std::list<size_t>> intervalsForKMer;
+    auto [size, rows] = ReadIntervals(intervals, kMers, intervalsForKMer, path, k, complements, of, nullptr);
+    int mappedSize, newIntervals; size_t totalIntervals;
+    auto [mapping, intervalMapping] = HeuristicPreSolve(intervalsForKMer, rows, mappedSize, totalIntervals, newIntervals);
     glp_prob *lp;
     lp = glp_create_prob();
-    auto *ia = new int[size + 1];
-    auto *ja = new int[size + 1];
-    auto *ar = new double[size + 1];
-    glp_set_obj_dir(lp, GLP_MIN);
-    glp_add_rows(lp, rows);
-    for (size_t i = 0; i < rows; ++i) {
-        glp_set_row_bnds(lp, i + 1, GLP_LO, 1.0, 0.0);
-    }
-    glp_add_cols(lp, kh_size(intervals));
-    for (size_t i = 0; i < kh_size(intervals); ++i) {
-        glp_set_col_bnds(lp, i + 1, GLP_DB, 0.0, 1.0);
-        glp_set_obj_coef(lp, i + 1, 1.0);
-    }
-    size_t index = 0;
-    size_t kMer = 0;
-    for (auto key = kh_begin(intervals); key != kh_end(intervals); ++key) {
-        if (!kh_exist(intervals, key)) continue;
-        for (auto j : intervalsForKMer[kh_value(intervals, key)]) {
-            ia[index + 1] = j + 1;
-            ja[index + 1] = kMer + 1;
-            ar[index + 1] = 1.0;
-            ++index;
+    if (mappedSize != 0) {
+        auto *ia = new int[totalIntervals + 1];
+        auto *ja = new int[totalIntervals + 1];
+        auto *ar = new double[totalIntervals + 1];
+        glp_set_obj_dir(lp, GLP_MIN);
+        // Add a row per each k-mer.
+        glp_add_rows(lp, mappedSize);
+        for (int i = 0; i < mappedSize; ++i) {
+            glp_set_row_bnds(lp, i + 1, GLP_LO, 1.0, 0.0);
         }
-        ++kMer;
+        // Add a column per each undecided interval.
+        glp_add_cols(lp, newIntervals);
+        for (int i = 0; i < newIntervals; ++i) {
+            glp_set_col_bnds(lp, i + 1, GLP_LO, 0.0, 1.0);
+            glp_set_col_kind(lp, i + 1, GLP_IV);
+            glp_set_obj_coef(lp, i + 1, 1.0);
+        }
+        int index = 0;
+        for (auto key = kh_begin(intervals); key != kh_end(intervals); ++key) {
+            if (!kh_exist(intervals, key)) continue;
+            size_t i = kh_value(intervals, key);
+            if (mapping[i] == -1) continue;
+            for (auto j: intervalsForKMer[i]) {
+                ja[index + 1] = intervalMapping[j] + 1;
+                ia[index + 1] = mapping[i] + 1;
+                ar[index + 1] = 1.0;
+                ++index;
+            }
+        }
+        // Supress glpk output.
+        glp_term_out(GLP_OFF);
+
+        glp_load_matrix(lp, index, ia, ja, ar);
+        glp_simplex(lp, nullptr);
     }
-    glp_load_matrix(lp, index, ia, ja, ar);
-    glp_simplex(lp, nullptr);
 
     bool *intervalsSet = new bool[rows];
 
     for (size_t i = 0; i < rows; ++i) {
-        intervalsSet[i] = glp_get_col_prim(lp, i + 1) > 0.5;
+        if (intervalMapping[i] == -1) intervalsSet[i] = true;
+        else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
-    ReadIntervals(nullptr, kMers, path, k, complements, of, intervalsSet);
+    of << "> masked superstring with minimum number of runs of ones" << std::endl;
+    ReadIntervals(nullptr, kMers, intervalsForKMer, path, k, complements, of, intervalsSet);
     of << std::endl;
 }
 

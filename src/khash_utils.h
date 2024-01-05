@@ -66,9 +66,7 @@ std::vector<kmer_t> kMersToVec(kh_S64_t *kMers) {
     return res;
 }
 
-std::vector<std::list<size_t>> intervalsForKMer;
-
-bool appendInterval(kh_O64_t *intervals, kmer_t kMer, size_t index, int k, bool complements) {
+bool appendInterval(kh_O64_t *intervals, std::vector<std::list<size_t>> &intervalsForKMer, kmer_t kMer, size_t index, int k, bool complements) {
     if (complements) kMer = std::min(kMer, ReverseComplement(kMer, k));
     auto key = kh_get_O64(intervals, kMer);
     if (key == kh_end(intervals)) {
