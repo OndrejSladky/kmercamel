@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: glpk
-      run: sudo apt install glpk-utils libglpk-dev glpk-doc python-glpk
+      run: sudo apt install glpk-utils libglpk-dev glpk-doc
     - name: make
       run: make
     - name: submodule
@@ -34,7 +34,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: glpk
-      run: sudo apt install glpk-utils libglpk-dev glpk-doc python-glpk
+      run: sudo apt install glpk-utils libglpk-dev glpk-doc
     - name: make
       run: make
     - name: jellyfish
