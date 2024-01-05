@@ -4,6 +4,8 @@
 #include "khash.h"
 
 #include <vector>
+#include <list>
+
 
 #define kh_int128_hash_func(key) kh_int64_hash_func((khint64_t)((key)>>65^(key)^(key)<<21))
 #define kh_int128_hash_equal(a, b) ((a) == (b))
