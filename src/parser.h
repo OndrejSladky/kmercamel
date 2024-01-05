@@ -23,18 +23,16 @@ struct FastaRecord {
 
 /// Read fasta file with given path.
 std::vector<FastaRecord> ReadFasta(std::string &path) {
-
     gzFile fp;
     kseq_t *seq;
     std::vector<FastaRecord> records;
-    int l;
 
     fp = gzopen(path.c_str(), "r");
-    if (fp == 0) {
+    if (fp == nullptr) {
         throw std::invalid_argument("couldn't open file " + path);
     }
     seq = kseq_init(fp);
-    while ((l = kseq_read(seq)) >= 0) {
+    while (kseq_read(seq) >= 0) {
         records.push_back(FastaRecord{
             seq->name.s,
             seq->seq.s,
@@ -144,7 +142,8 @@ void PrintRemainingKMer(kmer_t currentKMer, int beforeKMerEnd, int k, std::ostre
     }
 }
 
-std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, std::vector<std::list<size_t>> &intervalsForKmer, std::string &path, int k, bool complements, std::ostream &of, bool* setIntervals = nullptr) {
+std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, std::vector<std::list<size_t>> &intervalsForKmer,
+                                        std::string &path, int k, bool complements, std::ostream &of, const bool* setIntervals = nullptr) {
     std::ifstream fasta(path);
     if (fasta.is_open()) {
         bool reading = setIntervals == nullptr;
