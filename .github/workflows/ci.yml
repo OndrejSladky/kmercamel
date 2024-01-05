@@ -29,7 +29,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: glpk
-      run: sudo port install glpk
+      run: sudo brew install glpk
     - name: make
       run: make
     - name: submodule
