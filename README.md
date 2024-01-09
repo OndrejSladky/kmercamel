@@ -115,6 +115,8 @@ For example:
 
 minimizes the number of runs of 1s in the mask of the superstring computed by Global Greedy in the bidirectional model on the streptococcus fasta file with `k=12`.
 
+Note: currently mask optimization cannot read gziped files, nor can the proccess substititution be used.
+
 ### Large $k$-mers
 
 The default version of KmerCamel🐫 does not support $k > 31$. For those values, use the large KmerCamel🐫,
