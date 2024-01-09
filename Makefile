@@ -1,9 +1,9 @@
 .PHONY: all clean test cpptest converttest verify quick-verify
 
 CXX=         g++
-CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2 -I/opt/homebrew/include -L/opt/homebrew/lib
+CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2 -I/opt/homebrew/include
 
-LDFLAGS=     -lz -lglpk
+LDFLAGS=     -lz -lglpk -L/opt/homebrew/lib
 LARGEFLAGS=  -DLARGE_KMERS
 SRC=         src
 TESTS=       tests
