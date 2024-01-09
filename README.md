@@ -101,7 +101,7 @@ For mask optimization, run the subcommand `optimize` with the following argument
 
 - `p path_to_fasta` - the path to fasta file. This is a required argument.
 - `k k_value` - the size of one k-mer. This is a required argument.
-- `a algorithm` - the algorithm for mask optimization. Either `ones` for maximizing the number of 1s, `runs`for minimizing the number of runs of 1s, or `zeros` for minimizing the number of 0s. Default `ones`.
+- `a algorithm` - the algorithm for mask optimization. Either `ones` for maximizing the number of 1s, `runs` for minimizing the number of runs of 1s, or `zeros` for maximizing the number of 0s. Default `ones`.
 - `o output_path` - the path to output file. If not specified, output is printed to stdout.
 - `c` - treat k-mer and its reverse complement as equal.
 - `h` - print help.
