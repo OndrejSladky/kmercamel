@@ -1,7 +1,7 @@
 .PHONY: all clean test cpptest converttest verify quick-verify
 
 CXX=         g++
-CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2 -I /opt/homebrew/Cellar/glpk/5.0/include -L /opt/homebrew/Cellar/glpk/5.0/lib
+CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2 -I/opt/homebrew/include -L/opt/homebrew/lib
 
 LDFLAGS=     -lz -lglpk
 LARGEFLAGS=  -DLARGE_KMERS
