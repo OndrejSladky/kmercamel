@@ -125,7 +125,7 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool
             if (beforeKMerEnd == 0 && (!complements || kh_get_S64(kMers, ReverseComplement(currentKMer, k)) == kh_end(kMers))) {
                 int ret;
                 // If the k-mer was masked as present.
-                if (cases & (1 << k)) kh_put_S64(kMers, currentKMer, &ret);
+                if (cases & (kmer_t(1) << k)) kh_put_S64(kMers, currentKMer, &ret);
             }
         }
         fasta.close();
