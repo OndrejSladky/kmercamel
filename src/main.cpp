@@ -151,10 +151,10 @@ int main(int argc, char **argv) {
     } else if (masks && (d_set || !optimize_memory)) {
         std::cerr << "Not supported flags for optimize." << std::endl;
         return Help();
-    }
     } else if (lower_bound && algorithm != "global") {
         std::cerr << "Lower bound computation supported only for hash table global." << std::endl;
         return Help();
+    }
 
     if (masks) {
         int ret = Optimize(algorithm, path, *of, k, complements);
