@@ -78,7 +78,6 @@ namespace {
             overlapPath wantResult;
             int k;
             bool complements;
-            bool lower_bound;
         };
         std::vector<TestCase> tests = {
                 {
@@ -86,13 +85,11 @@ namespace {
                         {{(size_t)-1, (size_t)-1}, {(byte)-1, (byte)-1}},
                         2,
                         true,
-                        false,
                 },
                 {
                         {KMerToNumber({"ACG"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
                         {{2, 0, (size_t)-1}, {1, 2, (byte)-1}},
                         3,
-                        false,
                         false,
                 },
                 {
@@ -100,26 +97,11 @@ namespace {
                         {{4, 3, 0, 5, (size_t)-1, (size_t)-1}, {2, 2, 3, 3, (byte)-1, (byte)-1}},
                         4,
                         true,
-                        false,
-                },
-                {
-                        {KMerToNumber({"ACG"}), KMerToNumber({"CGT"}), KMerToNumber({"TAA"})},
-                        {{1, 2, 0}, {2, 1, 1}},
-                        3,
-                        false,
-                        true,
-                },
-                {
-                        {KMerToNumber({"ACC"}), KMerToNumber({"CGG"})},
-                        {{3, 2, 1, 0}, {2, 2, 0, 0}},
-                        3,
-                        true,
-                        true,
                 },
         };
 
         for (auto t : tests) {
-            overlapPath got = OverlapHamiltonianPath( t.kMers, t.k, t.complements, t.lower_bound);
+            overlapPath got = OverlapHamiltonianPath( t.kMers, t.k, t.complements);
             EXPECT_EQ(t.wantResult.first, got.first);
             EXPECT_EQ(t.wantResult.second, got.second);
         }
