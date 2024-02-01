@@ -159,7 +159,7 @@ typedef unsigned long long khint64_t;
 #endif
 #endif /* klib_unused */
 
-typedef khint32_t khint_t;
+typedef khint64_t khint_t;
 typedef khint_t khiter_t;
 
 #define __ac_isempty(flag, i) ((flag[i>>4]>>((i&0xfU)<<1))&2)
@@ -174,6 +174,10 @@ typedef khint_t khiter_t;
 
 #ifndef kroundup32
 #define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
+#endif
+
+#ifndef kroundup64
+#define kroundup64(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, (x)|=(x)>>32, ++(x))
 #endif
 
 #ifndef kcalloc
@@ -246,7 +250,7 @@ static const double __ac_HASH_UPPER = 0.77;
 		khint32_t *new_flags = 0;										\
 		khint_t j = 1;													\
 		{																\
-			kroundup32(new_n_buckets); 									\
+			kroundup64(new_n_buckets); 									\
 			if (new_n_buckets < 4) new_n_buckets = 4;					\
 			if (h->size >= (khint_t)(new_n_buckets * __ac_HASH_UPPER + 0.5)) j = 0;	/* requested size is too small */ \
 			else { /* hash table size to be changed (shrink or expand); rehash */ \
@@ -382,7 +386,8 @@ static const double __ac_HASH_UPPER = 0.77;
   @param  key   The integer [khint64_t]
   @return       The hash value [khint_t]
  */
-#define kh_int64_hash_func(key) (khint32_t)((key)>>33^(key)^(key)<<11)
+//#define kh_int64_hash_func(key) (khint32_t)((key)>>33^(key)^(key)<<11)
+#define kh_int64_hash_func(key) (khint64_t)(__ac_Wang_hash(key))
 /*! @function
   @abstract     64-bit integer comparison function
  */

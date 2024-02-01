@@ -1,3 +1,8 @@
+#include <iostream>
+#include <string>
+
+#include "unistd.h"
+#include "version.h"
 #include "global_ac.h"
 #include "global.h"
 #include "local.h"
@@ -6,12 +11,13 @@
 #include "streaming.h"
 #include "output.h"
 #include "khash_utils.h"
-#include "lower_bound.h"
 
 #include <iostream>
 #include <string>
 #include "unistd.h"
 #include "version.h"
+#include "masks.h"
+#include "lower_bound.h"
 
 
 #ifdef LARGE_KMERS
@@ -23,7 +29,7 @@
 #endif
 
 
-void Help() {
+int Help() {
     std::cerr << "KmerCamel " << VARIANT << " version " << VERSION << std::endl;
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
@@ -38,6 +44,17 @@ void Help() {
     std::cerr << "  -v               - print version" << std::endl;
     std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 13 -d 5 -a local" << std::endl;
     std::cerr << "Possible algorithms: global globalAC local localAC streaming" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "For optimization of masks use `kmercamel optimize`."  << std::endl;
+    std::cerr << "Accepted arguments:" << std::endl;
+    std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
+    std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
+    std::cerr << "  -a algorithm     - the algorithm to be run [ones (default), runs, zeros]" << std::endl;
+    std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
+    std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
+    std::cerr << "  -h               - print help" << std::endl;
+    std::cerr << "  -v               - print version" << std::endl;
+    return 1;
 }
 
 void Version() {
@@ -50,7 +67,14 @@ int main(int argc, char **argv) {
     int d_max = 5;
     std::ofstream output;
     std::ostream *of = &std::cout;
+    bool masks = false;
     std::string algorithm = "global";
+    if (argc > 1 && std::string(argv[1]) == "optimize") {
+        masks = true;
+        argv++;
+        argc--;
+        algorithm = "ones";
+    }
     bool complements = false;
     bool optimize_memory = true;
     bool d_set = false;
@@ -100,42 +124,42 @@ int main(int argc, char **argv) {
             }
         }
     } catch (std::invalid_argument&) {
-        Help();
-        return 1;
+        return Help();
     }
     if (path.empty()) {
         std::cerr << "Required parameter p not set." << std::endl;
-        Help();
-        return 1;
+        return Help();
     }
     if (k == 0) {
         std::cerr << "Required parameter k not set." << std::endl;
-        Help();
-        return 1;
+        return Help();
     } else if (k < 0) {
         std::cerr << "k must be positive." << std::endl;
-        Help();
-        return 1;
+        return Help();
     } else if (d_max < 0) {
         std::cerr << "d must be non-negative." << std::endl;
-        Help();
-        return 1;
+        return Help();
     } else if (k > MAX_K && (algorithm == "local" || algorithm == "global")) {
         std::cerr << "k > " << MAX_K << " not supported for the algorithm '" + algorithm + "'. Use the 128bit version of KmerCamel or the AC version of the algorithm instead." << std::endl;
-        Help();
-        return 1;
+        return Help();
     } else if (d_set && (algorithm == "globalAC" || algorithm == "global" || algorithm == "streaming")) {
         std::cerr << "Unsupported argument d for algorithm '" + algorithm + "'." << std::endl;
-        Help();
-        return 1;
+        return Help();
     } else if (!optimize_memory && algorithm != "global") {
         std::cerr << "Memory optimization turn-off only supported for hash table global." << std::endl;
-        Help();
-        return 1;
+        return Help();
+    } else if (masks && (d_set || !optimize_memory)) {
+        std::cerr << "Not supported flags for optimize." << std::endl;
+        return Help();
+    }
     } else if (lower_bound && algorithm != "global") {
         std::cerr << "Lower bound computation supported only for hash table global." << std::endl;
-        Help();
-        return 1;
+        return Help();
+
+    if (masks) {
+        int ret = Optimize(algorithm, path, *of, k, complements);
+        if (ret) Help();
+        return ret;
     }
 
     // Handle streaming algorithm separately.
@@ -143,14 +167,13 @@ int main(int argc, char **argv) {
         WriteName(k, *of);
         Streaming(path, *of,  k , complements);
     }
-    // Handle hash table based separately so that it consumes less memory.
+    // Handle hash table based algorithms separately so that they consume less memory.
     else if (algorithm == "global" || algorithm == "local") {
         kh_S64_t *kMers = kh_init_S64();
         ReadKMers(kMers, path, k, complements);
         if (!kh_size(kMers)) {
             std::cerr << "Path '" << path << "' contains no k-mers." << std::endl;
-            Help();
-            return 1;
+            return Help();
         }
         d_max = std::min(k - 1, d_max);
         if (!lower_bound) WriteName(k, *of);
@@ -168,8 +191,7 @@ int main(int argc, char **argv) {
         auto data = ReadFasta(path);
         if (data.empty()) {
             std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
-            Help();
-            return 1;
+            return Help();
         }
         d_max = std::min(k - 1, d_max);
 
@@ -183,8 +205,7 @@ int main(int argc, char **argv) {
         }
         else {
             std::cerr << "Algorithm '" << algorithm << "' not supported." << std::endl;
-            Help();
-            return 1;
+            return Help();
         }
     }
     *of << std::endl;

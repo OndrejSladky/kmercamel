@@ -1,12 +1,15 @@
-# KmerCamel 🐫
-KmerCamel 🐫 provides implementations of algorithms for efficiently representing a set of k-mers as a [masked superstring](https://doi.org/10.1101/2023.02.01.526717), based on the following paper:
+# KmerCamel🐫
+KmerCamel🐫 provides implementations of algorithms for efficiently representing a set of k-mers as a [masked superstring](https://doi.org/10.1101/2023.02.01.526717), based on the following paper:
 
 > Ondřej Sladký, Pavel Veselý, and Karel Břinda: Masked superstrings as a unified framework for textual *k*-mer set representations. *bioRxiv* 2023.02.01.526717, 2023.
 [https://doi.org/10.1101/2023.02.01.526717](https://doi.org/10.1101/2023.02.01.526717)
 
 See [supplementary materials](https://github.com/karel-brinda/masked-superstrings-supplement) of the aforementioned paper for experimental results with KmerCamel🐫.
 
-The implemented algorithms are the following:
+The computation of masked superstring using KmerCamel🐫 is done in two steps -
+first a superstring is computed and then its mask can be optimized.
+
+The implemented superstring algorithms are the following:
 - Local Greedy algorithm	 - constructs the superstring by locally finding and appending an unused k-mer with the largest overlap.
 - Global Greedy algorithm - constructs the superstring by merging two k-mers with the largest overlap
 
@@ -17,20 +20,16 @@ They come in two different implementations (their results may differ due to the 
 Note that at this point only the implementations with hash table are optimized and that the Aho-Corasick automaton
 based versions of the algorithms are only experimental.
 
-The hashing based implementations of the default KmerCamel 🐫 (`./kmercamel`) support $k$-mer with $k$ at most 31,
-whereas the larger KmerCamel 🐫 supports $k$-mers with $k$ at most 63 (at the cost of slight slowdown).
+The hashing based implementations of the default KmerCamel🐫 (`./kmercamel`) support $k$-mer with $k$ at most 31,
+whereas the larger KmerCamel🐫 (`./kmercamel-large`) supports $k$-mers with $k$ at most 63 (at the cost of slight slowdown).
 
 All algorithms can be used to either work in the unidirectional model or in the bidirectional model
 (i.e. treat $k$-mer and its reverse complement as the same; in this case either of them appears in the result).
 
-### Mask optimization
-
-Both the local and global greedy algorithms compute a superstring of the k-mers together with a default mask that minimizes the number of 1s.
-As noted in the paper, there are possibly many masks for a superstring, and various objectives for mask optimization can be considered,
-depending on the application.
-We refer to the [supplementary repository of the paper](https://github.com/karel-brinda/masked-superstrings-supplement/tree/main/experiments/08_optimize_masks)
-for Python scripts that take a masked superstring as input and output a masked superstring with mask optimized to the number of 1s (min or max)
-or to the number of runs of 1s (min).
+The implemented mask optimization algorithms are the following:
+- Minimize the number of 1s in the mask.
+- Maximize the number of 1s in the mask.
+- Minimize the number of runs of 1s in the mask.
 
 ## How to install
 
@@ -42,6 +41,22 @@ git clone --recursive https://github.com/OndrejSladky/kmercamel
 
 Compile the program by running `make`.
 
+
+### Dependencies
+
+The program requires the GLPK library. This is usually available by default. If not it can be installed via:
+
+```
+sudo apt-get install libglpk-dev
+```
+
+on Ubuntu or
+
+```
+brew install glpk
+```
+
+on macOS.
 
 ## How to run
 
@@ -71,7 +86,7 @@ runs the Local Greedy in the bidirectional model on the streptococcus fasta file
 
 Alternatively, if your operating system supports it, you can run `./🐫` instead of `./kmercamel`.
 
-Currently, KmerCamel does not support gziped files as an input.
+Currently, KmerCamel🐫 does not support gziped files as an input.
 A possible workaround is to use `gzcat` and process substitution.
 
 ```
@@ -80,9 +95,31 @@ A possible workaround is to use `gzcat` and process substitution.
 
 Note: on some systems you might need to use the name `zcat` instead of `gzcat`.
 
+### Mask optimization
+
+For mask optimization, run the subcommand `optimize` with the following arguments:
+
+- `p path_to_fasta` - the path to fasta file. This is a required argument.
+- `k k_value` - the size of one k-mer. This is a required argument.
+- `a algorithm` - the algorithm for mask optimization. Either `ones` for maximizing the number of 1s, `runs` for minimizing the number of runs of 1s, or `zeros` for maximizing the number of 0s. Default `ones`.
+- `o output_path` - the path to output file. If not specified, output is printed to stdout.
+- `c` - treat k-mer and its reverse complement as equal.
+- `h` - print help.
+- `v` - print version.
+
+For example:
+
+```
+./kmercamel optimize -p ./global-spneumoniae.fa -k 12 -a runs -c
+```
+
+minimizes the number of runs of 1s in the mask of the superstring computed by Global Greedy in the bidirectional model on the streptococcus fasta file with `k=12`.
+
+Note: currently mask optimization cannot read gziped files, nor can the proccess substititution be used.
+
 ### Large $k$-mers
 
-The default version of KmerCamel does not support $k > 31$. For those values, use the large KmerCamel,
+The default version of KmerCamel🐫 does not support $k > 31$. For those values, use the large KmerCamel🐫,
 which supports $k < 64$.
 
 For example:
@@ -91,7 +128,7 @@ For example:
 ./kmercamel-large -p ./spneumoniae.fa -a global -k 63 -c
 ```
 
-Note: for smaller $k$ it is recommended to use default KmerCamel as it is faster.
+Note: for smaller $k$ it is recommended to use default KmerCamel🐫 as it is faster.
 
 ### Turn off memory optimizations for Global
 

@@ -1,12 +1,13 @@
 .PHONY: all clean test cpptest converttest verify quick-verify
 
 CXX=         g++
-CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2
-LDFLAGS=     -lz
+CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2 -I/opt/homebrew/include
+LDFLAGS=     -lz -lglpk -L/opt/homebrew/lib
 LARGEFLAGS=  -DLARGE_KMERS
 SRC=         src
 TESTS=       tests
 GTEST=       $(TESTS)/googletest/googletest
+DATA=        data
 
 
 all: kmercamel kmercamel-large
@@ -14,10 +15,12 @@ all: kmercamel kmercamel-large
 test: cpptest converttest verify
 
 verify: verify.py kmercamel
-	./verify.py ./spneumoniae.fa
+	./verify.py $(DATA)/spneumoniae.fa
+	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
 
 quick-verify: verify.py kmercamel
-	./verify.py --quick ./spneumoniae.fa
+	./verify.py --quick $(DATA)/spneumoniae.fa
+	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
 
 cpptest: kmercameltest kmercameltest-large
 	./kmercameltest

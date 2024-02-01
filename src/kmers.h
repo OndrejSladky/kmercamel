@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <iostream>
 #include <cstdint>
@@ -104,6 +105,11 @@ KMer ReverseComplement(const KMer &kMer) {
 }
 
 const char letters[4] {'A', 'C', 'G', 'T'};
+
+/// Get the uppercase version of the character.
+inline char UpperToLower(char c) {
+    return c - 'A' + 'a';
+}
 
 /// Return the index-th nucleotide from the encoded k-mer.
 inline char NucleotideAtIndex(kmer_t encoded, int k, int index) {
