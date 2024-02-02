@@ -42,7 +42,7 @@ int Help() {
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
     std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
-    std::cerr << "  -a algorithm     - the algorithm to be run [ones (default), runs, zeros]" << std::endl;
+    std::cerr << "  -a algorithm     - the algorithm to be run [ones (default), runs, runsapprox, zeros]" << std::endl;
     std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
