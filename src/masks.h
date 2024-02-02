@@ -112,7 +112,7 @@ std::pair<std::vector<int>, std::vector<int>> HeuristicPreSolve(std::vector<std:
 
 
 /// For the given masked superstring output the same superstring with mask with minimal number of runs of ones.
-void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bool complements) {
+void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bool complements, bool approximate) {
     kh_O64_t *intervals = kh_init_O64();
     std::vector<std::list<size_t>> intervalsForKMer;
     auto [size, rows] = ReadIntervals(intervals, kMers, intervalsForKMer, path, k, complements, of, nullptr);
@@ -120,7 +120,7 @@ void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bo
     auto [mapping, intervalMapping] = HeuristicPreSolve(intervalsForKMer, rows, mappedSize, totalIntervals, newIntervals);
     glp_prob *lp;
     lp = glp_create_prob();
-    if (mappedSize != 0) {
+    if (mappedSize != 0 && !approximate) {
         auto *ia = new int[totalIntervals + 1];
         auto *ja = new int[totalIntervals + 1];
         auto *ar = new double[totalIntervals + 1];
@@ -160,6 +160,7 @@ void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bo
 
     for (size_t i = 0; i < rows; ++i) {
         if (intervalMapping[i] == -1) intervalsSet[i] = true;
+        else if (approximate) intervalsSet[i] = mappedSize != 0;
         else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
@@ -179,7 +180,9 @@ int Optimize(std::string &algorithm, std::string path, std::ostream &of,  int k,
         } else if (algorithm == "zeros") {
             OptimizeOnes(in, of, kMers, k, complements, true);
         } else if (algorithm == "runs") {
-            OptimizeRuns(path, kMers, of, k, complements);
+            OptimizeRuns(path, kMers, of, k, complements, false);
+        } else if (algorithm == "runsapprox") {
+            OptimizeRuns(path, kMers, of, k, complements, true);
         } else {
             std::cerr << "Algorithm '" + algorithm + "' not recognized." << std::endl;
             in.close();

@@ -73,6 +73,7 @@ namespace {
             std::vector<kmer_t> kMers;
             int k;
             bool complements;
+            bool approximate;
             std::string wantResult;
         };
         std::vector<TestCase> tests = {
@@ -84,8 +85,19 @@ namespace {
                             KMerToNumber({"TT"}),
                             KMerToNumber({"AT"})
                         },
-                        2, false,
+                        2, false, false,
                         "> superstring\nacgcgttACGtATt\n"
+                },
+                {
+                        {
+                                KMerToNumber({"AC"}),
+                                KMerToNumber({"CG"}),
+                                KMerToNumber({"GT"}),
+                                KMerToNumber({"TT"}),
+                                KMerToNumber({"AT"})
+                        },
+                        2, false, true,
+                        "> superstring\nACgCGTtACGtATt\n"
                 },
         };
 
@@ -95,7 +107,7 @@ namespace {
             int ret;
             for (auto &kMer : t.kMers) kh_put_S64(kMersDict, kMer, &ret);
 
-            OptimizeRuns(path, kMersDict, of, t.k, t.complements);
+            OptimizeRuns(path, kMersDict, of, t.k, t.complements, t.approximate);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
