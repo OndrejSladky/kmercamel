@@ -112,5 +112,40 @@ namespace {
             EXPECT_EQ(t.wantResult, of.str());
         }
     }
+
+    TEST(Mask, OptimizeRuns2) {
+        std::string path = std::filesystem::current_path();
+        path += "/tests/testdata/runstest2.fa"; // ACTaGta
+
+        struct TestCase {
+            std::vector<kmer_t> kMers;
+            int k;
+            bool complements;
+            bool approximate;
+            std::string wantResult;
+        };
+        std::vector<TestCase> tests = {
+                {
+                        {
+                                KMerToNumber({"ACT"}),
+                                KMerToNumber({"CTA"}),
+                                KMerToNumber({"GTA"})
+                        },
+                        3, true, false,
+                        "> superstring\nACTAGta\n"
+                },
+        };
+
+        for (auto &t : tests) {
+            std::stringstream of;
+            auto kMersDict = kh_init_S64();
+            int ret;
+            for (auto &kMer : t.kMers) kh_put_S64(kMersDict, kMer, &ret);
+
+            OptimizeRuns(path, kMersDict, of, t.k, t.complements, t.approximate);
+
+            EXPECT_EQ(t.wantResult, of.str());
+        }
+    }
 #endif
 }
