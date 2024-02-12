@@ -115,7 +115,7 @@ namespace {
 
     TEST(Mask, OptimizeRuns2) {
         std::string path = std::filesystem::current_path();
-        path += "/tests/testdata/runstest2.fa"; // ACTaGta
+        path += "/tests/testdata/runstest2.fa"; // ACtaGta
 
         struct TestCase {
             std::vector<kmer_t> kMers;
