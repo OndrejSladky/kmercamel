@@ -164,7 +164,6 @@ void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bo
         else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
-    of << "> superstring" << std::endl;
     ReadIntervals(nullptr, kMers, intervalsForKMer, path, k, complements, of, intervalsSet);
     of << std::endl;
 }

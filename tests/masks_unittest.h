@@ -67,13 +67,13 @@ namespace {
 
     TEST(Mask, OptimizeRuns) {
         std::string path = std::filesystem::current_path();
-        path += "/tests/testdata/runstest.fa";
 
         struct TestCase {
             std::vector<kmer_t> kMers;
             int k;
             bool complements;
             bool approximate;
+            std::string relativePath;
             std::string wantResult;
         };
         std::vector<TestCase> tests = {
@@ -86,6 +86,7 @@ namespace {
                             KMerToNumber({"AT"})
                         },
                         2, false, false,
+                        "/tests/testdata/runstest.fa",
                         "> superstring\nacgcgttACGtATt\n"
                 },
                 {
@@ -97,17 +98,29 @@ namespace {
                                 KMerToNumber({"AT"})
                         },
                         2, false, true,
+                        "/tests/testdata/runstest.fa",
                         "> superstring\nACgCGTtACGtATt\n"
+                },
+                {
+                        {
+                                KMerToNumber({"ACT"}),
+                                KMerToNumber({"CTA"}),
+                                KMerToNumber({"GTA"})
+                        },
+                        3, true, false,
+                        "/tests/testdata/runstest2.fa",
+                        "> superstring\nACTAGta\n"
                 },
         };
 
         for (auto &t : tests) {
             std::stringstream of;
+            auto totalPath = path + t.relativePath;
             auto kMersDict = kh_init_S64();
             int ret;
             for (auto &kMer : t.kMers) kh_put_S64(kMersDict, kMer, &ret);
 
-            OptimizeRuns(path, kMersDict, of, t.k, t.complements, t.approximate);
+            OptimizeRuns(totalPath, kMersDict, of, t.k, t.complements, t.approximate);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
