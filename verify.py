@@ -84,7 +84,7 @@ def main():
     else:
         k = int(args.k)
         # Do the tests on mask optimization.
-        for a in ["runs", "ones", "zeros"]:
+        for a in ["runs", "ones", "zeros", "runsapprox"]:
             print(f"Testing {a}:")
             for large in [True, False]:
                 if not large and k >= 32: continue

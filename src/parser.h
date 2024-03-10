@@ -168,7 +168,9 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
                 currentInterval += interval_used;
                 interval_used = false;
             }
-            else if (c == '\n') readingHeader = false;
+            // Reprint the header.
+            if (readingHeader && !reading) of << c;
+            if (c == '\n') readingHeader = false;
             if (readingHeader) continue;
             auto data = NucleotideToInt(c);
             // Disregard white space.
@@ -186,7 +188,7 @@ std::pair<size_t, size_t> ReadIntervals(kh_O64_t *intervals, kh_S64_t *kMers, st
             currentKMer |= data;
             --beforeKMerEnd;
             if (beforeKMerEnd == 0) {
-                bool represented = kh_get_S64(kMers, currentKMer) != kh_end(kMers);
+                bool represented = containsKMer(kMers, currentKMer, k, complements);
                 bool set = false;
                 if (represented) {
                     interval_used = true;
