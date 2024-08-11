@@ -135,30 +135,29 @@ void ReadKMers2(kh_S64_t *kMers, std::string &path, int k, bool complements, boo
 }
 
 
-void AddKMers(kh_S64_t *kMers, size_t sequence_length, char* sequence, int k, bool complements, bool case_sensitive = false) {
-    int beforeKMerEnd = k;
+void AddKMers(kh_S64_t *kMers, size_t sequence_length, char* sequence, int64_t k, bool complements, bool case_sensitive = false) {
+    int64_t currentLength = 0;
     kmer_t currentKMer = 0;
+    kmer_t reverseComplement = 0;
     kmer_t cases = 0;
     kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
+    kmer_t shift = 2 * (k - 1);
     for (size_t i = 0; i < sequence_length; ++i) {
-        auto data = NucleotideToInt(sequence[i]);
-        // Disregard white space.
-        if (data == -1) {
-            currentKMer = 0;
-            beforeKMerEnd = k;
+        auto data = nucleotideToInt[(uint8_t)sequence[i]];
+        if (data >= 4) {
+            currentKMer = reverseComplement = 0;
+            currentLength = 0;
             continue;
         }
-        currentKMer <<= 2;
+        currentKMer = ((currentKMer << 2) | data) & mask; 
+        reverseComplement = (reverseComplement >> 2) | ((kmer_t(3 ^ data)) << shift);
         // K-mer is present if it is upper case or case-insensitive.
-        cases |= !case_sensitive || sequence[i] <= 'Z';
-        cases <<= 1;
-        currentKMer &= mask;
-        currentKMer |= data;
-        if(beforeKMerEnd > 0) --beforeKMerEnd;
-        if (beforeKMerEnd == 0 && (!complements || kh_get_S64(kMers, ReverseComplement(currentKMer, k)) == kh_end(kMers))) {
+        cases = (cases | (!case_sensitive || sequence[i] <= 'Z')) << 1;
+        if ((++currentLength >= k) && (cases & (kmer_t(1) << k))) {
+            kmer_t canonical = ((!complements) || currentKMer < reverseComplement) ? currentKMer : reverseComplement;
             int ret;
             // If the k-mer was masked as present.
-            if (cases & (kmer_t(1) << k)) kh_put_S64(kMers, currentKMer, &ret);
+            kh_put_S64(kMers, canonical, &ret);
         }
     }
 }
