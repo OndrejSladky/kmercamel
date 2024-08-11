@@ -116,31 +116,42 @@ void AddKMers(kh_S64_t *kMers, size_t sequence_length, const char* sequence, int
     }
 }
 
+gzFile OpenFile(std::string &path) {
+    FILE *in_stream = nullptr;
+    if(path=="-"){
+        in_stream = stdin;
+    }
+    else {
+        in_stream = fopen(path.c_str(), "r");
+        if (in_stream == nullptr) {
+            throw std::invalid_argument("couldn't open file " + path);
+        }
+    }
+    gzFile fp = gzdopen(fileno(in_stream), "r");
+    return fp;
+}
+
 
 /// Load a dictionary of k-mers from a fasta file.
 /// If complements is true, add the canonical k-mers.
 void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool case_sensitive = false) {
-    kseq_t *seq;
+    gzFile fp = OpenFile(path);
+    kseq_t *seq = kseq_init(fp);
 
-    FILE *instream = nullptr;
-    if(path=="-"){
-        instream = stdin;
-    }
-    else {
-        instream = fopen(path.c_str(), "r");
-        if (instream == nullptr) {
-            throw std::invalid_argument("couldn't open file " + path);
-        }
-    }
-    gzFile fp = gzdopen(fileno(instream), "r");
-
-    seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         AddKMers(kMers, seq->seq.l, seq->seq.s, k, complements, case_sensitive);
     }
 
     kseq_destroy(seq);
     gzclose(fp);
+}
+
+/// Read the masked superstring from the given path and return it wrapped as a kseq_t.
+kseq_t ReadMaskedSuperstring(std::string &path) {
+    gzFile fp = OpenFile(path);
+    kseq_t *seq = kseq_init(fp);
+    kseq_read(seq);
+    return *seq;
 }
 
 /// Print the k-mer tail that has [beforeKMerEnd] steps to become a full k-mer.
