@@ -90,7 +90,7 @@ std::vector<KMer> ConstructKMers(std::vector<FastaRecord> &data, int k, bool com
 /// Return unique k-mers in no particular order.
 /// If complements is set to true, the result contains only one of the complementary k-mers - it is not guaranteed which one.
 /// This runs in O(sequence length) expected time.
-void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool case_sensitive = false) {
+void ReadKMers2(kh_S64_t *kMers, std::string &path, int k, bool complements, bool case_sensitive = false) {
     std::ifstream fasta(path);
     if (fasta.is_open()) {
         char c;
@@ -132,6 +132,54 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool
     } else {
         throw std::invalid_argument("couldn't open file " + path);
     }
+}
+
+
+void AddKMers(kh_S64_t *kMers, size_t sequence_length, char* sequence, int k, bool complements, bool case_sensitive = false) {
+    int beforeKMerEnd = k;
+    kmer_t currentKMer = 0;
+    kmer_t cases = 0;
+    kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
+    for (size_t i = 0; i < sequence_length; ++i) {
+        auto data = NucleotideToInt(sequence[i]);
+        // Disregard white space.
+        if (data == -1) {
+            currentKMer = 0;
+            beforeKMerEnd = k;
+            continue;
+        }
+        currentKMer <<= 2;
+        // K-mer is present if it is upper case or case-insensitive.
+        cases |= !case_sensitive || sequence[i] <= 'Z';
+        cases <<= 1;
+        currentKMer &= mask;
+        currentKMer |= data;
+        if(beforeKMerEnd > 0) --beforeKMerEnd;
+        if (beforeKMerEnd == 0 && (!complements || kh_get_S64(kMers, ReverseComplement(currentKMer, k)) == kh_end(kMers))) {
+            int ret;
+            // If the k-mer was masked as present.
+            if (cases & (kmer_t(1) << k)) kh_put_S64(kMers, currentKMer, &ret);
+        }
+    }
+}
+
+
+void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool case_sensitive = false) {
+    gzFile fp;
+    kseq_t *seq;
+
+    fp = gzopen(path.c_str(), "r");
+    if (fp == nullptr) {
+        throw std::invalid_argument("couldn't open file " + path);
+    }
+
+    seq = kseq_init(fp);
+    while (kseq_read(seq) >= 0) {
+        AddKMers(kMers, seq->seq.l, seq->seq.s, k, complements, case_sensitive);
+    }
+
+    kseq_destroy(seq);
+    gzclose(fp);
 }
 
 /// Print the k-mer tail that has [beforeKMerEnd] steps to become a full k-mer.
