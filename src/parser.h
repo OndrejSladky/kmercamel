@@ -86,65 +86,19 @@ std::vector<KMer> ConstructKMers(std::vector<FastaRecord> &data, int k, bool com
     return result;
 }
 
-/// Read encoded k-mers from the given fasta file.
-/// Return unique k-mers in no particular order.
-/// If complements is set to true, the result contains only one of the complementary k-mers - it is not guaranteed which one.
-/// This runs in O(sequence length) expected time.
-void ReadKMers2(kh_S64_t *kMers, std::string &path, int k, bool complements, bool case_sensitive = false) {
-    std::ifstream fasta(path);
-    if (fasta.is_open()) {
-        char c;
-        int beforeKMerEnd = k;
-        kmer_t currentKMer = 0;
-        kmer_t cases = 0;
-        kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
-        bool readingHeader = false;
-        while (fasta >> std::noskipws >> c) {
-            if (c == '>') {
-                readingHeader = true;
-                currentKMer = 0;
-                beforeKMerEnd = k;
-            }
-            else if (c == '\n') readingHeader = false;
-            if (readingHeader) continue;
-            auto data = NucleotideToInt(c);
-            // Disregard white space.
-            if (c == '\n' || c == '\r' || c == ' ') continue;
-            if (data == -1) {
-                currentKMer = 0;
-                beforeKMerEnd = k;
-                continue;
-            }
-            currentKMer <<= 2;
-            // K-mer is present if it is upper case or case-insensitive.
-            cases |= !case_sensitive || c <= 'Z';
-            cases <<= 1;
-            currentKMer &= mask;
-            currentKMer |= data;
-            if(beforeKMerEnd > 0) --beforeKMerEnd;
-            if (beforeKMerEnd == 0 && (!complements || kh_get_S64(kMers, ReverseComplement(currentKMer, k)) == kh_end(kMers))) {
-                int ret;
-                // If the k-mer was masked as present.
-                if (cases & (kmer_t(1) << k)) kh_put_S64(kMers, currentKMer, &ret);
-            }
-        }
-        fasta.close();
-    } else {
-        throw std::invalid_argument("couldn't open file " + path);
-    }
-}
-
-
-void AddKMers(kh_S64_t *kMers, size_t sequence_length, char* sequence, int64_t k, bool complements, bool case_sensitive = false) {
+/// Fill the k-mer dictionary with k-mers from the given sequence.
+/// If complements is true, always add the canonical k-mers.
+/// If case_sensitive is true, add the k-mer only if it starts with an upper case letter.
+void AddKMers(kh_S64_t *kMers, size_t sequence_length, const char* sequence, int64_t k, bool complements, bool case_sensitive = false) {
     int64_t currentLength = 0;
-    kmer_t currentKMer = 0;
-    kmer_t reverseComplement = 0;
+    kmer_t currentKMer = 0, reverseComplement = 0;
     kmer_t cases = 0;
     kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
     kmer_t shift = 2 * (k - 1);
     for (size_t i = 0; i < sequence_length; ++i) {
         auto data = nucleotideToInt[(uint8_t)sequence[i]];
         if (data >= 4) {
+            // Restart if "N"-like nucleotide.
             currentKMer = reverseComplement = 0;
             currentLength = 0;
             continue;
@@ -154,15 +108,17 @@ void AddKMers(kh_S64_t *kMers, size_t sequence_length, char* sequence, int64_t k
         // K-mer is present if it is upper case or case-insensitive.
         cases = (cases | (!case_sensitive || sequence[i] <= 'Z')) << 1;
         if ((++currentLength >= k) && (cases & (kmer_t(1) << k))) {
+            // Add the canonical k-mer to the dictionary.
             kmer_t canonical = ((!complements) || currentKMer < reverseComplement) ? currentKMer : reverseComplement;
             int ret;
-            // If the k-mer was masked as present.
             kh_put_S64(kMers, canonical, &ret);
         }
     }
 }
 
 
+/// Load a dictionary of k-mers from a fasta file.
+/// If complements is true, add the canonical k-mers.
 void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool case_sensitive = false) {
     gzFile fp;
     kseq_t *seq;
