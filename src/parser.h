@@ -120,13 +120,19 @@ void AddKMers(kh_S64_t *kMers, size_t sequence_length, const char* sequence, int
 /// Load a dictionary of k-mers from a fasta file.
 /// If complements is true, add the canonical k-mers.
 void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool case_sensitive = false) {
-    gzFile fp;
     kseq_t *seq;
 
-    fp = gzopen(path.c_str(), "r");
-    if (fp == nullptr) {
-        throw std::invalid_argument("couldn't open file " + path);
+    FILE *instream = nullptr;
+    if(path=="-"){
+        instream = stdin;
     }
+    else {
+        instream = fopen(path.c_str(), "r");
+        if (instream == nullptr) {
+            throw std::invalid_argument("couldn't open file " + path);
+        }
+    }
+    gzFile fp = gzdopen(fileno(instream), "r");
 
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
