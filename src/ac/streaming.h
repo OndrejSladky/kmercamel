@@ -5,7 +5,7 @@
 #include <cassert>
 #include <algorithm>
 
-#include "kmers.h"
+#include "../kmers.h"
 
 void Push(std::ostream &of, const std::string &current, int k, int32_t used) {
     if (current.size() == static_cast<size_t>(k) && used != 0) {

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstdint>
 
-#include "models.h"
+#include "ac/kmers_ac.h"
 
 #ifdef LARGE_KMERS
     typedef __uint128_t kmer_t;
@@ -13,22 +13,6 @@
     typedef uint64_t kmer_t;
     constexpr int KMER_T_SIZE = 64;
 #endif
-
-/// Convert the given basic nucleotide to int so it can be used for indexing in AC.
-/// If non-existing nucleotide is given, return -1.
-int NucleotideToInt (char c) {
-    switch (c) {
-        case 'A': return 0;
-        case 'C': return 1;
-        case 'G': return 2;
-        case 'T': return 3;
-        case 'a': return 0;
-        case 'c': return 1;
-        case 'g': return 2;
-        case 't': return 3;
-        default: return -1;
-    }
-}
 
 
 static const uint8_t nucleotideToInt[] = {
@@ -105,31 +89,7 @@ kmer_t ReverseComplement(kmer_t kMer, int k) {
     return (((kmer_t)word_reverse_complement(kMer)) >> (KMER_T_SIZE - (k << kmer_t(1)))) & ((kmer_t(1) << (k << kmer_t (1))) - kmer_t(1));
 }
 
-/// Return the complementary nucleotide for the given one.
-char ComplementaryNucleotide(const char nucleotide) {
-    if (nucleotide == 'A') return 'T';
-    else if (nucleotide == 'T') return 'A';
-    else if (nucleotide == 'G') return 'C';
-    else if (nucleotide == 'C') return 'G';
-    throw std::invalid_argument("cannot find complementary nucleotide for letter " + std::string(1, nucleotide));
-}
-
-/// Compute the reverse complement of the given k-mer.
-KMer ReverseComplement(const KMer &kMer) {
-    KMer ans;
-    ans.value.reserve(kMer.length());
-    for (int i = (int)kMer.length() - 1; i >= 0; --i) {
-        ans.value += ComplementaryNucleotide(kMer.value[i]);
-    }
-    return ans;
-}
-
 const char letters[4] {'A', 'C', 'G', 'T'};
-
-/// Get the uppercase version of the character.
-inline char UpperToLower(char c) {
-    return c - 'A' + 'a';
-}
 
 /// Return the index-th nucleotide from the encoded k-mer.
 inline char NucleotideAtIndex(kmer_t encoded, int k, int index) {

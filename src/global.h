@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cstdint>
 
-#include "models.h"
 #include "kmers.h"
 #include "khash.h"
 #include "khash_utils.h"

@@ -10,8 +10,7 @@
 #include <fstream>
 #include <algorithm>
 
-#include "models.h"
-#include "kmers.h"
+#include "kmers_ac.h"
 #include "ac_automaton.h"
 
 
