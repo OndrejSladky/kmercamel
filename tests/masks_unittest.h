@@ -37,12 +37,12 @@ namespace {
                     "> superstring\nACgTaACgt\n"
                 },
                 {
-                    {KMerToNumber({"CGT"}), KMerToNumber({"TAA"})},
+                    {KMerToNumber({"ACG"}), KMerToNumber({"TAA"})},
                     3, true, true,
                     "> superstring\nAcgTaacgt\n"
                 },
                 {
-                    {KMerToNumber({"CGT"}), KMerToNumber({"TAA"})},
+                    {KMerToNumber({"ACG"}), KMerToNumber({"TAA"})},
                     3, true, false,
                     "> superstring\nACgTaACgt\n"
                 },
@@ -56,7 +56,7 @@ namespace {
             for (auto &kMer : t.kMers) kh_put_S64(kMersDict, kMer, &ret);
 
             OptimizeOnes(masked_superstring, of, kMersDict, t.k, t.complements, t.minimize);
-            kseq_destroy(&masked_superstring);
+            kseq_destroy(masked_superstring);
 
             EXPECT_EQ(t.wantResult, of.str());
         }

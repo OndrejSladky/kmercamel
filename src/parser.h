@@ -147,11 +147,11 @@ void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool
 }
 
 /// Read the masked superstring from the given path and return it wrapped as a kseq_t.
-kseq_t ReadMaskedSuperstring(std::string &path) {
+kseq_t* ReadMaskedSuperstring(std::string &path) {
     gzFile fp = OpenFile(path);
     kseq_t *seq = kseq_init(fp);
     kseq_read(seq);
-    return *seq;
+    return seq;
 }
 
 /// Print the k-mer tail that has [beforeKMerEnd] steps to become a full k-mer.
