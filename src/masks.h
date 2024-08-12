@@ -46,6 +46,54 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S64_t *kMers,
     }
 }
 
+/// Read or set the intervals.
+/// If [setIntervals] is provided reprint the given files with the corresponding intervals set to 1.
+/// Otherwise, read the intervals in which each k-mer occurs.
+std::pair<size_t, size_t> ReadWriteIntervals(kh_O64_t *intervals, kh_S64_t *kMers, std::vector<std::list<size_t>> &intervalsForKmer,
+                                        kseq_t* masked_superstring, int k, bool complements, std::ostream &of, const bool* setIntervals = nullptr) {
+    bool reading = setIntervals == nullptr;
+    kmer_t currentKMer = 0, reverseComplement = 0;
+    kmer_t mask = (1 << (2 * k)) - 1;
+    kmer_t shift = 2 * (k - 1);
+    size_t currentInterval = 0;
+    size_t occurrences = 0;
+    bool interval_used = false;
+    uint8_t ms_validation = 0;
+    for (size_t i = 0; i < masked_superstring->seq.l; ++i) {
+        auto data = nucleotideToInt[(uint8_t) masked_superstring->seq.s[i]];
+        ms_validation |= data;
+        currentKMer = ((currentKMer << 2) | data) & mask;
+        reverseComplement = (reverseComplement >> 2) | ((kmer_t(3 ^ data)) << shift);
+        if (i >= (size_t)k - 1) {
+            kmer_t canonical = ((!complements) || currentKMer < reverseComplement) ? currentKMer : reverseComplement;
+            auto kmer_pointer = kh_get_S64(kMers, canonical);
+            bool contained = kmer_pointer != kh_end(kMers);
+            bool set = false;
+            if (contained) {
+                interval_used = true;
+                if (reading) occurrences += appendInterval(intervals, intervalsForKmer, currentKMer, currentInterval, k, complements);
+                else set = setIntervals[currentInterval];
+            } else {
+                currentInterval += interval_used;
+                interval_used = false;
+            }
+            if (!reading) {
+                char toPrint = masked_superstring->seq.s[i - k + 1];
+                of << Masked(toPrint, set);
+            }
+        }
+    }
+    if (!reading) {
+        for (size_t i = masked_superstring->seq.l - k + 1; i < masked_superstring->seq.l; ++i) {
+            of << Masked(masked_superstring->seq.s[i], false);
+        }
+    }
+    if (ms_validation >= 4) {
+        throw std::invalid_argument("Masked superstring contains invalid characters.");
+    }
+    return {occurrences, currentInterval + interval_used};
+}
+
 /// Pre-solve to the ILP in minimizing the number of runs.
 /// Set the intervals with single-occurring k-mers to 1 and remove k-mers from those intervals.
 std::pair<std::vector<int>, std::vector<int>> HeuristicPreSolve(std::vector<std::list<size_t>> &intervalsForKMer, size_t intervalCount, int &mappedSize, size_t &totalIntervals, int &newIntervals) {
@@ -91,10 +139,10 @@ std::pair<std::vector<int>, std::vector<int>> HeuristicPreSolve(std::vector<std:
 
 
 /// For the given masked superstring output the same superstring with mask with minimal number of runs of ones.
-void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bool complements, bool approximate) {
+void OptimizeRuns(kseq_t* masked_superstring, kh_S64_t *kMers, std::ostream &of, int k, bool complements, bool approximate) {
     kh_O64_t *intervals = kh_init_O64();
     std::vector<std::list<size_t>> intervalsForKMer;
-    auto [size, rows] = ReadIntervals(intervals, kMers, intervalsForKMer, path, k, complements, of, nullptr);
+    auto [size, rows] = ReadWriteIntervals(intervals, kMers, intervalsForKMer, masked_superstring, k, complements, of, nullptr);
     int mappedSize, newIntervals; size_t totalIntervals;
     auto [mapping, intervalMapping] = HeuristicPreSolve(intervalsForKMer, rows, mappedSize, totalIntervals, newIntervals);
     glp_prob *lp;
@@ -143,7 +191,8 @@ void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bo
         else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
-    ReadIntervals(nullptr, kMers, intervalsForKMer, path, k, complements, of, intervalsSet);
+    of << ">" << masked_superstring->name.s << " " << masked_superstring->comment.s << std::endl;
+    ReadWriteIntervals(nullptr, kMers, intervalsForKMer, masked_superstring, k, complements, of, intervalsSet);
     of << std::endl;
 }
 
@@ -152,16 +201,14 @@ int Optimize(std::string &algorithm, std::string path, std::ostream &of,  int k,
     kh_S64_t *kMers = kh_init_S64();
     AddKMers(kMers, masked_superstring->seq.l, masked_superstring->seq.s, k, complements, true);
 
-    of << masked_superstring->seq.s << std::endl;
-
     if (algorithm == "ones") {
         OptimizeOnes(masked_superstring, of, kMers, k, complements, false);
     } else if (algorithm == "zeros") {
         OptimizeOnes(masked_superstring, of, kMers, k, complements, true);
     } else if (algorithm == "runs") {
-        OptimizeRuns(path, kMers, of, k, complements, false);
+        OptimizeRuns(masked_superstring, kMers, of, k, complements, false);
     } else if (algorithm == "runsapprox") {
-        OptimizeRuns(path, kMers, of, k, complements, true);
+        OptimizeRuns(masked_superstring, kMers, of, k, complements, true);
     } else {
         std::cerr << "Algorithm '" + algorithm + "' not recognized." << std::endl;
         kseq_destroy(masked_superstring);

@@ -113,11 +113,12 @@ namespace {
         for (auto &t : tests) {
             std::stringstream of;
             auto totalPath = path + t.relativePath;
+            auto masked_superstring = ReadMaskedSuperstring(totalPath);
             auto kMersDict = kh_init_S64();
             int ret;
             for (auto &kMer : t.kMers) kh_put_S64(kMersDict, kMer, &ret);
 
-            OptimizeRuns(totalPath, kMersDict, of, t.k, t.complements, t.approximate);
+            OptimizeRuns(masked_superstring, kMersDict, of, t.k, t.complements, t.approximate);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
