@@ -8,6 +8,7 @@
 #include "khash_utils.h"
 #include "kmers.h"
 
+/// Return the given character in the correct case corresponding to the mask symbol.
 inline char Masked(char c, bool mask) {
     int masked_difference = (c <= 'Z') - (int) mask;
     return c + (char) masked_difference * ('a' - 'A');
@@ -41,6 +42,7 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S64_t *kMers,
         of << Masked(masked_superstring->seq.s[i], false);
     }
     of << std::endl;
+    // Check that characters were only ACGTacgt.
     if (ms_validation >= 4) {
         throw std::invalid_argument("Masked superstring contains invalid characters.");
     }
@@ -83,6 +85,7 @@ std::pair<size_t, size_t> ReadWriteIntervals(kh_O64_t *intervals, kh_S64_t *kMer
             }
         }
     }
+    // Print the remaining k-1 characters.
     if (!reading) {
         for (size_t i = masked_superstring->seq.l - k + 1; i < masked_superstring->seq.l; ++i) {
             of << Masked(masked_superstring->seq.s[i], false);
@@ -214,6 +217,7 @@ int Optimize(std::string &algorithm, std::string path, std::ostream &of,  int k,
         kseq_destroy(masked_superstring);
         return 1;
     }
+    AssertEOF(masked_superstring, "Expecting only a single FASTA record -- the masked superstring.");
     kseq_destroy(masked_superstring);
     return 0;
 }

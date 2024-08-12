@@ -116,8 +116,9 @@ void AddKMers(kh_S64_t *kMers, size_t sequence_length, const char* sequence, int
     }
 }
 
+/// Return a file/stdin for reading.
 gzFile OpenFile(std::string &path) {
-    FILE *in_stream = nullptr;
+    FILE *in_stream;
     if(path=="-"){
         in_stream = stdin;
     }
@@ -154,3 +155,9 @@ kseq_t* ReadMaskedSuperstring(std::string &path) {
     return seq;
 }
 
+/// Ensure that the file is at the end.
+void AssertEOF(kseq_t *seq, std::string message) {
+    if (kseq_read(seq) >= 0) {
+        throw std::invalid_argument(message);
+    }
+}
