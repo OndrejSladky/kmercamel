@@ -6,14 +6,8 @@
 
 #include "ac/kmers_ac.h"
 
-#ifdef LARGE_KMERS
-    typedef __uint128_t kmer_t;
-    constexpr int KMER_T_SIZE = 128;
-#else
-    typedef uint64_t kmer_t;
-    constexpr int KMER_T_SIZE = 64;
-#endif
-
+typedef __uint128_t kmer128_t;
+typedef uint64_t kmer64_t;
 
 static const uint8_t nucleotideToInt[] = {
 		4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
@@ -34,22 +28,14 @@ static const uint8_t nucleotideToInt[] = {
 		4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4
 	};
 
-/// Convert the given k-mer to its representation as a number.
-kmer_t KMerToNumber(const KMer &kMer) {
-    kmer_t ret = 0;
-    for (char c : kMer.value) {
-        ret <<= 2;
-        ret |= NucleotideToInt(c);
-    }
-    return ret;
-}
-
 /// Compute the prefix of size d of the given k-mer.
+template <typename kmer_t>
 kmer_t BitPrefix(kmer_t kMer, int k, int d) {
     return kMer >> ((k - d) << kmer_t(1));
 }
 
 /// Compute the suffix of size d of the given k-mer.
+template <typename kmer_t>
 kmer_t BitSuffix(kmer_t kMer, int d) {
     return kMer & ((kmer_t(1) << (d << kmer_t(1))) - kmer_t(1));
 }
@@ -69,34 +55,46 @@ struct cmask<U, len, 0> {
 
 /// Compute the reverse complement of a word.
 /// Copyright: Jellyfish GPL-3.0
-inline kmer_t word_reverse_complement(kmer_t w) {
-    typedef kmer_t U;
+inline kmer64_t word_reverse_complement(kmer64_t w) {
+    typedef kmer64_t U;
     w = ((w >> 2)  & cmask<U, 2 >::v) | ((w & cmask<U, 2 >::v) << 2);
     w = ((w >> 4)  & cmask<U, 4 >::v) | ((w & cmask<U, 4 >::v) << 4);
     w = ((w >> 8)  & cmask<U, 8 >::v) | ((w & cmask<U, 8 >::v) << 8);
     w = ((w >> 16) & cmask<U, 16>::v) | ((w & cmask<U, 16>::v) << 16);
-#ifdef LARGE_KMERS
+    w = ( w >> 32                   ) | ( w                    << 32);
+    return ((U)-1) - w;
+}
+
+
+/// Compute the reverse complement of a word.
+/// Copyright: Jellyfish GPL-3.0
+inline kmer128_t word_reverse_complement(kmer128_t w) {
+    typedef kmer128_t U;
+    w = ((w >> 2)  & cmask<U, 2 >::v) | ((w & cmask<U, 2 >::v) << 2);
+    w = ((w >> 4)  & cmask<U, 4 >::v) | ((w & cmask<U, 4 >::v) << 4);
+    w = ((w >> 8)  & cmask<U, 8 >::v) | ((w & cmask<U, 8 >::v) << 8);
+    w = ((w >> 16) & cmask<U, 16>::v) | ((w & cmask<U, 16>::v) << 16);
     w = ((w >> 32) & cmask<U, 32>::v) | ((w & cmask<U, 32>::v) << 32);
     w = ( w >> 64                   ) | ( w                    << 64);
-#else
-    w = ( w >> 32                   ) | ( w                    << 32);
-#endif
     return ((U)-1) - w;
 }
 
 /// Compute the reverse complement of the given k-mer.
+template <typename kmer_t>
 kmer_t ReverseComplement(kmer_t kMer, int k) {
-    return (((kmer_t)word_reverse_complement(kMer)) >> (KMER_T_SIZE - (k << kmer_t(1)))) & ((kmer_t(1) << (k << kmer_t (1))) - kmer_t(1));
+    return (((kmer_t)word_reverse_complement(kMer)) >> ((sizeof(kMer)<<3) - (k << 1))) & ((kmer_t(1) << (k << 1)) - kmer_t(1));
 }
 
 const char letters[4] {'A', 'C', 'G', 'T'};
 
 /// Return the index-th nucleotide from the encoded k-mer.
+template <typename kmer_t>
 inline char NucleotideAtIndex(kmer_t encoded, int k, int index) {
     return letters[(encoded >> ((k - index - kmer_t(1)) << kmer_t(1))) & kmer_t(3)];
 }
 
 /// Convert the encoded KMer representation to string.
+template <typename kmer_t>
 std::string NumberToKMer(kmer_t encoded, int length) {
     std::string ret(length, 'N');
     for (int i = 0; i < length; ++i) {
