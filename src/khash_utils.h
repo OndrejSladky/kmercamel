@@ -9,17 +9,28 @@
 
 #define kh_int128_hash_func(key) kh_int64_hash_func((khint64_t)((key)>>65^(key)^(key)<<21))
 #define kh_int128_hash_equal(a, b) ((a) == (b))
+#define kh_int256_hash_func(key) kh_int128_hash_func((__uint128_t)((key)>>129^(key)^(key)<<35))
+#define kh_int256_hash_equal(a, b) ((a) == (b))
 
 #define KHASH_MAP_INIT_INT128(name, khval_t)								\
 	KHASH_INIT(name, __uint128_t, khval_t, 1, kh_int128_hash_func, kh_int128_hash_equal)
 
 #define KHASH_SET_INIT_INT128(name)										\
-	KHASH_INIT(name, __uint128_t, char, 0, kh_int128_hash_func, kh_int128_hash_equal)
+    KHASH_INIT(name, __uint128_t, char, 0, kh_int128_hash_func, kh_int128_hash_equal)
 
-// Use 128-bit integers for k-mers to allow for larger k.
+#define KHASH_MAP_INIT_INT256(name, khval_t)								\
+	KHASH_INIT(name, uint256_t, khval_t, 1, kh_int256_hash_func, kh_int256_hash_equal)
+
+#define KHASH_SET_INIT_INT256(name)										\
+	KHASH_INIT(name, uint256_t, char, 0, kh_int256_hash_func, kh_int256_hash_equal)
+
+// Use 128-bit integers for extra large k-mers to allow for larger k.
+KHASH_SET_INIT_INT256(S256)
+KHASH_MAP_INIT_INT256(P256, size_t)
+// Use 128-bit integers for large k-mers to allow for larger k.
 KHASH_SET_INIT_INT128(S128)
 KHASH_MAP_INIT_INT128(P128, size_t)
-// Use 64-bits integers for k-mers for faster operations and less memory usage.
+// Use 64-bits integers for small k-mers for faster operations and less memory usage.
 KHASH_SET_INIT_INT64(S64)
 KHASH_MAP_INIT_INT64(P64, size_t)
 
@@ -62,6 +73,7 @@ KHASH_MAP_INIT_INT64(P64, size_t)
 
 INIT_KHASH_WRAPPER(64)
 INIT_KHASH_WRAPPER(128)
+INIT_KHASH_WRAPPER(256)
 
 /// Determine whether the k-mer or its reverse complement is present.
 template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>

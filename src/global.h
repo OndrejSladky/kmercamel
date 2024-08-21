@@ -164,7 +164,7 @@ void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<k
     for (; start < kMersCount && !isStart[start]; ++start);
 
     kmer_t last = BitSuffix(access(kMers, start), k-1);
-    of << letters[BitPrefix(access(kMers, start), k, 1)];
+    of << letters[(uint64_t)BitPrefix(access(kMers, start), k, 1)];
 
     // Move from the first k-mer to the last which has no successor.
     while(edgeFrom[start] != size_t(-1)) {
@@ -175,7 +175,7 @@ void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<k
             of << unmaskedNucleotides;
         }
         last = BitSuffix(access(kMers, edgeFrom[start]), k-1);
-        of << letters[BitPrefix(access(kMers, edgeFrom[start]), k, 1)];
+        of << letters[(uint64_t)BitPrefix(access(kMers, edgeFrom[start]), k, 1)];
         start = edgeFrom[start];
     }
 
