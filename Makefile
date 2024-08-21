@@ -22,7 +22,7 @@ quick-verify: verify.py kmercamel
 	./verify.py --quick $(DATA)/spneumoniae.fa
 	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
 
-cpptest: kmercameltest
+cpptest: kmercameltest kmercameltest-large
 	./kmercameltest
 	./kmercameltest-large
 
