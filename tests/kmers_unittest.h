@@ -1,5 +1,6 @@
 #pragma once
 #include "../src/kmers.h"
+#include "../src/ac/kmers_ac.h"
 
 #include "gtest/gtest.h"
 

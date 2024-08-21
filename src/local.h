@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <fstream>
 
-#include "models.h"
 #include "kmers.h"
 #include "khash_utils.h"
 

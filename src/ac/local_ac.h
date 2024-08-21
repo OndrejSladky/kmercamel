@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <fstream>
 
-#include "models.h"
+#include "kmers_ac.h"
 #include "ac_automaton.h"
 
 /// Find the index of the first extending k-mer from the incidentKMers which is not forbidden.

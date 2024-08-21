@@ -3,13 +3,13 @@
 
 #include "unistd.h"
 #include "version.h"
-#include "global_ac.h"
+#include "ac/global_ac.h"
 #include "global.h"
 #include "local.h"
-#include "local_ac.h"
+#include "ac/local_ac.h"
 #include "parser.h"
-#include "streaming.h"
-#include "output.h"
+#include "ac/parser_ac.h"
+#include "ac/streaming.h"
 #include "khash_utils.h"
 #include "masks.h"
 

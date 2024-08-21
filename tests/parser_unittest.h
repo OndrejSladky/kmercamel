@@ -1,5 +1,6 @@
 #pragma once
 #include "../src/parser.h"
+#include "../src/ac/parser_ac.h"
 
 #include <algorithm>
 #include <vector>
