@@ -16,8 +16,8 @@
 int Help() {
     std::cerr << "KmerCamel version " << VERSION << std::endl;
     std::cerr << "Accepted arguments:" << std::endl;
-    std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
-    std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
+    std::cerr << "  -p path_to_fasta - required; valid path to fasta file (can be gziped)" << std::endl;
+    std::cerr << "  -k k_value       - required; integer value for k (up to 63)" << std::endl;
     std::cerr << "  -a algorithm     - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
     std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
@@ -25,13 +25,13 @@ int Help() {
     std::cerr << "  -m               - turn off the memory optimizations for global" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
     std::cerr << "  -v               - print version" << std::endl;
-    std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 13 -d 5 -a local" << std::endl;
+    std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 31 -d 5 -a local -c" << std::endl;
     std::cerr << "Possible algorithms: global globalAC local localAC streaming" << std::endl;
     std::cerr << std::endl;
     std::cerr << "For optimization of masks use `kmercamel optimize`."  << std::endl;
     std::cerr << "Accepted arguments:" << std::endl;
-    std::cerr << "  -p path_to_fasta - required; valid path to fasta file" << std::endl;
-    std::cerr << "  -k k_value       - required; integer value for k" << std::endl;
+    std::cerr << "  -p path_to_fasta - required; valid path to fasta file (can be gziped)" << std::endl;
+    std::cerr << "  -k k_value       - required; integer value for k (up to 63)" << std::endl;
     std::cerr << "  -a algorithm     - the algorithm to be run [ones (default), runs, runsapprox, zeros]" << std::endl;
     std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
         std::cerr << "d must be non-negative." << std::endl;
         return Help();
     } else if (k > MAX_K && (algorithm == "local" || algorithm == "global")) {
-        std::cerr << "k > " << MAX_K << " not supported for the algorithm '" + algorithm + "'. Use the 128bit version of KmerCamel or the AC version of the algorithm instead." << std::endl;
+        std::cerr << "k > " << MAX_K << " not supported for the algorithm '" + algorithm + "'. Use the  AC version of the algorithm instead." << std::endl;
         return Help();
     } else if (d_set && (algorithm == "globalAC" || algorithm == "global" || algorithm == "streaming")) {
         std::cerr << "Unsupported argument d for algorithm '" + algorithm + "'." << std::endl;
