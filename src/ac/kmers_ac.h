@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "../kmers.h"
 
 struct KMer {
     std::string value;
@@ -40,5 +41,15 @@ int NucleotideToInt (char c) {
         case 't': return 3;
         default: return -1;
     }
+}
+
+/// Convert the given k-mer to its representation as a number.
+kmer64_t KMerToNumber(const KMer &kMer) {
+    kmer64_t ret = 0;
+    for (char c : kMer.value) {
+        ret <<= 2;
+        ret |= NucleotideToInt(c);
+    }
+    return ret;
 }
 

@@ -16,7 +16,9 @@ KSEQ_INIT(gzFile, gzread)
 /// Fill the k-mer dictionary with k-mers from the given sequence.
 /// If complements is true, always add the canonical k-mers.
 /// If case_sensitive is true, add the k-mer only if it starts with an upper case letter.
-void AddKMers(kh_S64_t *kMers, size_t sequence_length, const char* sequence, int64_t k, bool complements, bool case_sensitive = false) {
+template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
+void AddKMers(kh_S_t *kMers, kh_wrapper_t wrapper, [[maybe_unused]] kmer_t _, size_t sequence_length,
+              const char* sequence, int64_t k, bool complements, bool case_sensitive = false) {
     int64_t currentLength = 0;
     kmer_t currentKMer = 0, reverseComplement = 0;
     kmer_t cases = 0;
@@ -30,7 +32,7 @@ void AddKMers(kh_S64_t *kMers, size_t sequence_length, const char* sequence, int
             currentLength = 0;
             continue;
         }
-        currentKMer = ((currentKMer << 2) | data) & mask; 
+        currentKMer = ((currentKMer << 2) | data) & mask;
         reverseComplement = (reverseComplement >> 2) | ((kmer_t(3 ^ data)) << shift);
         // K-mer is present if it is upper case or case-insensitive.
         cases = (cases | (!case_sensitive || sequence[i] <= 'Z')) << 1;
@@ -38,7 +40,7 @@ void AddKMers(kh_S64_t *kMers, size_t sequence_length, const char* sequence, int
             // Add the canonical k-mer to the dictionary.
             kmer_t canonical = ((!complements) || currentKMer < reverseComplement) ? currentKMer : reverseComplement;
             int ret;
-            kh_put_S64(kMers, canonical, &ret);
+            wrapper.kh_put_to_set(kMers, canonical, &ret);
         }
     }
 }
@@ -62,12 +64,14 @@ gzFile OpenFile(std::string &path) {
 
 /// Load a dictionary of k-mers from a fasta file.
 /// If complements is true, add the canonical k-mers.
-void ReadKMers(kh_S64_t *kMers, std::string &path, int k, bool complements, bool case_sensitive = false) {
+template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
+void ReadKMers(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t _, std::string &path, int k, bool complements,
+               bool case_sensitive = false) {
     gzFile fp = OpenFile(path);
     kseq_t *seq = kseq_init(fp);
 
     while (kseq_read(seq) >= 0) {
-        AddKMers(kMers, seq->seq.l, seq->seq.s, k, complements, case_sensitive);
+        AddKMers(kMers, wrapper, _, seq->seq.l, seq->seq.s, k, complements, case_sensitive);
     }
 
     kseq_destroy(seq);

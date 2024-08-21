@@ -2,6 +2,8 @@
 #include "../src/parser.h"
 #include "../src/ac/parser_ac.h"
 
+#include "kmer_types.h"
+
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -52,9 +54,9 @@ namespace {
         };
 
         for (auto &t: tests) {
-            auto kMers  = kh_init_S64();
+            auto kMers  = wrapper.kh_init_set();
 
-            ReadKMers(kMers, path, t.k, t.complements, t.case_sensitive);
+            ReadKMers(kMers, wrapper, kmer_t (0), path, t.k, t.complements, t.case_sensitive);
 
             EXPECT_EQ(t.wantResultSize, kh_size(kMers));
         }

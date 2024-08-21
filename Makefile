@@ -10,7 +10,7 @@ GTEST=       $(TESTS)/googletest/googletest
 DATA=        data
 
 
-all: kmercamel kmercamel-large
+all: kmercamel
 
 test: cpptest converttest verify
 
@@ -22,7 +22,7 @@ quick-verify: verify.py kmercamel
 	./verify.py --quick $(DATA)/spneumoniae.fa
 	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
 
-cpptest: kmercameltest kmercameltest-large
+cpptest: kmercameltest
 	./kmercameltest
 	./kmercameltest-large
 
@@ -33,10 +33,6 @@ kmercamel: $(SRC)/main.cpp $(SRC)/$(wildcard *.cpp *.h *.hpp) src/version.h
 	./create-version.sh
 	$(CXX) $(CXXFLAGS) $(SRC)/main.cpp -o $@ $(LDFLAGS)
 	cp kmercamel  🐫 || true
-
-kmercamel-large: $(SRC)/main.cpp $(SRC)/$(wildcard *.cpp *.h *.hpp) src/version.h
-	./create-version.sh
-	$(CXX) $(CXXFLAGS) $(SRC)/main.cpp -o $@ $(LDFLAGS) $(LARGEFLAGS)
 
 kmercameltest: $(TESTS)/unittest.cpp gtest-all.o $(SRC)/$(wildcard *.cpp *.h *.hpp) $(TESTS)/$(wildcard *.cpp *.h *.hpp)
 	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include $(TESTS)/unittest.cpp gtest-all.o -pthread -o $@ $(LDFLAGS)
@@ -55,6 +51,7 @@ clean:
 	rm -f kmercamel
 	rm -f 🐫 || true
 	rm -f kmercameltest
+	rm -f kmercameltest-large
 	rm -r -f ./bin
 	rm -f gtest-all.o
 	rm -f src/version.h

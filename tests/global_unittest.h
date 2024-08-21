@@ -3,6 +3,8 @@
 
 #include <algorithm>
 
+#include "kmer_types.h"
+
 #include "gtest/gtest.h"
 typedef unsigned char byte;
 namespace {
@@ -101,7 +103,7 @@ namespace {
         };
 
         for (auto t : tests) {
-            overlapPath got = OverlapHamiltonianPath( t.kMers, t.k, t.complements);
+            overlapPath got = OverlapHamiltonianPath(wrapper, t.kMers, t.k, t.complements);
             EXPECT_EQ(t.wantResult.first, got.first);
             EXPECT_EQ(t.wantResult.second, got.second);
         }
@@ -126,7 +128,7 @@ namespace {
         for (auto &&t : tests) {
             std::stringstream of;
 
-            Global(t.input, of, t.k, t.complements);
+            Global(wrapper, t.input, of, t.k, t.complements);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
