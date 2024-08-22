@@ -1,6 +1,8 @@
 #pragma once
 #include "../src/masks.h"
 
+#include "kmer_types.h"
+
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -37,12 +39,12 @@ namespace {
                     "> superstring\nACgTaACgt\n"
                 },
                 {
-                    {KMerToNumber({"CGT"}), KMerToNumber({"TAA"})},
+                    {KMerToNumber({"ACG"}), KMerToNumber({"TAA"})},
                     3, true, true,
                     "> superstring\nAcgTaacgt\n"
                 },
                 {
-                    {KMerToNumber({"CGT"}), KMerToNumber({"TAA"})},
+                    {KMerToNumber({"ACG"}), KMerToNumber({"TAA"})},
                     3, true, false,
                     "> superstring\nACgTaACgt\n"
                 },
@@ -50,16 +52,13 @@ namespace {
 
         for (auto &t : tests) {
             std::stringstream of;
-            std::ifstream in(path);
-            if (!in.is_open()) {
-                throw std::invalid_argument("couldn't open file " + path);
-            }
-            auto kMersDict = kh_init_S64();
+            auto masked_superstring = ReadMaskedSuperstring(path);
+            auto kMersDict = wrapper.kh_init_set();
             int ret;
-            for (auto &kMer : t.kMers) kh_put_S64(kMersDict, kMer, &ret);
+            for (auto &kMer : t.kMers) wrapper.kh_put_to_set(kMersDict, kMer, &ret);
 
-            OptimizeOnes(in, of, kMersDict, t.k, t.complements, t.minimize);
-            in.close();
+            OptimizeOnes(masked_superstring, of, kMersDict, wrapper, kmer_t (0), t.k, t.complements, t.minimize);
+            kseq_destroy(masked_superstring);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
@@ -116,11 +115,12 @@ namespace {
         for (auto &t : tests) {
             std::stringstream of;
             auto totalPath = path + t.relativePath;
-            auto kMersDict = kh_init_S64();
+            auto masked_superstring = ReadMaskedSuperstring(totalPath);
+            auto kMersDict = wrapper.kh_init_set();
             int ret;
-            for (auto &kMer : t.kMers) kh_put_S64(kMersDict, kMer, &ret);
+            for (auto &kMer : t.kMers) wrapper.kh_put_to_set(kMersDict, kMer, &ret);
 
-            OptimizeRuns(totalPath, kMersDict, of, t.k, t.complements, t.approximate);
+            OptimizeRuns(wrapper, kmer_t (0), masked_superstring, kMersDict, of, t.k, t.complements, t.approximate);
 
             EXPECT_EQ(t.wantResult, of.str());
         }

@@ -1,6 +1,8 @@
 #pragma once
 #include "../src/local.h"
 
+#include "kmer_types.h"
+
 #include "gtest/gtest.h"
 
 namespace {
@@ -24,11 +26,11 @@ namespace {
         };
 
         for (auto t: tests) {
-            auto kMers = kh_init_S64();
+            auto kMers = wrapper.kh_init_set();
             int ret;
-            for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
+            for (auto &&kMer : t.kMers) wrapper.kh_put_to_set(kMers, kMer, &ret);
 
-            auto got = RightExtension(t.last, kMers, t.k, t.d, t.complements);
+            auto got = RightExtension(t.last, kMers, wrapper, t.k, t.d, t.complements);
             auto gotExt = got.first;
             auto gotNext = got.second;
 
@@ -55,11 +57,11 @@ namespace {
         };
 
         for (auto t: tests) {
-            auto kMers = kh_init_S64();
+            auto kMers = wrapper.kh_init_set();
             int ret;
-            for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
+            for (auto &&kMer : t.kMers) wrapper.kh_put_to_set(kMers, kMer, &ret);
 
-            auto got = LeftExtension(t.first, kMers, t.k, t.d, t.complements);
+            auto got = LeftExtension(t.first, kMers, wrapper, t.k, t.d, t.complements);
             auto gotExt = got.first;
             auto gotNext = got.second;
             EXPECT_EQ(t.wantNext, gotNext);
@@ -89,13 +91,13 @@ namespace {
 
         for (auto &&t: tests) {
             std::stringstream of;
-            auto kMers = kh_init_S64();
+            auto kMers = wrapper.kh_init_set();
             int ret;
-            for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
+            for (auto &&kMer : t.kMers) wrapper.kh_put_to_set(kMers, kMer, &ret);
 
-            NextGeneralizedSimplitig(kMers, t.kMers.front(), of, t.k, t.d_max, t.complements);
+            NextGeneralizedSimplitig(kMers, wrapper, t.kMers.front(), of, t.k, t.d_max, t.complements);
             auto gotSuperstring = of.str();
-            auto remainingKmers = kMersToVec(kMers);
+            auto remainingKmers = kMersToVec(kMers, kmer_t(0));
             std::sort(remainingKmers.begin(), remainingKmers.end());
 
             EXPECT_EQ(t.wantKMers, remainingKmers);
@@ -125,11 +127,11 @@ namespace {
 
         for (auto t: tests) {
             std::stringstream of;
-            auto kMers = kh_init_S64();
+            auto kMers = wrapper.kh_init_set();
             int ret;
-            for (auto &&kMer : t.kMers) kh_put_S64(kMers, kMer, &ret);
+            for (auto &&kMer : t.kMers) wrapper.kh_put_to_set(kMers, kMer, &ret);
 
-            Local(kMers, of, t.k, t.d_max, t.complements);
+            Local(kMers, wrapper, kmer_t (0), of, t.k, t.d_max, t.complements);
 
             EXPECT_EQ(t.wantSuperstring, of.str());
         }

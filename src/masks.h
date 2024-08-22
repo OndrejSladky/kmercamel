@@ -8,63 +8,99 @@
 #include "khash_utils.h"
 #include "kmers.h"
 
+/// Return the given character in the correct case corresponding to the mask symbol.
+inline char Masked(char c, bool mask) {
+    int masked_difference = (c <= 'Z') - (int) mask;
+    return c + (char) masked_difference * ('a' - 'A');
+}
+
 /// For the given masked superstring output the same superstring with mask with minimal/maximal number of ones.
-void OptimizeOnes(std::ifstream &in, std::ostream &of, kh_S64_t *kMers, int k, bool complements, bool minimize) {
-    char c;
-    int beforeKMerEnd = k;
-    kmer_t currentKMer = 0;
-    kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
-    bool readingHeader = false;
-    while (in >> std::noskipws >> c) {
-        // Start of a header.
-        if (c == '>') {
-            readingHeader = true;
-            currentKMer &= mask >> 1;
-            for (char ch : NumberToKMer(currentKMer, k - beforeKMerEnd)) of << UpperToLower(ch);
-            currentKMer = 0;
-            beforeKMerEnd = k;
-        }
-        // Reprint the header.
-        if (readingHeader) of << c;
-        if (c == '\n') readingHeader = false;
-        if (readingHeader) continue;
-        auto data = NucleotideToInt(c);
-        // Disregard white space.
-        if (c == '\n' || c == '\r' || c == ' ') continue;
-        // Break at an unknown character.
-        if (data == -1) {
-            currentKMer &= mask >> 1;
-            for (char ch : NumberToKMer(currentKMer, k - beforeKMerEnd)) of << UpperToLower(ch);
-            currentKMer = 0;
-            beforeKMerEnd = k;
-            continue;
-        }
-        currentKMer <<= 2;
-        currentKMer &= mask;
-        currentKMer |= data;
-        --beforeKMerEnd;
-        kmer_t reverseComplement = ReverseComplement(currentKMer, k);
-        if (beforeKMerEnd == 0) {
-            ++beforeKMerEnd;
-            char to_print = NucleotideAtIndex(currentKMer, k, 0);
-            auto key = kh_get_S64(kMers, currentKMer);
-            if (key != kh_end(kMers)) {
-                if (minimize) {
-                    kh_del_S64(kMers, key);
-                }
-            } else if (complements && (key = kh_get_S64(kMers, reverseComplement)) != kh_end(kMers)) {
-                if (minimize) {
-                    kh_del_S64(kMers, key);
-                }
-            } else {
-                to_print = UpperToLower(to_print);
+template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
+void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, kh_wrapper_t wrapper,
+                  [[maybe_unused]] kmer_t _, int k,
+                  bool complements, bool minimize) {
+    kmer_t currentKMer = 0, reverseComplement = 0;
+    kmer_t mask = (1 << (2 * k)) - 1;
+    kmer_t shift = 2 * (k - 1);
+    of << ">" << masked_superstring->name.s << " " << masked_superstring->comment.s << std::endl;
+    uint8_t ms_validation = 0;
+    for (size_t i = 0; i < masked_superstring->seq.l; ++i) {
+        auto data = nucleotideToInt[(uint8_t) masked_superstring->seq.s[i]];
+        ms_validation |= data;
+        currentKMer = ((currentKMer << 2) | data) & mask;
+        reverseComplement = (reverseComplement >> 2) | ((kmer_t(3 ^ data)) << shift);
+        if (i >= (size_t)k - 1) {
+            kmer_t canonical = ((!complements) || currentKMer < reverseComplement) ? currentKMer : reverseComplement;
+            auto kmer_pointer = wrapper.kh_get_from_set(kMers, canonical);
+            bool contained = kmer_pointer != kh_end(kMers);
+            of << Masked(masked_superstring->seq.s[i - k + 1], contained);
+            // If minimizing, erase the k-mer once set.
+            if (minimize && contained) {
+                wrapper.kh_del_from_set(kMers, kmer_pointer);
             }
-            of << to_print;
         }
     }
-    currentKMer &= mask >> 1;
-    for (char ch : NumberToKMer(currentKMer, k - beforeKMerEnd)) of << UpperToLower(ch);
+    // Print the remaining k-1 characters.
+    for (size_t i = masked_superstring->seq.l - k + 1; i < masked_superstring->seq.l; ++i) {
+        of << Masked(masked_superstring->seq.s[i], false);
+    }
     of << std::endl;
+    // Check that characters were only ACGTacgt.
+    if (ms_validation >= 4) {
+        throw std::invalid_argument("Masked superstring contains invalid characters.");
+    }
+}
+
+/// Read or set the intervals.
+/// If [setIntervals] is provided reprint the given files with the corresponding intervals set to 1.
+/// Otherwise, read the intervals in which each k-mer occurs.
+template <typename kmer_t, typename kh_P_t, typename kh_S_t, typename kh_wrapper_t>
+std::pair<size_t, size_t> ReadWriteIntervals(kh_P_t *intervals, kh_S_t *kMers, kh_wrapper_t wrapper,
+                             [[maybe_unused]] kmer_t _, std::vector<std::list<size_t>> &intervalsForKmer,
+                             kseq_t* masked_superstring, int k, bool complements, std::ostream &of,
+                             const bool* setIntervals = nullptr) {
+    bool reading = setIntervals == nullptr;
+    kmer_t currentKMer = 0, reverseComplement = 0;
+    kmer_t mask = (1 << (2 * k)) - 1;
+    kmer_t shift = 2 * (k - 1);
+    size_t currentInterval = 0;
+    size_t occurrences = 0;
+    bool interval_used = false;
+    uint8_t ms_validation = 0;
+    for (size_t i = 0; i < masked_superstring->seq.l; ++i) {
+        auto data = nucleotideToInt[(uint8_t) masked_superstring->seq.s[i]];
+        ms_validation |= data;
+        currentKMer = ((currentKMer << 2) | data) & mask;
+        reverseComplement = (reverseComplement >> 2) | ((kmer_t(3 ^ data)) << shift);
+        if (i >= (size_t)k - 1) {
+            kmer_t canonical = ((!complements) || currentKMer < reverseComplement) ? currentKMer : reverseComplement;
+            auto kmer_pointer = wrapper.kh_get_from_set(kMers, canonical);
+            bool contained = kmer_pointer != kh_end(kMers);
+            bool set = false;
+            if (contained) {
+                interval_used = true;
+                if (reading) occurrences += appendInterval(intervals, wrapper, intervalsForKmer, currentKMer, currentInterval, k, complements);
+                else set = setIntervals[currentInterval];
+            } else {
+                currentInterval += interval_used;
+                interval_used = false;
+            }
+            if (!reading) {
+                char toPrint = masked_superstring->seq.s[i - k + 1];
+                of << Masked(toPrint, set);
+            }
+        }
+    }
+    // Print the remaining k-1 characters.
+    if (!reading) {
+        for (size_t i = masked_superstring->seq.l - k + 1; i < masked_superstring->seq.l; ++i) {
+            of << Masked(masked_superstring->seq.s[i], false);
+        }
+    }
+    if (ms_validation >= 4) {
+        throw std::invalid_argument("Masked superstring contains invalid characters.");
+    }
+    return {occurrences, currentInterval + interval_used};
 }
 
 /// Pre-solve to the ILP in minimizing the number of runs.
@@ -112,10 +148,11 @@ std::pair<std::vector<int>, std::vector<int>> HeuristicPreSolve(std::vector<std:
 
 
 /// For the given masked superstring output the same superstring with mask with minimal number of runs of ones.
-void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bool complements, bool approximate) {
-    kh_O64_t *intervals = kh_init_O64();
+template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
+void OptimizeRuns(kh_wrapper_t wrapper, kmer_t _, kseq_t* masked_superstring, kh_S_t *kMers, std::ostream &of, int k, bool complements, bool approximate) {
+    auto *intervals = wrapper.kh_init_map();
     std::vector<std::list<size_t>> intervalsForKMer;
-    auto [size, rows] = ReadIntervals(intervals, kMers, intervalsForKMer, path, k, complements, of, nullptr);
+    auto [size, rows] = ReadWriteIntervals(intervals, kMers, wrapper, _, intervalsForKMer, masked_superstring, k, complements, of, nullptr);
     int mappedSize, newIntervals; size_t totalIntervals;
     auto [mapping, intervalMapping] = HeuristicPreSolve(intervalsForKMer, rows, mappedSize, totalIntervals, newIntervals);
     glp_prob *lp;
@@ -164,32 +201,31 @@ void OptimizeRuns(std::string path, kh_S64_t *kMers, std::ostream &of, int k, bo
         else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
-    ReadIntervals(nullptr, kMers, intervalsForKMer, path, k, complements, of, intervalsSet);
+    of << ">" << masked_superstring->name.s << " " << masked_superstring->comment.s << std::endl;
+    ReadWriteIntervals(intervals, kMers, wrapper, _, intervalsForKMer, masked_superstring, k, complements, of, intervalsSet);
     of << std::endl;
 }
 
-int Optimize(std::string &algorithm, std::string path, std::ostream &of,  int k, bool complements) {
-    kh_S64_t *kMers = kh_init_S64();
-    ReadKMers(kMers, path, k, complements, true);
+template <typename kmer_t, typename kh_wrapper_t>
+int Optimize(kh_wrapper_t wrapper, kmer_t _, std::string &algorithm, std::string path, std::ostream &of,  int k, bool complements) {
+    kseq_t* masked_superstring = ReadMaskedSuperstring(path);
+    auto *kMers = wrapper.kh_init_set();
+    AddKMers(kMers, wrapper, _, masked_superstring->seq.l, masked_superstring->seq.s, k, complements, true);
 
-    std::ifstream in(path);
-    if (in.is_open()) {
-        if (algorithm == "ones") {
-            OptimizeOnes(in, of, kMers, k, complements, false);
-        } else if (algorithm == "zeros") {
-            OptimizeOnes(in, of, kMers, k, complements, true);
-        } else if (algorithm == "runs") {
-            OptimizeRuns(path, kMers, of, k, complements, false);
-        } else if (algorithm == "runsapprox") {
-            OptimizeRuns(path, kMers, of, k, complements, true);
-        } else {
-            std::cerr << "Algorithm '" + algorithm + "' not recognized." << std::endl;
-            in.close();
-            return 1;
-        }
-        in.close();
+    if (algorithm == "ones") {
+        OptimizeOnes(masked_superstring, of, kMers, wrapper, _, k, complements, false);
+    } else if (algorithm == "zeros") {
+        OptimizeOnes(masked_superstring, of, kMers,  wrapper, _,k, complements, true);
+    } else if (algorithm == "runs") {
+        OptimizeRuns(wrapper, _, masked_superstring, kMers, of, k, complements, false);
+    } else if (algorithm == "runsapprox") {
+        OptimizeRuns(wrapper, _,masked_superstring, kMers, of, k, complements, true);
     } else {
-        throw std::invalid_argument("couldn't open file " + path);
+        std::cerr << "Algorithm '" + algorithm + "' not recognized." << std::endl;
+        kseq_destroy(masked_superstring);
+        return 1;
     }
+    AssertEOF(masked_superstring, "Expecting only a single FASTA record -- the masked superstring.");
+    kseq_destroy(masked_superstring);
     return 0;
 }
