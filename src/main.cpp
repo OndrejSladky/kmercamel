@@ -120,7 +120,7 @@ INIT_KMERCAMEL(128)
 INIT_KMERCAMEL(256)
 
 int main(int argc, char **argv) {
-    std::string path;
+    std::string path = "";
     int k = 0;
     int d_max = 5;
     std::ofstream output;
@@ -142,6 +142,10 @@ int main(int argc, char **argv) {
         while ((opt = getopt(argc, argv, "p:k:d:a:o:hcvml"))  != -1) {
             switch(opt) {
                 case  'p':
+                    if (path != "") {
+                        std::cerr << "Error: parameter p set twice." << std::endl;
+                        return Help();
+                    }
                     path = optarg;
                     break;
                 case 'o':
