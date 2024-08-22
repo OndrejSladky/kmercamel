@@ -36,12 +36,12 @@ void PartialPreSort(std::vector<kmer_t> &vals, int k) {
     std::vector<size_t> counts(DIFFERENT_PREFIXES_COUNT, 0);
     int shift = (2 * k) - SORT_FIRST_BITS;
     kmer_t mask = PREFIX_MASK << shift;
-    for (auto &&kMer : vals) counts[(size_t)((kMer & mask) >> shift)]++;
+    for (auto &&kMer : vals) counts[(uint64_t)((kMer & mask) >> shift)]++;
     std::vector<std::vector<kmer_t>> distributed(DIFFERENT_PREFIXES_COUNT);
-    for (size_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) distributed[i] = std::vector<kmer_t> (counts[i]);
-    for (size_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) counts[i] = 0;
+    for (uint64_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) distributed[i] = std::vector<kmer_t> (counts[i]);
+    for (uint64_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) counts[i] = 0;
     for (auto &&kMer : vals) {
-        size_t index = (kMer & mask) >> shift;
+        uint64_t index = (kMer & mask) >> shift;
         distributed[index][counts[index]++] = kMer;
     }
     size_t index = 0;
