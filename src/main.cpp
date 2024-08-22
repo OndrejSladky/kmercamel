@@ -11,7 +11,13 @@
 #include "ac/parser_ac.h"
 #include "ac/streaming.h"
 #include "khash_utils.h"
+
+#include <iostream>
+#include <string>
+#include "unistd.h"
+#include "version.h"
 #include "masks.h"
+#include "lower_bound.h"
 
 int Help() {
     std::cerr << "KmerCamel version " << VERSION << std::endl;
@@ -23,6 +29,7 @@ int Help() {
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
     std::cerr << "  -m               - turn off the memory optimizations for global" << std::endl;
+    std::cerr << "  -l               - compute the cycle cover lower bound instead of masked superstring" << std::endl;
     std::cerr << "  -h               - print help" << std::endl;
     std::cerr << "  -v               - print version" << std::endl;
     std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 31 -d 5 -a local -c" << std::endl;
@@ -48,8 +55,9 @@ void Version() {
 
 // This macro cannot be avoided without bloating the code too much.
 #define INIT_KMERCAMEL(type) \
-int kmercamel##type(std::string path, int k, int d_max, std::ostream *of, bool complements, bool masks, std::string algorithm, bool optimize_memory) { \
-    kmer_dict##type##_t wrapper;                                                                                                                       \
+int kmercamel##type(std::string path, int k, int d_max, std::ostream *of, bool complements, bool masks, \
+                    std::string algorithm, bool optimize_memory, bool lower_bound) { \
+    kmer_dict##type##_t wrapper; \
     kmer##type##_t kmer_type = 0; \
     if (masks) { \
         int ret = Optimize(wrapper, kmer_type, algorithm, path, *of, k, complements); \
@@ -71,14 +79,15 @@ int kmercamel##type(std::string path, int k, int d_max, std::ostream *of, bool c
             return Help(); \
         } \
         d_max = std::min(k - 1, d_max); \
-        WriteName(k, *of); \
+        if (!lower_bound) WriteName(k, *of); \
         if (algorithm == "global") { \
             auto kMerVec = kMersToVec(kMers, kmer_type); \
             kh_destroy_S##type(kMers); \
             /* Turn off the memory optimizations if optimize_memory is set to false. */ \
             if(optimize_memory) PartialPreSort(kMerVec, k); \
             else MEMORY_REDUCTION_FACTOR = 1; \
-            Global(wrapper, kMerVec, *of, k, complements); \
+            if (lower_bound) std::cout << LowerBoundLength(wrapper, kMerVec, k, complements); \
+            else Global(wrapper, kMerVec, *of, k, complements); \
         } \
         else Local(kMers, wrapper, kmer_type, *of, k, d_max, complements); \
     } else { \
@@ -127,9 +136,10 @@ int main(int argc, char **argv) {
     bool complements = false;
     bool optimize_memory = true;
     bool d_set = false;
+    bool lower_bound = false;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "p:k:d:a:o:hcvm"))  != -1) {
+        while ((opt = getopt(argc, argv, "p:k:d:a:o:hcvml"))  != -1) {
             switch(opt) {
                 case  'p':
                     path = optarg;
@@ -158,6 +168,9 @@ int main(int argc, char **argv) {
                     break;
                 case 'm':
                     optimize_memory = false;
+                    break;
+                case 'l':
+                    lower_bound = true;
                     break;
                 case 'v':
                     Version();
@@ -196,12 +209,15 @@ int main(int argc, char **argv) {
     } else if (masks && (d_set || !optimize_memory)) {
         std::cerr << "Not supported flags for optimize." << std::endl;
         return Help();
+    } else if (lower_bound && algorithm != "global") {
+        std::cerr << "Lower bound computation supported only for hash table global." << std::endl;
+        return Help();
     }
     if (k < 32) {
-        return kmercamel64(path, k, d_max, of, complements, masks, algorithm, optimize_memory);
+        return kmercamel64(path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
     } else if (k < 64) {
-        return kmercamel128(path, k, d_max, of, complements, masks, algorithm, optimize_memory);
+        return kmercamel128(path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
     } else {
-        return kmercamel256(path, k, d_max, of, complements, masks, algorithm, optimize_memory);
+        return kmercamel256(path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
     }
 }

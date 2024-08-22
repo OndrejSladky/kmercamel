@@ -1,3 +1,4 @@
+#pragma once
 #ifndef __LITTLE_ENDIAN__
 #ifndef __BIG_ENDIAN__
   #define __LITTLE_ENDIAN__ 1

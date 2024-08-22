@@ -4,6 +4,7 @@ CXX=         g++
 CXXFLAGS=    -g -Wall -Wno-unused-function -std=c++17 -O2 -I/opt/homebrew/include
 LDFLAGS=     -lz -lglpk -L/opt/homebrew/lib
 LARGEFLAGS=  -DLARGE_KMERS
+ELARGEFLAGS=  -DEXTRA_LARGE_KMERS
 SRC=         src
 TESTS=       tests
 GTEST=       $(TESTS)/googletest/googletest
@@ -22,9 +23,10 @@ quick-verify: verify.py kmercamel
 	./verify.py --quick $(DATA)/spneumoniae.fa
 	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
 
-cpptest: kmercameltest kmercameltest-large
+cpptest: kmercameltest kmercameltest-large kmercameltest-extra-large
 	./kmercameltest
 	./kmercameltest-large
+	./kmercameltest-extra-large
 
 converttest: convert_superstring_unittest.py
 	./convert_superstring_unittest.py
@@ -39,6 +41,9 @@ kmercameltest: $(TESTS)/unittest.cpp gtest-all.o $(SRC)/$(wildcard *.cpp *.h *.h
 
 kmercameltest-large: $(TESTS)/unittest.cpp gtest-all.o $(SRC)/$(wildcard *.cpp *.h *.hpp) $(TESTS)/$(wildcard *.cpp *.h *.hpp)
 	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include $(TESTS)/unittest.cpp gtest-all.o -pthread -o $@ $(LDFLAGS) $(LARGEFLAGS)
+
+kmercameltest-extra-large: $(TESTS)/unittest.cpp gtest-all.o $(SRC)/$(wildcard *.cpp *.h *.hpp) $(TESTS)/$(wildcard *.cpp *.h *.hpp)
+	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include $(TESTS)/unittest.cpp gtest-all.o -pthread -o $@ $(LDFLAGS) $(ELARGEFLAGS)
 
 gtest-all.o: $(GTEST)/src/gtest-all.cc $(wildcard *.cpp *.h *.hpp)
 	$(CXX) $(CXXFLAGS) -isystem $(GTEST)/include -I $(GTEST)/include -I $(GTEST) -DGTEST_CREATE_SHARED_LIBRARY=1 -c -pthread $(GTEST)/src/gtest-all.cc -o $@
