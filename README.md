@@ -102,7 +102,7 @@ The versions with AC use Aho-Corasick automaton. Default `global`.
 - `-l` - compute lower bound on the superstring length instead of the superstring.
 - `-m` - turn off memory optimizations for `global`.
 - `-h` - print help.
-- `-h` - print version.
+- `-v` - print version.
 
 For mask optimization, run the subcommand `optimize` with the following arguments:
 
