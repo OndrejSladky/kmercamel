@@ -48,6 +48,9 @@ KHASH_MAP_INIT_INT64(P64, size_t)
         inline void kh_del_from_set(kh_S##type##_t *set, khint_t key) { \
             kh_del_S##type(set, key); \
         }                        \
+        inline void kh_destroy_set(kh_S##type##_t *set) { \
+            kh_destroy_S##type(set); \
+        }                        \
         inline kh_P##type##_t *kh_init_map() { \
             return kh_init_P##type(); \
         }                         \

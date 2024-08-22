@@ -53,71 +53,65 @@ void Version() {
     std::cerr << VERSION << std::endl;
 }
 
-// This macro cannot be avoided without bloating the code too much.
-#define INIT_KMERCAMEL(type) \
-int kmercamel##type(std::string path, int k, int d_max, std::ostream *of, bool complements, bool masks, \
-                    std::string algorithm, bool optimize_memory, bool lower_bound) { \
-    kmer_dict##type##_t wrapper; \
-    kmer##type##_t kmer_type = 0; \
-    if (masks) { \
-        int ret = Optimize(wrapper, kmer_type, algorithm, path, *of, k, complements); \
-        if (ret) Help(); \
-        return ret; \
-    } \
-    \
-    /* Handle streaming algorithm separately. */ \
-    if (algorithm == "streaming") { \
-        WriteName(k, *of); \
-        Streaming(path, *of,  k , complements); \
-    } \
-    /* Handle hash table based algorithms separately so that they consume less memory. */ \
-    else if (algorithm == "global" || algorithm == "local") { \
-        auto *kMers = kh_init_S##type(); \
-        ReadKMers(kMers, wrapper, kmer_type, path, k, complements); \
-        if (!kh_size(kMers)) { \
-            std::cerr << "Path '" << path << "' contains no k-mers." << std::endl; \
-            return Help(); \
-        } \
-        d_max = std::min(k - 1, d_max); \
-        if (!lower_bound) WriteName(k, *of); \
-        if (algorithm == "global") { \
-            auto kMerVec = kMersToVec(kMers, kmer_type); \
-            kh_destroy_S##type(kMers); \
-            /* Turn off the memory optimizations if optimize_memory is set to false. */ \
-            if(optimize_memory) PartialPreSort(kMerVec, k); \
-            else MEMORY_REDUCTION_FACTOR = 1; \
-            if (lower_bound) std::cout << LowerBoundLength(wrapper, kMerVec, k, complements); \
-            else Global(wrapper, kMerVec, *of, k, complements); \
-        } \
-        else Local(kMers, wrapper, kmer_type, *of, k, d_max, complements); \
-    } else { \
-        auto data = ReadFasta(path); \
-        if (data.empty()) { \
-            std::cerr << "Path '" << path << "' not to a fasta file." << std::endl; \
-            return Help(); \
-        } \
-        d_max = std::min(k - 1, d_max); \
-        \
-        auto kMers = ConstructKMers(data, k, complements); \
-        WriteName(k, *of); \
-        if (algorithm == "globalAC") { \
-            GlobalAC(kMers, *of, complements); \
-        } \
-        else if (algorithm == "localAC") { \
-            LocalAC(kMers, *of, k, d_max, complements); \
-        } \
-        else { \
-            std::cerr << "Algorithm '" << algorithm << "' not supported." << std::endl; \
-            return Help(); \
-        } \
-    } \
-    *of << std::endl; \
-    return 0; \
-}
+/// Run KmerCamel with the given parameters.
+template <typename kmer_t, typename kh_wrapper_t>
+int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, int d_max, std::ostream *of, bool complements, bool masks,
+                    std::string algorithm, bool optimize_memory, bool lower_bound) {
+    if (masks) {
+        int ret = Optimize(wrapper, kmer_type, algorithm, path, *of, k, complements);
+        if (ret) Help();
+        return ret;
+    }
 
-INIT_KMERCAMEL(64)
-INIT_KMERCAMEL(128)
-INIT_KMERCAMEL(256)
+    /* Handle streaming algorithm separately. */
+    if (algorithm == "streaming") {
+        WriteName(k, *of);
+        Streaming(path, *of,  k , complements);
+    }
+    /* Handle hash table based algorithms separately so that they consume less memory. */
+    else if (algorithm == "global" || algorithm == "local") {
+        auto *kMers = wrapper.kh_init_set();
+        ReadKMers(kMers, wrapper, kmer_type, path, k, complements);
+        if (!kh_size(kMers)) {
+            std::cerr << "Path '" << path << "' contains no k-mers." << std::endl;
+            return Help();
+        }
+        d_max = std::min(k - 1, d_max);
+        if (!lower_bound) WriteName(k, *of);
+        if (algorithm == "global") {
+            auto kMerVec = kMersToVec(kMers, kmer_type);
+            wrapper.kh_destroy_set(kMers);
+            /* Turn off the memory optimizations if optimize_memory is set to false. */
+            if(optimize_memory) PartialPreSort(kMerVec, k);
+            else MEMORY_REDUCTION_FACTOR = 1;
+            if (lower_bound) std::cout << LowerBoundLength(wrapper, kMerVec, k, complements);
+            else Global(wrapper, kMerVec, *of, k, complements);
+        }
+        else Local(kMers, wrapper, kmer_type, *of, k, d_max, complements);
+    } else {
+        auto data = ReadFasta(path);
+        if (data.empty()) {
+            std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
+            return Help();
+        }
+        d_max = std::min(k - 1, d_max);
+
+        auto kMers = ConstructKMers(data, k, complements);
+        WriteName(k, *of);
+        if (algorithm == "globalAC") {
+            GlobalAC(kMers, *of, complements);
+        }
+        else if (algorithm == "localAC") {
+            LocalAC(kMers, *of, k, d_max, complements);
+        }
+        else {
+            std::cerr << "Algorithm '" << algorithm << "' not supported." << std::endl;
+            return Help();
+        }
+    }
+    *of << std::endl;
+    return 0;
+}
 
 int main(int argc, char **argv) {
     std::string path;
@@ -142,6 +136,10 @@ int main(int argc, char **argv) {
         while ((opt = getopt(argc, argv, "p:k:d:a:o:hcvml"))  != -1) {
             switch(opt) {
                 case  'p':
+                    if (!path.empty()) {
+                        std::cerr << "Error: parameter p set twice." << std::endl;
+                        return Help();
+                    }
                     path = optarg;
                     break;
                 case 'o':
@@ -214,10 +212,10 @@ int main(int argc, char **argv) {
         return Help();
     }
     if (k < 32) {
-        return kmercamel64(path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
     } else if (k < 64) {
-        return kmercamel128(path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
     } else {
-        return kmercamel256(path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
     }
 }
