@@ -4,10 +4,13 @@
 #include <iostream>
 #include <cstdint>
 
+#include "uint256_t/uint256_t.h"
+
 #include "ac/kmers_ac.h"
 
 typedef __uint128_t kmer128_t;
 typedef uint64_t kmer64_t;
+typedef uint256_t kmer256_t;
 
 static const uint8_t nucleotideToInt[] = {
 		4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
@@ -65,7 +68,6 @@ inline kmer64_t word_reverse_complement(kmer64_t w) {
     return ((U)-1) - w;
 }
 
-
 /// Compute the reverse complement of a word.
 /// Copyright: Jellyfish GPL-3.0
 inline kmer128_t word_reverse_complement(kmer128_t w) {
@@ -79,6 +81,13 @@ inline kmer128_t word_reverse_complement(kmer128_t w) {
     return ((U)-1) - w;
 }
 
+/// Compute the reverse complement of a word.
+inline kmer256_t word_reverse_complement(kmer256_t w) {
+    kmer128_t low = word_reverse_complement(w.lower());
+    kmer128_t high = word_reverse_complement(w.upper());
+    return kmer256_t(low, high);
+}
+
 /// Compute the reverse complement of the given k-mer.
 template <typename kmer_t>
 kmer_t ReverseComplement(kmer_t kMer, int k) {
@@ -90,7 +99,7 @@ const char letters[4] {'A', 'C', 'G', 'T'};
 /// Return the index-th nucleotide from the encoded k-mer.
 template <typename kmer_t>
 inline char NucleotideAtIndex(kmer_t encoded, int k, int index) {
-    return letters[(encoded >> ((k - index - kmer_t(1)) << kmer_t(1))) & kmer_t(3)];
+    return letters[(uint64_t)((encoded >> ((k - index - kmer_t(1)) << kmer_t(1))) & kmer_t(3))];
 }
 
 /// Convert the encoded KMer representation to string.
@@ -99,7 +108,7 @@ std::string NumberToKMer(kmer_t encoded, int length) {
     std::string ret(length, 'N');
     for (int i = 0; i < length; ++i) {
         // The last two bits correspond to one nucleotide.
-        ret[length - i -1] = letters[encoded & 3];
+        ret[length - i -1] = letters[(uint64_t)(encoded & 3)];
         // Move to the next letter.
         encoded >>= 2;
     }

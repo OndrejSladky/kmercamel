@@ -17,7 +17,7 @@ int Help() {
     std::cerr << "KmerCamel version " << VERSION << std::endl;
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file (can be gziped)" << std::endl;
-    std::cerr << "  -k k_value       - required; integer value for k (up to 63)" << std::endl;
+    std::cerr << "  -k k_value       - required; integer value for k (up to 127)" << std::endl;
     std::cerr << "  -a algorithm     - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
     std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
     std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
@@ -31,7 +31,7 @@ int Help() {
     std::cerr << "For optimization of masks use `kmercamel optimize`."  << std::endl;
     std::cerr << "Accepted arguments:" << std::endl;
     std::cerr << "  -p path_to_fasta - required; valid path to fasta file (can be gziped)" << std::endl;
-    std::cerr << "  -k k_value       - required; integer value for k (up to 63)" << std::endl;
+    std::cerr << "  -k k_value       - required; integer value for k (up to 127)" << std::endl;
     std::cerr << "  -a algorithm     - the algorithm to be run [ones (default), runs, runsapprox, zeros]" << std::endl;
     std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
     std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
@@ -40,7 +40,7 @@ int Help() {
     return 1;
 }
 
-constexpr int MAX_K = 63;
+constexpr int MAX_K = 127;
 
 void Version() {
     std::cerr << VERSION << std::endl;
@@ -50,7 +50,7 @@ void Version() {
 #define INIT_KMERCAMEL(type) \
 int kmercamel##type(std::string path, int k, int d_max, std::ostream *of, bool complements, bool masks, std::string algorithm, bool optimize_memory) { \
     kmer_dict##type##_t wrapper;                                                                                                                       \
-    kmer##type##_t kmer_type; \
+    kmer##type##_t kmer_type = 0; \
     if (masks) { \
         int ret = Optimize(wrapper, kmer_type, algorithm, path, *of, k, complements); \
         if (ret) Help(); \
@@ -108,6 +108,7 @@ int kmercamel##type(std::string path, int k, int d_max, std::ostream *of, bool c
 
 INIT_KMERCAMEL(64)
 INIT_KMERCAMEL(128)
+INIT_KMERCAMEL(256)
 
 int main(int argc, char **argv) {
     std::string path;
@@ -198,7 +199,9 @@ int main(int argc, char **argv) {
     }
     if (k < 32) {
         return kmercamel64(path, k, d_max, of, complements, masks, algorithm, optimize_memory);
-    } else {
+    } else if (k < 64) {
         return kmercamel128(path, k, d_max, of, complements, masks, algorithm, optimize_memory);
+    } else {
+        return kmercamel256(path, k, d_max, of, complements, masks, algorithm, optimize_memory);
     }
 }

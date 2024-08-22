@@ -20,7 +20,7 @@ They come in two different implementations (their results may differ due to the 
 Note that at this point only the implementations with hash table are optimized and that the Aho-Corasick automaton
 based versions of the algorithms are only experimental.
 
-The hashing based implementations of KmerCamel🐫 support $k$-mer with $k$ at most 63,
+The hashing based implementations of KmerCamel🐫 support $k$-mer with $k$ at most 127,
 
 All algorithms can be used to either work in the unidirectional model or in the bidirectional model
 (i.e. treat $k$-mer and its reverse complement as the same; in this case either of them appears in the result).
@@ -62,7 +62,7 @@ on macOS.
 The program has the following arguments:
 
 - `-p path_to_fasta` - the path to fasta file (can be `gzip`ed). This is a required argument.
-- `-k value_of_k` - the size of one k-mer (up to 63). This is a required argument.
+- `-k value_of_k` - the size of one k-mer (up to 127). This is a required argument.
 - `-a algorithm` - the algorithm which should be run. Either `global` or `globalAC` for Global Greedy, `local` or `localAC` for Local Greedy.
 The versions with AC use Aho-Corasick automaton. Default `global`.
 - `-o output_path` - the path to output file. If not specified, output is printed to stdout.

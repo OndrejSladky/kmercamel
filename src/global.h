@@ -31,17 +31,17 @@ typedef std::pair<std::vector<size_t>, std::vector<unsigned char>> overlapPath;
 template <typename kmer_t>
 void PartialPreSort(std::vector<kmer_t> &vals, int k) {
     int SORT_FIRST_BITS = std::min(2 * k, SORT_FIRST_BITS_DEFAULT);
-    kmer_t DIFFERENT_PREFIXES_COUNT = kmer_t(1) << SORT_FIRST_BITS;
+    uint64_t DIFFERENT_PREFIXES_COUNT = 1ULL << SORT_FIRST_BITS;
     kmer_t PREFIX_MASK = DIFFERENT_PREFIXES_COUNT - kmer_t(1);
     std::vector<size_t> counts(DIFFERENT_PREFIXES_COUNT, 0);
     int shift = (2 * k) - SORT_FIRST_BITS;
     kmer_t mask = PREFIX_MASK << shift;
-    for (auto &&kMer : vals) counts[(kMer & mask) >> shift]++;
+    for (auto &&kMer : vals) counts[(uint64_t)((kMer & mask) >> shift)]++;
     std::vector<std::vector<kmer_t>> distributed(DIFFERENT_PREFIXES_COUNT);
-    for (kmer_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) distributed[i] = std::vector<kmer_t> (counts[i]);
-    for (kmer_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) counts[i] = 0;
+    for (uint64_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) distributed[i] = std::vector<kmer_t> (counts[i]);
+    for (uint64_t i = 0; i < DIFFERENT_PREFIXES_COUNT; ++i) counts[i] = 0;
     for (auto &&kMer : vals) {
-        kmer_t index = (kMer & mask) >> shift;
+        uint64_t index = (kMer & mask) >> shift;
         distributed[index][counts[index]++] = kMer;
     }
     size_t index = 0;
@@ -164,7 +164,7 @@ void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<k
     for (; start < kMersCount && !isStart[start]; ++start);
 
     kmer_t last = BitSuffix(access(kMers, start), k-1);
-    of << letters[BitPrefix(access(kMers, start), k, 1)];
+    of << letters[(uint64_t)BitPrefix(access(kMers, start), k, 1)];
 
     // Move from the first k-mer to the last which has no successor.
     while(edgeFrom[start] != size_t(-1)) {
@@ -175,7 +175,7 @@ void SuperstringFromPath(const overlapPath &hamiltonianPath, const std::vector<k
             of << unmaskedNucleotides;
         }
         last = BitSuffix(access(kMers, edgeFrom[start]), k-1);
-        of << letters[BitPrefix(access(kMers, edgeFrom[start]), k, 1)];
+        of << letters[(uint64_t)BitPrefix(access(kMers, edgeFrom[start]), k, 1)];
         start = edgeFrom[start];
     }
 

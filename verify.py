@@ -76,7 +76,7 @@ def main():
         for a in ["global", "local", "globalAC", "localAC", "streaming"]:
             print(f"Testing {a}:")
             for complements in [True, False]:
-                for k in ( ([5, 8, 12] if a not in ["local", "global"] else [5, 8, 12, 17, 31, 32, 51, 63]) if args.quick else range(2, 64)):
+                for k in ( ([5, 8, 12] if a not in ["local", "global"] else [5, 8, 12, 17, 31, 32, 51, 63, 127]) if args.quick else range(2, 128)):
                     success &= verify_instance(args.path, k, a, complements, "")
                 print("")
     else:
