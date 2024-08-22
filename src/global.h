@@ -31,7 +31,7 @@ typedef std::pair<std::vector<size_t>, std::vector<unsigned char>> overlapPath;
 template <typename kmer_t>
 void PartialPreSort(std::vector<kmer_t> &vals, int k) {
     int SORT_FIRST_BITS = std::min(2 * k, SORT_FIRST_BITS_DEFAULT);
-    kmer_t DIFFERENT_PREFIXES_COUNT = kmer_t(1) << SORT_FIRST_BITS;
+    uint64_t DIFFERENT_PREFIXES_COUNT = 1ULL << SORT_FIRST_BITS;
     kmer_t PREFIX_MASK = DIFFERENT_PREFIXES_COUNT - kmer_t(1);
     std::vector<size_t> counts(DIFFERENT_PREFIXES_COUNT, 0);
     int shift = (2 * k) - SORT_FIRST_BITS;
