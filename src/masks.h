@@ -29,6 +29,18 @@ inline char Masked(char c, bool mask) {
     return c + (char) masked_difference * ('a' - 'A');
 }
 
+/// Reprint the sequence header as it was in the original fasta file.
+void ReprintSequenceHeader(kseq_t* masked_superstring, std::ostream &of) {
+    of << ">";
+    if (masked_superstring->name.s) {
+        of << masked_superstring->name.s;
+    }
+    if (masked_superstring->comment.s) {
+        of << " " << masked_superstring->comment.s;
+    }
+    of << std::endl;
+}
+
 /// For the given masked superstring output the same superstring with mask with minimal/maximal number of ones.
 template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
 void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, kh_wrapper_t wrapper,
@@ -37,7 +49,7 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, k
     kmer_t currentKMer = 0, reverseComplement = 0;
     kmer_t mask = (1 << (2 * k)) - 1;
     kmer_t shift = 2 * (k - 1);
-    of << ">" << masked_superstring->name.s << " " << masked_superstring->comment.s << std::endl;
+    ReprintSequenceHeader(masked_superstring, of);
     uint8_t ms_validation = 0;
     for (size_t i = 0; i < masked_superstring->seq.l; ++i) {
         auto data = nucleotideToInt[(uint8_t) masked_superstring->seq.s[i]];
@@ -224,7 +236,7 @@ void OptimizeRuns(kh_wrapper_t wrapper, kmer_t _, kseq_t* masked_superstring, kh
         else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
-    of << ">" << masked_superstring->name.s << " " << masked_superstring->comment.s << std::endl;
+    ReprintSequenceHeader(masked_superstring, of);
     ReadWriteIntervals(intervals, kMers, wrapper, _, intervalsForKMer, masked_superstring, k, complements, of, intervalsSet);
     of << std::endl;
 }
