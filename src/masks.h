@@ -8,10 +8,37 @@
 #include "khash_utils.h"
 #include "kmers.h"
 
+/// Print a warning to stderr if the mask after optimization violates the mask convention
+/// (i.e., if there are more than k-1 last characters OFF).
+void PrintMaskConventionWarning() {
+    std::cerr << "Warning: the mask after optimization violates the mask convention" <<
+        "as there are more than k-1 trailing zeros (more than k-1 trailing lowercase characters)." << std::endl <<
+        "Depending on your case, you might want to consider one of the following manual fixes:" << std::endl <<
+        "  - Set the k-th last mask symbol to 1 (corresponds to setting the letter to uppercase)." <<
+        "The masked superstring will still represent the same set, but the mask will not be optimal" << std::endl <<
+        "  - Truncate the masked superstring so that there are exactly k-1 trailing lowercase characters." <<
+        "The masked superstring will still represent the same set, but the superstring will differ from the original" <<
+        " (it will be shorter)." << std::endl <<
+        "  - Ignore the warning if the previous fixes are not suitable" <<
+        "Ensure that for your masked superstring, k is always explicitly provided and not inferred from the mask.";
+}
+
 /// Return the given character in the correct case corresponding to the mask symbol.
 inline char Masked(char c, bool mask) {
     int masked_difference = (c <= 'Z') - (int) mask;
     return c + (char) masked_difference * ('a' - 'A');
+}
+
+/// Reprint the sequence header as it was in the original fasta file.
+void ReprintSequenceHeader(kseq_t* masked_superstring, std::ostream &of) {
+    of << ">";
+    if (masked_superstring->name.s) {
+        of << masked_superstring->name.s;
+    }
+    if (masked_superstring->comment.s) {
+        of << " " << masked_superstring->comment.s;
+    }
+    of << std::endl;
 }
 
 /// For the given masked superstring output the same superstring with mask with minimal/maximal number of ones.
@@ -22,7 +49,7 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, k
     kmer_t currentKMer = 0, reverseComplement = 0;
     kmer_t mask = (1 << (2 * k)) - 1;
     kmer_t shift = 2 * (k - 1);
-    of << ">" << masked_superstring->name.s << " " << masked_superstring->comment.s << std::endl;
+    ReprintSequenceHeader(masked_superstring, of);
     uint8_t ms_validation = 0;
     for (size_t i = 0; i < masked_superstring->seq.l; ++i) {
         auto data = nucleotideToInt[(uint8_t) masked_superstring->seq.s[i]];
@@ -37,6 +64,10 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, k
             // If minimizing, erase the k-mer once set.
             if (minimize && contained) {
                 wrapper.kh_del_from_set(kMers, kmer_pointer);
+            }
+            // Print a warning if the mask convention is violated.
+            if (i == masked_superstring->seq.l - 1 && !contained) {
+                PrintMaskConventionWarning();
             }
         }
     }
@@ -88,6 +119,10 @@ std::pair<size_t, size_t> ReadWriteIntervals(kh_P_t *intervals, kh_S_t *kMers, k
             if (!reading) {
                 char toPrint = masked_superstring->seq.s[i - k + 1];
                 of << Masked(toPrint, set);
+                // Print a warning if the mask convention is violated.
+                if (i == masked_superstring->seq.l - 1 && !contained) {
+                    PrintMaskConventionWarning();
+                }
             }
         }
     }
@@ -201,7 +236,7 @@ void OptimizeRuns(kh_wrapper_t wrapper, kmer_t _, kseq_t* masked_superstring, kh
         else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
-    of << ">" << masked_superstring->name.s << " " << masked_superstring->comment.s << std::endl;
+    ReprintSequenceHeader(masked_superstring, of);
     ReadWriteIntervals(intervals, kMers, wrapper, _, intervalsForKMer, masked_superstring, k, complements, of, intervalsSet);
     of << std::endl;
 }
