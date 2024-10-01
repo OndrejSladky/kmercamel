@@ -20,7 +20,7 @@ void PrintMaskConventionWarning() {
         "The masked superstring will still represent the same set, but the superstring will differ from the original" <<
         " (it will be shorter)." << std::endl <<
         "  - Ignore the warning if the previous fixes are not suitable" <<
-        "Ensure that for your masked superstring, k is always explicitly provided and not inferred from the mask.";
+        "Ensure that for your masked superstring, k is always explicitly provided and not inferred from the mask." << std::endl;
 }
 
 /// Return the given character in the correct case corresponding to the mask symbol.
@@ -47,7 +47,7 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, k
                   [[maybe_unused]] kmer_t _, int k,
                   bool complements, bool minimize) {
     kmer_t currentKMer = 0, reverseComplement = 0;
-    kmer_t mask = (1 << (2 * k)) - 1;
+    kmer_t mask = ((kmer_t(1)) << (2 * k)) - 1;
     kmer_t shift = 2 * (k - 1);
     ReprintSequenceHeader(masked_superstring, of);
     uint8_t ms_validation = 0;
@@ -92,7 +92,7 @@ std::pair<size_t, size_t> ReadWriteIntervals(kh_P_t *intervals, kh_S_t *kMers, k
                              const bool* setIntervals = nullptr) {
     bool reading = setIntervals == nullptr;
     kmer_t currentKMer = 0, reverseComplement = 0;
-    kmer_t mask = (1 << (2 * k)) - 1;
+    kmer_t mask = ((kmer_t(1)) << (2 * k)) - 1;
     kmer_t shift = 2 * (k - 1);
     size_t currentInterval = 0;
     size_t occurrences = 0;
