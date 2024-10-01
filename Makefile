@@ -15,13 +15,18 @@ all: kmercamel
 
 test: cpptest converttest verify
 
+mask-verify:
+	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
+	./verify.py --k 31 --superstring_path $(DATA)/global-k31c.fa $(DATA)/spneumoniae.fa
+	./verify.py --k 63 --superstring_path $(DATA)/global-k63c.fa $(DATA)/spneumoniae.fa
+	./verify.py --k 127 --superstring_path $(DATA)/global-k127c.fa $(DATA)/spneumoniae.fa
+
+
 verify: verify.py kmercamel
 	./verify.py $(DATA)/spneumoniae.fa
-	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
 
 quick-verify: verify.py kmercamel
 	./verify.py --quick $(DATA)/spneumoniae.fa
-	./verify.py --k 13 --superstring_path $(DATA)/global-k13c.fa $(DATA)/spneumoniae.fa
 
 cpptest: kmercameltest kmercameltest-large kmercameltest-extra-large
 	./kmercameltest
