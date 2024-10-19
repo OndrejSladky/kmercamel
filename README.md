@@ -36,6 +36,8 @@ KmerCamel🐫 implements two different algorithms for computing the superstring:
 global greedy and local greedy. Global greedy produces more compact superstrings and therefore is the default option,
 but local greedy requires less memory and hence can be more suitable in use cases where memory is the main limitation.
 
+To compute masked superstrings takes about 4-10s / 1M k-mers, which means about 5h to compute masked superstrings for the human genome.
+
 All algorithms can be used to either work in the unidirectional model or in the bidirectional model
 (i.e. treat $k$-mer and its reverse complement as the same; in this case either of them appears in the result).
 
