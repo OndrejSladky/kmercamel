@@ -76,9 +76,9 @@ Alternatively, you can install KmerCamel from Bioconda:
 ### Compression for k-mer set storage
 
 ```
-./kmercamel -p yourfile.fa -k 31 -c > ms.fa   # Compute MS with the default mask
+./kmercamel -p yourfile.fa -k 31 -c > ms.fa        # Compute MS with the default mask
 cat ms.fa | tr acgt 0000 | tr ACGT 1111 > mask.txt # Extract mask
-cat ms.fa | tr acgt ACGR > superstring.txt # Extract mask
+cat ms.fa | tr acgt ACGT > superstring.txt         # Extract superstring
 bzip2 --best mask.txt
 xz -T1 -9 superstring.txt
 ```
@@ -90,9 +90,9 @@ For a super efficient compression of the superstring (often <2 bits / bp), you u
 
 Example with [FMSI](https://github.com/OndrejSladky/fmsi/activity?ref=main):
 ```
-kmercamel -p yourfile.fa -k 31 -c > ms.fa   # Compute MS with the default mask
-kmercamel optimize -p ms.fa -k 31 -c -o ms-opt.fa
-fmsi index -p ms-opt.fa
+kmercamel -p yourfile.fa -k 31 -c > ms.fa          # Compute MS with the default mask
+kmercamel optimize -p ms.fa -k 31 -c -o ms-opt.fa  # Maximize the number of 1s in the mask
+fmsi index -p ms-opt.fa                            # Create a k-mer index
 ```
 
 ## Detailed instructions
