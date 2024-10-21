@@ -6,7 +6,12 @@
 * [Introduction](#introduction)
 * [Prerequisites](#prerequisites)
 * [Getting started](#getting-started)
-* [How to use](#how-to-use)
+  * [Installation](#installation)
+  * [Compression for k-mer set storage](#compression-for-k-mer-set-storage)
+  * [k-mer set indexing](#k-mer-set-indexing)
+* [Detailed instructions](#detailed-instructions)
+  * [Arguments](#arguments)
+  * [Converting k-mer set superstring representation to the (r)SPSS representations](#converting-k-mer-set-superstring-representation-to-the-rspss-representations)
 * [How it works](#how-it-works)
 * [How to test](#how-to-test)
 * [Issues](#issues)
@@ -54,6 +59,8 @@ Additionally, KmerCamel🐫 can optimize the mask of the superstring via the `op
 
 ## Getting started
 
+### Installation
+
 Download and compile KmerCamel🐫 by running the following commands:
 
 ```
@@ -61,7 +68,34 @@ git clone --recursive https://github.com/OndrejSladky/kmercamel
 cd kmercamel && make
 ```
 
-## How to use
+Alternatively, you can install KmerCamel from Bioconda:
+```
+   conda install kmercamel
+```
+
+### Compression for k-mer set storage
+
+```
+./kmercamel -p yourfile.fa -k 31 -c > ms.fa   # Compute MS with the default mask
+cat ms.fa | tr acgt 0000 | tr ACGT 1111 > mask.txt # Extract mask
+cat ms.fa | tr acgt ACGR > superstring.txt # Extract mask
+bzip2 --best mask.txt
+xz -T1 -9 superstring.txt
+```
+
+For a super efficient compression of the superstring (often <2 bits / bp), you use some of the specialized tools based on statistical compression such as [GeCo3](https://github.com/cobilab/geco3) or [Jarvis3](https://github.com/cobilab/jarvis3).
+
+
+### k-mer set indexing
+
+Example with [FMSI](https://github.com/OndrejSladky/fmsi/activity?ref=main):
+```
+kmercamel -p yourfile.fa -k 31 -c > ms.fa   # Compute MS with the default mask
+kmercamel optimize -p ms.fa -k 31 -c -o ms-opt.fa
+fmsi index -p ms-opt.fa
+```
+
+## Detailed instructions
 
 Computing masked superstrings:
 ```
