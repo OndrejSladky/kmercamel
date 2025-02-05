@@ -51,6 +51,7 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, k
     kmer_t shift = 2 * (k - 1);
     ReprintSequenceHeader(masked_superstring, of);
     uint8_t ms_validation = 0;
+    size_t firstNotToPrint = 0;
     for (size_t i = 0; i < masked_superstring->seq.l; ++i) {
         auto data = nucleotideToInt[(uint8_t) masked_superstring->seq.s[i]];
         ms_validation |= data;
@@ -60,20 +61,22 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, k
             kmer_t canonical = ((!complements) || currentKMer < reverseComplement) ? currentKMer : reverseComplement;
             auto kmer_pointer = wrapper.kh_get_from_set(kMers, canonical);
             bool contained = kmer_pointer != kh_end(kMers);
-            of << Masked(masked_superstring->seq.s[i - k + 1], contained);
+            if (contained) firstNotToPrint = i + k;
+            if (firstNotToPrint > i) of << Masked(masked_superstring->seq.s[i - k + 1], contained);
             // If minimizing, erase the k-mer once set.
             if (minimize && contained) {
                 wrapper.kh_del_from_set(kMers, kmer_pointer);
             }
             // Print a warning if the mask convention is violated.
             if (i == masked_superstring->seq.l - 1 && !contained) {
-                PrintMaskConventionWarning();
+                // For this experimental feature do not print the warning.
+                // PrintMaskConventionWarning();
             }
         }
     }
     // Print the remaining k-1 characters.
     for (size_t i = masked_superstring->seq.l - k + 1; i < masked_superstring->seq.l; ++i) {
-        of << Masked(masked_superstring->seq.s[i], false);
+        if (firstNotToPrint >= i + k) of << Masked(masked_superstring->seq.s[i], false);
     }
     of << std::endl;
     // Check that characters were only ACGTacgt.
