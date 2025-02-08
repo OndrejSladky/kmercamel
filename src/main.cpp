@@ -19,31 +19,41 @@
 #include "masks.h"
 #include "lower_bound.h"
 
-int Help() {
-    std::cerr << "KmerCamel version " << VERSION << std::endl;
-    std::cerr << "Accepted arguments:" << std::endl;
-    std::cerr << "  -p path_to_fasta - required; valid path to fasta file (can be gziped)" << std::endl;
-    std::cerr << "  -k k_value       - required; integer value for k (up to 127)" << std::endl;
-    std::cerr << "  -a algorithm     - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
-    std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
-    std::cerr << "  -d d_value       - integer value for d_max; default 5" << std::endl;
-    std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
-    std::cerr << "  -m               - turn off the memory optimizations for global" << std::endl;
-    std::cerr << "  -l               - compute the cycle cover lower bound instead of masked superstring" << std::endl;
-    std::cerr << "  -h               - print help" << std::endl;
-    std::cerr << "  -v               - print version" << std::endl;
-    std::cerr << "Example usage:       ./kmercamel -p path_to_fasta -k 31 -d 5 -a local -c" << std::endl;
-    std::cerr << "Possible algorithms: global globalAC local localAC streaming" << std::endl;
+int usage() {
     std::cerr << std::endl;
-    std::cerr << "For optimization of masks use `kmercamel optimize`."  << std::endl;
-    std::cerr << "Accepted arguments:" << std::endl;
-    std::cerr << "  -p path_to_fasta - required; valid path to fasta file (can be gziped)" << std::endl;
-    std::cerr << "  -k k_value       - required; integer value for k (up to 127)" << std::endl;
-    std::cerr << "  -a algorithm     - the algorithm to be run [ones (default), runs, runsapprox, zeros]" << std::endl;
-    std::cerr << "  -o output_path   - if not specified, the output is printed to stdout" << std::endl;
-    std::cerr << "  -c               - treat k-mer and its reverse complement as equal" << std::endl;
-    std::cerr << "  -h               - print help" << std::endl;
-    std::cerr << "  -v               - print version" << std::endl;
+    std::cerr << "Program: KmerCamel - a tool for computation of masked superstrings." << std::endl;
+    std::cerr << "Version: " << VERSION << std::endl;
+    std::cerr << "Contact: Ondrej Sladky (ondra.sladky@gmail.com)" << std::endl << std::endl;
+    std::cerr << "Usage:   kmercamel <command> [options]" << std::endl << std::endl;
+    std::cerr << "Command:" << std::endl;
+    std::cerr << "    ms         - Compute an approximately shortest masked superstring from input FASTA." << std::endl;
+    std::cerr << "    optimize   - Optimize a given masked superstring." << std::endl;
+    std::cerr << "    ms2msfa    - Split a masked superstring into a superstring and a mask." << std::endl;
+    std::cerr << "    msfa2ms    - Join a masked superstring from a superstring and a mask." << std::endl;
+    std::cerr << "    msfa2spss  - Compute rSPSS from a masked superstring." << std::endl;
+    std::cerr << "    spss2msfa  - Compute masked superstring corresponding to (r)SPSS." << std::endl;
+    std::cerr << "    lowerbound - Compute the lower bound on masked superstring size of a k-mer set." << std::endl;
+    std::cerr << std::endl;
+}
+
+int usage_subcommand(std::string subcommand) {
+    std::cerr << std::endl;
+    std::cerr << "Usage:   kmercamel " << subcommand << " [options] <fasta>" << std::endl << std::endl;
+    std::cerr << "Options:" << std::endl;
+    std::cerr << "  -k INT   - k-mer size [required; up to 127]" << std::endl;
+    if (subcommand == "ms")
+    std::cerr << "  -a STR   - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
+    else if (subcommand == "optimize")
+    std::cerr << "  -a STR   - the algorithm to be run [maxone (default), minone, minruns, approxminruns]" << std::endl;
+    if (subcommand != "lowerbound")
+    std::cerr << "  -o FILE  - if not specified, the output is printed to stdout" << std::endl;
+    if (subcommand == "ms")
+    std::cerr << "  -d INT   - d_max for local algorithm; default 5" << std::endl;
+    std::cerr << "  -u       - treat k-mer and its reverse complement as distinct" << std::endl;
+    if (subcommand == "ms" || subcommand == "lowerbound")
+    std::cerr << "  -m       - turn off the memory optimizations for global algorithm" << std::endl;
+    std::cerr << "  -h       - print help" << std::endl;
+    std::cerr << std::endl;
     return 1;
 }
 
@@ -59,7 +69,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
                     std::string algorithm, bool optimize_memory, bool lower_bound) {
     if (masks) {
         int ret = Optimize(wrapper, kmer_type, algorithm, path, *of, k, complements);
-        if (ret) Help();
+        if (ret) usage_subcommand("optimize");
         return ret;
     }
 
@@ -74,7 +84,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         ReadKMers(kMers, wrapper, kmer_type, path, k, complements);
         if (!kh_size(kMers)) {
             std::cerr << "Path '" << path << "' contains no k-mers." << std::endl;
-            return Help();
+            return usage_subcommand("ms");
         }
         d_max = std::min(k - 1, d_max);
         if (!lower_bound) WriteName(k, *of);
@@ -92,7 +102,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         auto data = ReadFasta(path);
         if (data.empty()) {
             std::cerr << "Path '" << path << "' not to a fasta file." << std::endl;
-            return Help();
+            return usage_subcommand("ms");
         }
         d_max = std::min(k - 1, d_max);
 
@@ -106,42 +116,32 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         }
         else {
             std::cerr << "Algorithm '" << algorithm << "' not supported." << std::endl;
-            return Help();
+            return usage_subcommand("ms");
         }
     }
     *of << std::endl;
     return 0;
 }
 
-int main(int argc, char **argv) {
+int camel_compute(int argc, char **argv) {
+    std::string subcommand = "ms";
     std::string path;
+    if (argc > 1 && std::string(argv[argc - 1]) != "-h") {
+        path = argv[argc - 1];
+        argc--;
+    }
     int k = 0;
     int d_max = 5;
     std::ofstream output;
     std::ostream *of = &std::cout;
-    bool masks = false;
     std::string algorithm = "global";
-    if (argc > 1 && std::string(argv[1]) == "optimize") {
-        masks = true;
-        argv++;
-        argc--;
-        algorithm = "ones";
-    }
-    bool complements = false;
+    bool complements = true;
     bool optimize_memory = true;
     bool d_set = false;
-    bool lower_bound = false;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "p:k:d:a:o:hcvml"))  != -1) {
+        while ((opt = getopt(argc, argv, "k:d:a:o:hum"))  != -1) {
             switch(opt) {
-                case  'p':
-                    if (!path.empty()) {
-                        std::cerr << "Error: parameter p set twice." << std::endl;
-                        return Help();
-                    }
-                    path = optarg;
-                    break;
                 case 'o':
                     output.open(optarg);
                     of = &output;
@@ -155,67 +155,210 @@ int main(int argc, char **argv) {
                     break;
                 case  'a':
                     algorithm = optarg;
-                    // Backwards compatability.
-                    if (algorithm == "greedy") algorithm = "global";
-                    if (algorithm == "greedyAC") algorithm = "globalAC";
-                    if (algorithm == "pseudosimplitigs") algorithm = "local";
-                    if (algorithm == "pseudosimplitigsAC") algorithm = "localAC";
                     break;
-                case  'c':
-                    complements = true;
+                case  'u':
+                    complements = false;
                     break;
                 case 'm':
                     optimize_memory = false;
                     break;
-                case 'l':
-                    lower_bound = true;
-                    break;
-                case 'v':
-                    Version();
-                    return 0;
                 case 'h':
-                default:
-                    Help();
+                    usage_subcommand(subcommand);
                     return 0;
+                default:
+                    return usage_subcommand(subcommand);
             }
         }
     } catch (std::invalid_argument&) {
-        return Help();
+        return usage_subcommand(subcommand);
     }
     if (path.empty()) {
-        std::cerr << "Required parameter p not set." << std::endl;
-        return Help();
+        std::cerr << "Required positional parameter path to the file not set." << std::endl;
+        return usage_subcommand(subcommand);
     }
     if (k == 0) {
         std::cerr << "Required parameter k not set." << std::endl;
-        return Help();
+        return usage_subcommand(subcommand);
     } else if (k < 0) {
         std::cerr << "k must be positive." << std::endl;
-        return Help();
+        return usage_subcommand(subcommand);
     } else if (d_max < 0) {
         std::cerr << "d must be non-negative." << std::endl;
-        return Help();
+        return usage_subcommand(subcommand);
     } else if (k > MAX_K && (algorithm == "local" || algorithm == "global")) {
         std::cerr << "k > " << MAX_K << " not supported for the algorithm '" + algorithm + "'. Use the  AC version of the algorithm instead." << std::endl;
-        return Help();
+        return usage_subcommand(subcommand);
     } else if (d_set && (algorithm == "globalAC" || algorithm == "global" || algorithm == "streaming")) {
         std::cerr << "Unsupported argument d for algorithm '" + algorithm + "'." << std::endl;
-        return Help();
+        return usage_subcommand(subcommand);
     } else if (!optimize_memory && algorithm != "global") {
         std::cerr << "Memory optimization turn-off only supported for hash table global." << std::endl;
-        return Help();
-    } else if (masks && (d_set || !optimize_memory)) {
-        std::cerr << "Not supported flags for optimize." << std::endl;
-        return Help();
-    } else if (lower_bound && algorithm != "global") {
-        std::cerr << "Lower bound computation supported only for hash table global." << std::endl;
-        return Help();
+        return usage_subcommand(subcommand);
     }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, complements, false, algorithm, optimize_memory, false);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, d_max, of, complements, false, algorithm, optimize_memory, false);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, d_max, of, complements, masks, algorithm, optimize_memory, lower_bound);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, d_max, of, complements, false, algorithm, optimize_memory, false);
+    }
+}
+
+int camel_optimize(int argc, char **argv) {
+    std::string subcommand = "optimize";
+    std::string path;
+    if (argc > 1 && std::string(argv[argc - 1]) != "-h") {
+        path = argv[argc - 1];
+        argc--;
+    }
+    int k = 0;
+    std::ofstream output;
+    std::ostream *of = &std::cout;
+    std::string algorithm = "maxone";
+    bool complements = true;
+    int opt;
+    try {
+        while ((opt = getopt(argc, argv, "k:a:o:hu"))  != -1) {
+            switch(opt) {
+                case 'o':
+                    output.open(optarg);
+                    of = &output;
+                    break;
+                case  'k':
+                    k = std::stoi(optarg);
+                    break;
+                case  'a':
+                    algorithm = optarg;
+                    break;
+                case  'u':
+                    complements = false;
+                    break;
+                case 'h':
+                    usage_subcommand(subcommand);
+                    return 0;
+                default:
+                    return usage_subcommand(subcommand);
+            }
+        }
+    } catch (std::invalid_argument&) {
+        return usage_subcommand(subcommand);
+    }
+    if (path.empty()) {
+        std::cerr << "Required positional parameter path to the file not set." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    if (k == 0) {
+        std::cerr << "Required parameter k not set." << std::endl;
+        return usage_subcommand(subcommand);
+    } else if (k < 0) {
+        std::cerr << "k must be positive." << std::endl;
+        return usage_subcommand(subcommand);
+    } else if (k > MAX_K && (algorithm == "local" || algorithm == "global")) {
+        std::cerr << "k > " << MAX_K << " not supported for the algorithm '" + algorithm + "'. Use the  AC version of the algorithm instead." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    if (k < 32) {
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, complements, true, algorithm, false, false);
+    } else if (k < 64) {
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, complements, true, algorithm, false, false);
+    } else {
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, complements, true, algorithm, false, false);
+    }
+}
+
+int camel_lowerbound(int argc, char **argv) {
+    std::string subcommand = "lowerbound";
+    std::string path;
+    if (argc > 1 && std::string(argv[argc - 1]) != "-h") {
+        path = argv[argc - 1];
+        argc--;
+    }
+    int k = 0;
+    std::ostream *of = &std::cout;
+    bool complements = true;
+    bool optimize_memory = true;
+    int opt;
+    try {
+        while ((opt = getopt(argc, argv, "k:hu"))  != -1) {
+            switch(opt) {
+                case  'k':
+                    k = std::stoi(optarg);
+                    break;
+                case 'u':
+                    complements = false;
+                case 'h':
+                    usage_subcommand(subcommand);
+                    return 0;
+                case 'm':
+                    optimize_memory = false;
+                    break;
+                default:
+                    return usage_subcommand(subcommand);
+            }
+        }
+    } catch (std::invalid_argument&) {
+        return usage_subcommand(subcommand);
+    }
+    if (path.empty()) {
+        std::cerr << "Required positional parameter path to the file not set." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    if (k == 0) {
+        std::cerr << "Required parameter k not set." << std::endl;
+        return usage_subcommand(subcommand);
+    } else if (k < 0) {
+        std::cerr << "k must be positive." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    if (k < 32) {
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, complements, false, "global", optimize_memory, true);
+    } else if (k < 64) {
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, complements, false, "global", optimize_memory, true);
+    } else {
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, complements, false, "global", optimize_memory, true);
+    }
+}
+
+int camel_split_ms(int argc, char **argv) {
+    std::cerr << "Not implemented" << std::endl;
+    return 1;
+}
+
+int camel_join_ms(int argc, char **argv) {
+    std::cerr << "Not implemented" << std::endl;
+    return 1;    
+}
+
+int camel_ms_to_spss(int argc, char **argv) {
+    std::cerr << "Not implemented" << std::endl;
+    return 1;
+}
+
+int camel_spss_to_ms(int argc, char **argv) {
+    std::cerr << "Not implemented" << std::endl;
+    return 1;
+}
+
+int main(int argc, char **argv) {
+    if (argc == 1 || std::string(argv[1]) == "-h") {
+        usage();
+        return 0;
+    } else if (std::string(argv[1]) == "ms") {
+        return camel_compute(argc - 1, argv + 1);
+    } else if (std::string(argv[1]) == "optimize") {
+        return camel_optimize(argc - 1, argv + 1);
+    } else if (std::string(argv[1]) == "lowerbound") {
+        return camel_lowerbound(argc - 1, argv + 1);
+    } else if (std::string(argv[1]) == "ms2msfa") {
+        return camel_join_ms(argc - 1, argv + 1);
+    } else if (std::string(argv[1]) == "msfa2ms") {
+        return camel_split_ms(argc - 1, argv + 1);
+    } else if (std::string(argv[1]) == "msfa2spss") {
+        return camel_ms_to_spss(argc - 1, argv + 1);
+    } else if (std::string(argv[1]) == "spss2msfa") {
+        return camel_spss_to_ms(argc - 1, argv + 1);
+    } else {
+        std::cerr << "Command '" << argv[1] << "' not recognized." << std::endl;
+        return usage(); 
     }
 }
