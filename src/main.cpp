@@ -11,6 +11,7 @@
 #include "ac/parser_ac.h"
 #include "ac/streaming.h"
 #include "khash_utils.h"
+#include "conversions.h"
 
 #include <iostream>
 #include <string>
@@ -38,20 +39,36 @@ int usage() {
 
 int usage_subcommand(std::string subcommand) {
     std::cerr << std::endl;
-    std::cerr << "Usage:   kmercamel " << subcommand << " [options] <fasta>" << std::endl << std::endl;
+    std::cerr << "Usage:   kmercamel " << subcommand << " [options]";
+    if (subcommand != "ms2msfa")
+    std::cerr << " <fasta>";
+
+    std::cerr  << std::endl << std::endl;
     std::cerr << "Options:" << std::endl;
+    if (subcommand != "ms2msfa" && subcommand != "msfa2ms")
     std::cerr << "  -k INT   - k-mer size [required; up to 127]" << std::endl;
+
     if (subcommand == "ms")
     std::cerr << "  -a STR   - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
+
     else if (subcommand == "optimize")
     std::cerr << "  -a STR   - the algorithm to be run [maxone (default), minone, minruns, approxminruns]" << std::endl;
-    if (subcommand != "lowerbound")
+
+    if (subcommand != "lowerbound" && subcommand != "msfa2ms")
     std::cerr << "  -o FILE  - if not specified, the output is printed to stdout" << std::endl;
+
     if (subcommand == "ms")
     std::cerr << "  -d INT   - d_max for local algorithm; default 5" << std::endl;
+    if (subcommand == "ms" || subcommand == "optimize" || subcommand == "lowerbound")
     std::cerr << "  -u       - treat k-mer and its reverse complement as distinct" << std::endl;
+
     if (subcommand == "ms" || subcommand == "lowerbound")
     std::cerr << "  -m       - turn off the memory optimizations for global algorithm" << std::endl;
+
+    if (subcommand == "ms2msfa" || subcommand == "msfa2ms") {
+    std::cerr << "  -m FILE  - file with mask" << std::endl;
+    std::cerr << "  -s FILE  - file with superstring" << std::endl;
+    }
     std::cerr << "  -h       - print help" << std::endl;
     std::cerr << std::endl;
     return 1;
@@ -320,23 +337,196 @@ int camel_lowerbound(int argc, char **argv) {
 }
 
 int camel_split_ms(int argc, char **argv) {
-    std::cerr << "Not implemented" << std::endl;
-    return 1;
+    std::string subcommand = "msfa2ms";
+    std::string path;
+    if (argc > 1 && std::string(argv[argc - 1]) != "-h") {
+        path = argv[argc - 1];
+        argc--;
+    }
+
+    std::ofstream mask;
+    std::ostream *maskf = &std::cout;
+
+    std::ofstream superstring;
+    std::ostream *superstringf = &std::cout;
+    
+    int opt;
+    try {
+        while ((opt = getopt(argc, argv, "m:s:h"))  != -1) {
+            switch(opt) {
+                case  'm':
+                    mask.open(optarg);
+                    maskf = &mask;
+                    break;
+                case 's':
+                    superstring.open(optarg);
+                    superstringf = &superstring;
+                    break;
+                case 'h':
+                    usage_subcommand(subcommand);
+                    return 0;
+                default:
+                    return usage_subcommand(subcommand);
+            }
+        }
+    } catch (std::invalid_argument&) {
+        return usage_subcommand(subcommand);
+    }
+    if (path.empty()) {
+        std::cerr << "Required positional parameter path to the file not set." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    if (!mask && !superstring) {
+        std::cerr << "Cannot have both superstring and mask redirected to stdout." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    split_ms(*superstringf, *maskf, path);
+    return 0;    
 }
 
 int camel_join_ms(int argc, char **argv) {
-    std::cerr << "Not implemented" << std::endl;
-    return 1;    
+    std::string subcommand = "ms2msfa";
+
+    std::ifstream mask;
+    std::istream *maskf = &std::cin;
+
+    std::ifstream superstring;
+    std::istream *superstringf = &std::cin;
+
+    std::ofstream output;
+    std::ostream *of = &std::cout;
+    
+    
+    int opt;
+    try {
+        while ((opt = getopt(argc, argv, "m:s:o:h"))  != -1) {
+            switch(opt) {
+                case  'm':
+                    mask.open(optarg);
+                    maskf = &mask;
+                    break;
+                case 's':
+                    superstring.open(optarg);
+                    superstringf = &superstring;
+                    break;
+                case 'o':
+                    output.open(optarg);
+                    of = &output;
+                    break;
+                case 'h':
+                    usage_subcommand(subcommand);
+                    return 0;
+                default:
+                    return usage_subcommand(subcommand);
+            }
+        }
+    } catch (std::invalid_argument&) {
+        return usage_subcommand(subcommand);
+    }
+    if (!mask && !superstring) {
+        std::cerr << "Cannot have both superstring and mask redirected from stdin." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    join_ms(*superstringf, *maskf, *of);
+    return 0;    
 }
 
 int camel_ms_to_spss(int argc, char **argv) {
-    std::cerr << "Not implemented" << std::endl;
-    return 1;
+    std::string subcommand = "msfa2spss";
+    std::string path;
+    if (argc > 1 && std::string(argv[argc - 1]) != "-h") {
+        path = argv[argc - 1];
+        argc--;
+    }
+
+    std::ofstream output;
+    std::ostream *of = &std::cout;
+
+    int k = 0;
+    
+    int opt;
+    try {
+        while ((opt = getopt(argc, argv, "o:k:h"))  != -1) {
+            switch(opt) {
+                case  'o':
+                    output.open(optarg);
+                    of = &output;
+                    break;
+                case 'k':
+                    k = std::stoi(optarg);
+                    break;
+                case 'h':
+                    usage_subcommand(subcommand);
+                    return 0;
+                default:
+                    return usage_subcommand(subcommand);
+            }
+        }
+    } catch (std::invalid_argument&) {
+        return usage_subcommand(subcommand);
+    }
+    if (path.empty()) {
+        std::cerr << "Required positional parameter path to the file not set." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    if (k == 0) {
+        std::cerr << "Required parameter k not set." << std::endl;
+        return usage_subcommand(subcommand);
+    } else if (k < 0) {
+        std::cerr << "k must be positive." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    ms_to_spss(path, *of, k);
+    return 0;
 }
 
 int camel_spss_to_ms(int argc, char **argv) {
-    std::cerr << "Not implemented" << std::endl;
-    return 1;
+    std::string subcommand = "spss2msfa";
+    std::string path;
+    if (argc > 1 && std::string(argv[argc - 1]) != "-h") {
+        path = argv[argc - 1];
+        argc--;
+    }
+
+    std::ofstream output;
+    std::ostream *of = &std::cout;
+
+    int k = 0;
+    
+    int opt;
+    try {
+        while ((opt = getopt(argc, argv, "o:k:h"))  != -1) {
+            switch(opt) {
+                case  'o':
+                    output.open(optarg);
+                    of = &output;
+                    break;
+                case 'k':
+                    k = std::stoi(optarg);
+                    break;
+                case 'h':
+                    usage_subcommand(subcommand);
+                    return 0;
+                default:
+                    return usage_subcommand(subcommand);
+            }
+        }
+    } catch (std::invalid_argument&) {
+        return usage_subcommand(subcommand);
+    }
+    if (path.empty()) {
+        std::cerr << "Required positional parameter path to the file not set." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    if (k == 0) {
+        std::cerr << "Required parameter k not set." << std::endl;
+        return usage_subcommand(subcommand);
+    } else if (k < 0) {
+        std::cerr << "k must be positive." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    spss_to_ms(path, *of, k);
+    return 0;
 }
 
 int main(int argc, char **argv) {

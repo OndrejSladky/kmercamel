@@ -23,12 +23,6 @@ void PrintMaskConventionWarning() {
         "Ensure that for your masked superstring, k is always explicitly provided and not inferred from the mask." << std::endl;
 }
 
-/// Return the given character in the correct case corresponding to the mask symbol.
-inline char Masked(char c, bool mask) {
-    int masked_difference = (c <= 'Z') - (int) mask;
-    return c + (char) masked_difference * ('a' - 'A');
-}
-
 /// Reprint the sequence header as it was in the original fasta file.
 void ReprintSequenceHeader(kseq_t* masked_superstring, std::ostream &of) {
     of << ">";

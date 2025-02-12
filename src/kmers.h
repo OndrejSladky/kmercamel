@@ -114,3 +114,9 @@ std::string NumberToKMer(kmer_t encoded, int length) {
     }
     return ret;
 }
+
+/// Return the given character in the correct case corresponding to the mask symbol.
+inline char Masked(char c, bool mask) {
+    int masked_difference = (c <= 'Z') - (int) mask;
+    return c + (char) masked_difference * ('a' - 'A');
+}
