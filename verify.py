@@ -14,7 +14,7 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
         subprocess.run(args, stdout=k_mers)
     with open("./bin/kmercamel.txt", "r") as k_mers:
         with open("./bin/converted.fa", "w") as converted:
-            subprocess.run(["./convert_superstring.py"], stdin=k_mers, stdout=converted)
+            subprocess.run(["./kmercamel", "msfa2spss", "-k", f"{k}"], stdin=k_mers, stdout=converted)
     # in result; in original sequence; in result without complements; in original without complements; in merged file
     stats = [{}, {}, {}]
     runs = [
