@@ -35,6 +35,7 @@ int usage() {
     std::cerr << "    spss2msfa  - Compute masked superstring corresponding to (r)SPSS." << std::endl;
     std::cerr << "    lowerbound - Compute the lower bound on masked superstring size of a k-mer set." << std::endl;
     std::cerr << std::endl;
+    return 1;
 }
 
 int usage_subcommand(std::string subcommand) {
@@ -55,7 +56,10 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -a STR   - the algorithm to be run [maxone (default), minone, minruns, approxminruns]" << std::endl;
 
     if (subcommand != "lowerbound" && subcommand != "msfa2ms")
-    std::cerr << "  -o FILE  - if not specified, the output is printed to stdout" << std::endl;
+    std::cerr << "  -o FILE  - output, if not specified, the output is printed to stdout" << std::endl;
+    
+    if (subcommand == "ms")
+    std::cerr << "  -M FILE  - if specified, print also mask maximizing ones to a separate file (possible only with global)" << std::endl;
 
     if (subcommand == "ms")
     std::cerr << "  -d INT   - d_max for local algorithm; default 5" << std::endl;
@@ -63,7 +67,7 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -u       - treat k-mer and its reverse complement as distinct" << std::endl;
 
     if (subcommand == "ms" || subcommand == "lowerbound")
-    std::cerr << "  -m       - turn off the memory optimizations for global algorithm" << std::endl;
+    std::cerr << "  -x       - turn off the memory optimizations for global algorithm" << std::endl;
 
     if (subcommand == "ms2msfa" || subcommand == "msfa2ms") {
     std::cerr << "  -m FILE  - file with mask" << std::endl;
@@ -82,7 +86,7 @@ void Version() {
 
 /// Run KmerCamel with the given parameters.
 template <typename kmer_t, typename kh_wrapper_t>
-int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, int d_max, std::ostream *of, bool complements, bool masks,
+int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, int d_max, std::ostream *of, std::ostream *maskf, bool complements, bool masks,
                     std::string algorithm, bool optimize_memory, bool lower_bound) {
     if (masks) {
         int ret = Optimize(wrapper, kmer_type, algorithm, path, *of, k, complements);
@@ -112,7 +116,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
             if(optimize_memory) PartialPreSort(kMerVec, k);
             else MEMORY_REDUCTION_FACTOR = 1;
             if (lower_bound) std::cout << LowerBoundLength(wrapper, kMerVec, k, complements);
-            else Global(wrapper, kMerVec, *of, k, complements);
+            else Global(wrapper, kMerVec, *of, maskf, k, complements);
         }
         else Local(kMers, wrapper, kmer_type, *of, k, d_max, complements);
     } else {
@@ -151,13 +155,15 @@ int camel_compute(int argc, char **argv) {
     int d_max = 5;
     std::ofstream output;
     std::ostream *of = &std::cout;
+    std::ofstream maskOutput;
+    std::ostream *maskf = nullptr;
     std::string algorithm = "global";
     bool complements = true;
     bool optimize_memory = true;
     bool d_set = false;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "k:d:a:o:hum"))  != -1) {
+        while ((opt = getopt(argc, argv, "k:d:a:o:huxM:"))  != -1) {
             switch(opt) {
                 case 'o':
                     output.open(optarg);
@@ -176,8 +182,12 @@ int camel_compute(int argc, char **argv) {
                 case  'u':
                     complements = false;
                     break;
-                case 'm':
+                case 'x':
                     optimize_memory = false;
+                    break;
+                case 'M':
+                    maskOutput.open(optarg);
+                    maskf = &maskOutput;
                     break;
                 case 'h':
                     usage_subcommand(subcommand);
@@ -211,13 +221,16 @@ int camel_compute(int argc, char **argv) {
     } else if (!optimize_memory && algorithm != "global") {
         std::cerr << "Memory optimization turn-off only supported for hash table global." << std::endl;
         return usage_subcommand(subcommand);
+    } else if (maskf != nullptr && algorithm != "global") {
+        std::cerr << "Outputting mask maximizing number of ones is possible only with global. For other algorithms, use separately kmercamel optimize." << std::endl;
+        return usage_subcommand(subcommand);
     }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, complements, false, algorithm, optimize_memory, false);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, maskf, complements, false, algorithm, optimize_memory, false);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, d_max, of, complements, false, algorithm, optimize_memory, false);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, d_max, of, maskf, complements, false, algorithm, optimize_memory, false);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, d_max, of, complements, false, algorithm, optimize_memory, false);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, d_max, of, maskf, complements, false, algorithm, optimize_memory, false);
     }
 }
 
@@ -275,11 +288,11 @@ int camel_optimize(int argc, char **argv) {
         return usage_subcommand(subcommand);
     }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, complements, true, algorithm, false, false);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, true, algorithm, false, false);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, complements, true, algorithm, false, false);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, true, algorithm, false, false);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, complements, true, algorithm, false, false);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, true, algorithm, false, false);
     }
 }
 
@@ -328,11 +341,11 @@ int camel_lowerbound(int argc, char **argv) {
         return usage_subcommand(subcommand);
     }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, complements, false, "global", optimize_memory, true);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, false, "global", optimize_memory, true);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, complements, false, "global", optimize_memory, true);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, false, "global", optimize_memory, true);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, complements, false, "global", optimize_memory, true);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, false, "global", optimize_memory, true);
     }
 }
 
