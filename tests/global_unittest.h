@@ -68,7 +68,7 @@ namespace {
         for (auto t : tests) {
             std::stringstream of;
 
-            SuperstringFromPath(t.path, t.kMers, of, nullptr, t.k, t.complements);
+            SuperstringFromPath(wrapper, t.path, t.kMers, of, nullptr, t.k, t.complements);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
