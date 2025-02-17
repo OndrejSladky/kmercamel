@@ -9,7 +9,7 @@
 #include "ac/local_ac.h"
 #include "parser.h"
 #include "ac/parser_ac.h"
-#include "ac/streaming.h"
+#include "streaming.h"
 #include "khash_utils.h"
 #include "conversions.h"
 
@@ -50,7 +50,7 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -k INT   - k-mer size [required; up to 127]" << std::endl;
 
     if (subcommand == "ms")
-    std::cerr << "  -a STR   - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
+    std::cerr << "  -a STR   - the algorithm to be run [global (default), local, streaming, globalAC (experimental), localAC (experimental)]" << std::endl;
 
     else if (subcommand == "optimize")
     std::cerr << "  -a STR   - the algorithm to be run [maxone (default), minone, minruns, approxminruns]" << std::endl;
@@ -96,8 +96,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
 
     /* Handle streaming algorithm separately. */
     if (algorithm == "streaming") {
-        WriteName(k, *of);
-        Streaming(path, *of,  k , complements);
+        Streaming(wrapper, kmer_type, path, *of,  k , complements);
     }
     /* Handle hash table based algorithms separately so that they consume less memory. */
     else if (algorithm == "global" || algorithm == "local") {

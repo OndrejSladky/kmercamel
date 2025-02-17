@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../src/ac/streaming.h"
+#include "../src/streaming.h"
 #include "gtest/gtest.h"
 namespace {
 
@@ -26,34 +26,10 @@ namespace {
         for (auto t : tests) {
             std::stringstream of;
 
-            Streaming(path, of, t.k, t.complements);
+            Streaming(kmer_dict64_t(), kmer64_t(0), path, of, t.k, t.complements);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
     }
 #endif
-    TEST(Streaming, Push) {
-        struct TestCase {
-            std::string current;
-            int k;
-            int32_t used;
-            std::string wantResult;
-        };
-        std::vector<TestCase> tests = {
-                {"ACGT", 4, 0b010, "cg"},
-                {"ACGT", 4, 0b101, "cgt"},
-                {"ACGT", 4, 0b100, "c"},
-                {"ACGT", 4, 0b000, ""},
-                {"CGT", 4, 0b000, ""},
-        };
-
-
-        for (auto t : tests) {
-            std::stringstream of;
-
-            Push(of, t.current, t.k, t.used);
-
-            EXPECT_EQ(t.wantResult, of.str());
-        }
-    }
 }
