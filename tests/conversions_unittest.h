@@ -33,7 +33,7 @@ namespace {
 
         auto tests = std::vector<TestCase> {
             {2, ">0\nAC\n>1\nCGTT\n>2\nGT\n>3\nATT\n"},
-            {3, ">0\nACT\n>1\nCGTTA\n>2\nGTA\n>3\nATT\n"}
+            {3, ">0\nACG\n>1\nCGTTA\n>2\nGTA\n>3\nATT\n"}
         };
 
         for (auto t : tests) {
@@ -47,7 +47,7 @@ namespace {
 
     TEST(Conversions, SPSSToMS) {
         std::string path = std::filesystem::current_path();
-        path += "/tests/testdata/test.fa"; 
+        path += "/tests/testdata/spss.fa"; 
 
         struct TestCase {
             int k;
