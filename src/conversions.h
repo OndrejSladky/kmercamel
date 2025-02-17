@@ -35,7 +35,7 @@ void join_ms(std::istream &superstringf, std::istream &maskf, std::ostream &of) 
     std::string superstring, mask;
     superstringf >> superstring;
     maskf >> mask;
-    of << ">superstring";
+    of << ">superstring" << std::endl;
     for (size_t i = 0; i < superstring.length(); ++i) {
         of << Masked(superstring[i], mask[i] == '1');
     }
