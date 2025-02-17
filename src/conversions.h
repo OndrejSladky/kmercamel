@@ -35,7 +35,7 @@ void join_ms(std::istream &superstringf, std::istream &maskf, std::ostream &of) 
     std::string superstring, mask;
     superstringf >> superstring;
     maskf >> mask;
-    of << ">superstring";
+    of << ">superstring" << std::endl;
     for (size_t i = 0; i < superstring.length(); ++i) {
         of << Masked(superstring[i], mask[i] == '1');
     }
@@ -48,13 +48,11 @@ void ms_to_spss(std::string path, std::ostream &of, int k) {
 
     int64_t l = kseq_read(seq);
 
-    int64_t last_mask = 0;
     bool masked = false;
     int counter = 0;
     for (int64_t i = 0; i < l; ++i) {
         if (is_upper(seq->seq.s[i])) {
             if (!masked) {
-                last_mask = i;
                 of << ">" << counter++ << std::endl;
             }
             masked = true;
@@ -63,7 +61,7 @@ void ms_to_spss(std::string path, std::ostream &of, int k) {
             if (!masked) continue;
             masked = false;
             for (int64_t j = 0; j < k - 1; ++j) {
-                of << to_upper(seq->seq.s[i + j]);
+                if (i + j < l) of << to_upper(seq->seq.s[i + j]);
             }
             of << std::endl;
         }
