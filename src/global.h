@@ -184,9 +184,14 @@ void SuperstringFromPath(kh_wrapper_t wrapper, const overlapPath &hamiltonianPat
     while(edgeFrom[start] != size_t(-1)) {
         int overlapLength = overlaps[start];
         kmer_t current = access(kMers, edgeFrom[start]);
+        if (overlapLength != k - 1) {
+            std::string unmaskedNucleotides = NumberToKMer(BitPrefix(last, k-1, k-1-overlapLength), k-1-overlapLength);
+            std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
+            of << unmaskedNucleotides;
+        }
         // If provided, output also mask maximizing ones.
         if (maskf != nullptr) for (int j = 0; j < k - overlapLength; ++j) {
-            last <<= 1;
+            last <<= 2;
             last |= AtIndex(current, k, overlapLength + j);
             last = BitSuffix(last, k);
             if (containsKMer(kMersDict, wrapper, last, k, complements)) {
@@ -194,11 +199,6 @@ void SuperstringFromPath(kh_wrapper_t wrapper, const overlapPath &hamiltonianPat
             } else {
                 (*maskf) << Masked(NucleotideAtIndex(last, k, 0), false);
             }
-        }
-        if (overlapLength != k - 1) {
-            std::string unmaskedNucleotides = NumberToKMer(BitPrefix(last, k-1, k-1-overlapLength), k-1-overlapLength);
-            std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
-            of << unmaskedNucleotides;
         }
         last = access(kMers, edgeFrom[start]);
         of << letters[(uint64_t)BitPrefix(access(kMers, edgeFrom[start]), k, 1)];
