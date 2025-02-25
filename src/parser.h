@@ -94,7 +94,16 @@ void AssertEOF(kseq_t *seq, std::string message) {
 }
 
 /// Print the fasta file header.
-void WriteName(const int k, std::ostream &of) {
-    of << ">superstring ";
-    of << "k=" << k << std::endl;
+void WriteName(const std::string &dataset, const std::string &algorithm, const int k, const bool maxone, const bool unidirectional, std::ostream &of) {
+    of << ">maskedsuperstring ";
+    of << "dataset='" << dataset << "' ";
+    of << "k=" << k << " ";
+    of << "alg=" << algorithm << " ";
+    of << "mask=";
+    if (maxone) of << "maxone ";
+    else of << "minone ";
+    of << "mode=";
+    if (unidirectional) of << "unidirectional";
+    else of << "bidirectional";
+    of << std::endl;
 }

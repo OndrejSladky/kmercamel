@@ -53,13 +53,13 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -a STR   - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
 
     else if (subcommand == "maskopt")
-    std::cerr << "  -a STR   - the algorithm to be run [maxone (default), minone, minruns, approxminruns]" << std::endl;
+    std::cerr << "  -a STR   - the algorithm to be run [maxone (default), minone, minrun, approxminrun]" << std::endl;
 
     if (subcommand != "lowerbound" && subcommand != "ms2mssep")
     std::cerr << "  -o FILE  - output, if not specified, the output is printed to stdout" << std::endl;
     
     if (subcommand == "compute")
-    std::cerr << "  -M FILE  - if specified, print also mask maximizing ones to a separate file (possible only with global)" << std::endl;
+    std::cerr << "  -M FILE  - if given, print also ms with mask maximizing ones (only with global)" << std::endl;
 
     if (subcommand == "compute")
     std::cerr << "  -d INT   - d_max for local algorithm; default 5" << std::endl;
@@ -67,7 +67,7 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -u       - treat k-mer and its reverse complement as distinct" << std::endl;
 
     if (subcommand == "compute" || subcommand == "lowerbound")
-    std::cerr << "  -x       - turn off the memory optimizations for global algorithm" << std::endl;
+    std::cerr << "  -x       - turn off the memory optimizations for global" << std::endl;
 
     if (subcommand == "mssep2ms" || subcommand == "ms2mssep") {
     std::cerr << "  -m FILE  - file with mask" << std::endl;
@@ -96,7 +96,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
 
     /* Handle streaming algorithm separately. */
     if (algorithm == "streaming") {
-        WriteName(k, *of);
+        WriteName(path, algorithm, k, false, !complements, *of);
         Streaming(path, *of,  k , complements);
     }
     /* Handle hash table based algorithms separately so that they consume less memory. */
@@ -108,7 +108,8 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
             return usage_subcommand("compute");
         }
         d_max = std::min(k - 1, d_max);
-        if (!lower_bound) WriteName(k, *of);
+        if (!lower_bound) WriteName(path, algorithm, k, false, !complements, *of);
+        if (maskf != nullptr) WriteName(path, algorithm, k, true, !complements, *maskf);
         if (algorithm == "global") {
             auto kMerVec = kMersToVec(kMers, kmer_type);
             wrapper.kh_destroy_set(kMers);
@@ -128,7 +129,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         d_max = std::min(k - 1, d_max);
 
         auto kMers = ConstructKMers(data, k, complements);
-        WriteName(k, *of);
+        WriteName(path, algorithm, k, false, !complements, *of);
         if (algorithm == "globalAC") {
             GlobalAC(kMers, *of, complements);
         }

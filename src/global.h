@@ -178,7 +178,7 @@ void SuperstringFromPath(kh_wrapper_t wrapper, const overlapPath &hamiltonianPat
 
     kmer_t last = access(kMers, start);
     of << letters[(uint64_t)BitPrefix(access(kMers, start), k, 1)];
-    if (maskf != nullptr) (*maskf) << "1";
+    if (maskf != nullptr) (*maskf) << Masked(NucleotideAtIndex(last, k, 0), true);
 
     // Move from the first k-mer to the last which has no successor.
     while(edgeFrom[start] != size_t(-1)) {
@@ -190,9 +190,9 @@ void SuperstringFromPath(kh_wrapper_t wrapper, const overlapPath &hamiltonianPat
             last |= AtIndex(current, k, overlapLength + j);
             last = BitSuffix(last, k);
             if (containsKMer(kMersDict, wrapper, last, k, complements)) {
-                (*maskf) << "1";
+                (*maskf) << Masked(NucleotideAtIndex(last, k, 0), true);
             } else {
-                (*maskf) << "0";
+                (*maskf) << Masked(NucleotideAtIndex(last, k, 0), false);
             }
         }
         if (overlapLength != k - 1) {
@@ -211,7 +211,7 @@ void SuperstringFromPath(kh_wrapper_t wrapper, const overlapPath &hamiltonianPat
     std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
     of << unmaskedNucleotides;
     if (maskf != nullptr) {
-        for (int j = 0; j < k - 1; ++j) (*maskf) << "0";
+        for (int j = 1; j < k; ++j) (*maskf) << Masked(NucleotideAtIndex(last, k, j), false);
         (*maskf) << std::endl;
     }
 }
