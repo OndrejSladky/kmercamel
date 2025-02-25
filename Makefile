@@ -59,6 +59,7 @@ clean:
 	rm -f 🐫 || true
 	rm -f kmercameltest
 	rm -f kmercameltest-large
+	rm -f kmercameltest-extra-large
 	rm -r -f ./bin
 	rm -f gtest-all.o
 	rm -f src/version.h
