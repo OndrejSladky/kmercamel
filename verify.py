@@ -10,7 +10,7 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
     Check if running superstring algorithm on given fasta file produces the same set of k-mers as the original one.
     """
     with open("./bin/kmercamel.fa", "w") as k_mers:
-        args = ["./kmercamel"] + (["maskopt"] if masked_superstring else ["compute", "-M", "./bin/kmercamel-maxone.fa"]) +["-k", f"{k}", "-a", algorithm] + ([] if complements else ["-u"]) + [(masked_superstring if masked_superstring != "" else fasta_path)]
+        args = ["./kmercamel"] + (["maskopt"] if masked_superstring else (["compute"] + ([] if algorithm != "global" else ["-M", "./bin/kmercamel-maxone.fa"]))) +["-k", f"{k}", "-a", algorithm] + ([] if complements else ["-u"]) + [(masked_superstring if masked_superstring != "" else fasta_path)]
         subprocess.run(args, stdout=k_mers)
     
     for s in ["", "-maxone"]:
@@ -21,9 +21,10 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
     stats = [{}, {}, {}, {}, {}]
     runs = [
         (0, "./bin/converted.fa", "converted", complements),
-        (1, "./bin/converted-maxone.fa", "converted-maxone", complements),
         (2, fasta_path, "original", complements),
     ]
+    if algorithm == "global":
+        runs.append((1, "./bin/converted-maxone.fa", "converted-maxone", complements))
     for i, path, result, pass_complements in runs:
         args = ["jellyfish", "count", "-m", f"{k}", "-s", "100M", "-o", f"./bin/{result}.jf", path]
         if pass_complements:
@@ -37,7 +38,7 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
                 stats[i][key] = value
     # Count k-mers on merged file.
     res = True
-    for offset, s, text in [(0, "", "default"), (1, "-maxone", "maxone")]:
+    for offset, s, text in [(0, "", "default"), (1, "-maxone", "maxone")][:(2 if algorithm == "global" else 1)]:
         subprocess.run(["jellyfish", "merge", "-o", f"./bin/merged{s}.jf", f"./bin/converted{s}.jf", "./bin/original.jf"])
         with open(f"./bin/merged_stats{s}.txt", "w") as f:
             subprocess.run(["jellyfish", "stats", f"./bin/merged{s}.jf"], stdout=f)
