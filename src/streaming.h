@@ -15,7 +15,6 @@ void Streaming(kh_wrapper_t wrapper, kmer_t kmer_type, std::string &path, std::o
     kseq_t *seq = kseq_init(fp);
 
     auto kMers = wrapper.kh_init_set();
-    of << ">superstring" << std::endl;
 
     kmer_t mask = (kmer_t(1)) << (2 * k - 1);
     mask |= mask - 1;
