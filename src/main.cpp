@@ -41,8 +41,10 @@ int usage() {
 int usage_subcommand(std::string subcommand) {
     std::cerr << std::endl;
     std::cerr << "Usage:   kmercamel " << subcommand << " [options]";
-    if (subcommand != "mssep2ms")
+    if (subcommand == "compute" || subcommand == "lowerbound" || subcommand == "spss2ms")
     std::cerr << " <fasta>";
+    else if (subcommand != "mssep2ms")
+    std::cerr << " <ms>";
 
     std::cerr  << std::endl << std::endl;
     std::cerr << "Options:" << std::endl;
@@ -63,15 +65,20 @@ int usage_subcommand(std::string subcommand) {
 
     if (subcommand == "compute")
     std::cerr << "  -d INT   - d_max for local algorithm; default 5" << std::endl;
+
     if (subcommand == "compute" || subcommand == "maskopt" || subcommand == "lowerbound")
     std::cerr << "  -u       - treat k-mer and its reverse complement as distinct" << std::endl;
 
     if (subcommand == "compute" || subcommand == "lowerbound")
     std::cerr << "  -x       - turn off the memory optimizations for global" << std::endl;
 
-    if (subcommand == "mssep2ms" || subcommand == "ms2mssep") {
-    std::cerr << "  -m FILE  - file with mask" << std::endl;
-    std::cerr << "  -s FILE  - file with superstring" << std::endl;
+    if (subcommand == "mssep2ms") {
+    std::cerr << "  -m FILE  - input file with mask" << std::endl;
+    std::cerr << "  -s FILE  - input file with superstring" << std::endl;
+    }
+    if (subcommand == "ms2mssep") {
+    std::cerr << "  -m FILE  - output file with mask" << std::endl;
+    std::cerr << "  -s FILE  - output file with superstring" << std::endl;
     }
     std::cerr << "  -h       - print help" << std::endl;
     std::cerr << std::endl;
