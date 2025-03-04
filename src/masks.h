@@ -24,11 +24,12 @@ void PrintMaskConventionWarning() {
 }
 
 /// Reprint the sequence header as it was in the original fasta file.
-void ReprintSequenceHeader(kseq_t* masked_superstring, std::ostream &of) {
+void ReprintSequenceHeader(kseq_t* masked_superstring, std::string algorithm, std::ostream &of) {
     of << ">";
     if (masked_superstring->name.s) {
         of << masked_superstring->name.s;
     }
+    of << " reoptimized=" << algorithm;
     if (masked_superstring->comment.s) {
         of << " " << masked_superstring->comment.s;
     }
@@ -43,7 +44,7 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, k
     kmer_t currentKMer = 0, reverseComplement = 0;
     kmer_t mask = ((kmer_t(1)) << (2 * k)) - 1;
     kmer_t shift = 2 * (k - 1);
-    ReprintSequenceHeader(masked_superstring, of);
+    ReprintSequenceHeader(masked_superstring, minimize ? "minone" : "maxone", of);
     uint8_t ms_validation = 0;
     for (size_t i = 0; i < masked_superstring->seq.l; ++i) {
         auto data = nucleotideToInt[(uint8_t) masked_superstring->seq.s[i]];
@@ -230,7 +231,7 @@ void OptimizeRuns(kh_wrapper_t wrapper, kmer_t _, kseq_t* masked_superstring, kh
         else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
-    ReprintSequenceHeader(masked_superstring, of);
+    ReprintSequenceHeader(masked_superstring, approximate ? "approxminrun" : "minrun", of);
     ReadWriteIntervals(intervals, kMers, wrapper, _, intervalsForKMer, masked_superstring, k, complements, of, intervalsSet);
     of << std::endl;
 }
