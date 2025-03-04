@@ -97,7 +97,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
     /* Handle streaming algorithm separately. */
     if (algorithm == "streaming") {
         WriteName(path, algorithm, k, false, !complements, *of);
-        Streaming(path, *of,  k , complements);
+        Streaming(wrapper, kmer_type, path, *of,  k , complements);
     }
     /* Handle hash table based algorithms separately so that they consume less memory. */
     else if (algorithm == "global" || algorithm == "local") {
