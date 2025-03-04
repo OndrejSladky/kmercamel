@@ -45,8 +45,6 @@ void Streaming(kh_wrapper_t wrapper, kmer_t kmer_type, std::string &path, std::o
         }
     }
 
-    of << std::endl;
-
     kseq_destroy(seq);
     gzclose(fp);
 }

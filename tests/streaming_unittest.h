@@ -16,10 +16,10 @@ namespace {
             std::string wantResult;
         };
         std::vector<TestCase> tests = {
-                {3, true, ">superstring\nACCCGAacCGtaATgcTTta\n"},
-                {2, true, ">superstring\nACcCGAaTaATGc\n"},
-                {1, true, ">superstring\nAC\n"},
-                {1, false, ">superstring\nACGT\n"},
+                {3, true, "ACCCGAacCGtaATgcTTta"},
+                {2, true, "ACcCGAaTaATGc"},
+                {1, true, "AC"},
+                {1, false, "ACGT"},
         };
 
 
