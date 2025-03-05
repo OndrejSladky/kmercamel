@@ -23,18 +23,13 @@ void PrintMaskConventionWarning() {
         "Ensure that for your masked superstring, k is always explicitly provided and not inferred from the mask." << std::endl;
 }
 
-/// Return the given character in the correct case corresponding to the mask symbol.
-inline char Masked(char c, bool mask) {
-    int masked_difference = (c <= 'Z') - (int) mask;
-    return c + (char) masked_difference * ('a' - 'A');
-}
-
 /// Reprint the sequence header as it was in the original fasta file.
-void ReprintSequenceHeader(kseq_t* masked_superstring, std::ostream &of) {
+void ReprintSequenceHeader(kseq_t* masked_superstring, std::string algorithm, std::ostream &of) {
     of << ">";
     if (masked_superstring->name.s) {
         of << masked_superstring->name.s;
     }
+    of << " reoptimized=" << algorithm;
     if (masked_superstring->comment.s) {
         of << " " << masked_superstring->comment.s;
     }
@@ -49,7 +44,7 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, k
     kmer_t currentKMer = 0, reverseComplement = 0;
     kmer_t mask = ((kmer_t(1)) << (2 * k)) - 1;
     kmer_t shift = 2 * (k - 1);
-    ReprintSequenceHeader(masked_superstring, of);
+    ReprintSequenceHeader(masked_superstring, minimize ? "minone" : "maxone", of);
     uint8_t ms_validation = 0;
     for (size_t i = 0; i < masked_superstring->seq.l; ++i) {
         auto data = nucleotideToInt[(uint8_t) masked_superstring->seq.s[i]];
@@ -236,7 +231,7 @@ void OptimizeRuns(kh_wrapper_t wrapper, kmer_t _, kseq_t* masked_superstring, kh
         else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
-    ReprintSequenceHeader(masked_superstring, of);
+    ReprintSequenceHeader(masked_superstring, approximate ? "approxminrun" : "minrun", of);
     ReadWriteIntervals(intervals, kMers, wrapper, _, intervalsForKMer, masked_superstring, k, complements, of, intervalsSet);
     of << std::endl;
 }
@@ -247,13 +242,13 @@ int Optimize(kh_wrapper_t wrapper, kmer_t _, std::string &algorithm, std::string
     auto *kMers = wrapper.kh_init_set();
     AddKMers(kMers, wrapper, _, masked_superstring->seq.l, masked_superstring->seq.s, k, complements, true);
 
-    if (algorithm == "ones") {
+    if (algorithm == "maxone") {
         OptimizeOnes(masked_superstring, of, kMers, wrapper, _, k, complements, false);
-    } else if (algorithm == "zeros") {
+    } else if (algorithm == "minone") {
         OptimizeOnes(masked_superstring, of, kMers,  wrapper, _,k, complements, true);
-    } else if (algorithm == "runs") {
+    } else if (algorithm == "minrun") {
         OptimizeRuns(wrapper, _, masked_superstring, kMers, of, k, complements, false);
-    } else if (algorithm == "runsapprox") {
+    } else if (algorithm == "approxminrun") {
         OptimizeRuns(wrapper, _,masked_superstring, kMers, of, k, complements, true);
     } else {
         std::cerr << "Algorithm '" + algorithm + "' not recognized." << std::endl;

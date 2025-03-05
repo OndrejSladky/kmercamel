@@ -9,20 +9,22 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
     """
     Check if running superstring algorithm on given fasta file produces the same set of k-mers as the original one.
     """
-    with open("./bin/kmercamel.txt", "w") as k_mers:
-        args = ["./kmercamel"] + (["optimize"] if masked_superstring else []) + ["-p", (masked_superstring if masked_superstring != "" else fasta_path), "-k", f"{k}", "-a", algorithm]
-        if complements:
-            args.append("-c")
+    with open("./bin/kmercamel.fa", "w") as k_mers:
+        args = ["./kmercamel"] + (["maskopt"] if masked_superstring else (["compute"] + ([] if algorithm != "global" else ["-M", "./bin/kmercamel-maxone.fa"]))) +["-k", f"{k}", "-t" if masked_superstring else "-a", algorithm] + ([] if complements else ["-u"]) + [(masked_superstring if masked_superstring != "" else fasta_path)]
         subprocess.run(args, stdout=k_mers)
-    with open("./bin/kmercamel.txt", "r") as k_mers:
-        with open("./bin/converted.fa", "w") as converted:
-            subprocess.run(["./convert_superstring.py"], stdin=k_mers, stdout=converted)
-    # in result; in original sequence; in result without complements; in original without complements; in merged file
-    stats = [{}, {}, {}]
+    
+    for s in ["", "-maxone"]:
+        with open(f"./bin/converted{s}.fa", "w") as converted:
+            subprocess.run(["./kmercamel", "ms2spss", "-k", f"{k}", f"./bin/kmercamel{s}.fa"], stdout=converted)
+
+    # in result; in result with maxone, in original sequence; in merged file; in merge file for maxone
+    stats = [{}, {}, {}, {}, {}]
     runs = [
         (0, "./bin/converted.fa", "converted", complements),
-        (1, fasta_path, "original", complements),
+        (2, fasta_path, "original", complements),
     ]
+    if algorithm == "global":
+        runs.append((1, "./bin/converted-maxone.fa", "converted-maxone", complements))
     for i, path, result, pass_complements in runs:
         args = ["jellyfish", "count", "-m", f"{k}", "-s", "100M", "-o", f"./bin/{result}.jf", path]
         if pass_complements:
@@ -35,26 +37,28 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
                 key, value = f.readline().split()
                 stats[i][key] = value
     # Count k-mers on merged file.
-    subprocess.run(["jellyfish", "merge", "-o", f"./bin/merged.jf", "./bin/converted.jf", "./bin/original.jf"])
-    with open(f"./bin/merged_stats.txt", "w") as f:
-        subprocess.run(["jellyfish", "stats", f"./bin/merged.jf"], stdout=f)
-    with open(f"./bin/merged_stats.txt", "r") as f:
-        for _ in range(4):
-            key, value = f.readline().split()
-            stats[2][key] = value
-    distinct_key = "Distinct:"
-    total_key = "Total:"
-    if stats[0][distinct_key] != stats[1][distinct_key] or stats[0][distinct_key] != stats[2][distinct_key]:
-        print("F")
-        print(f"Failed: k={k}: expected orginal_distinct_count={stats[1][distinct_key]}, result_distinct_count={stats[0][distinct_key]} and merged_distinct_count={stats[2][distinct_key]} to be equal.")
-        return False
-    elif complements and stats[0][distinct_key] != stats[0][total_key] and masked_superstring == "":
-        print("W")
-        print(f"Warning: k={k}: number of masked k-mers={stats[0][total_key]} is not minimal possible (minimum is {stats[0][distinct_key]}).")
-    else:
-        print(".", end="")
-        sys.stdout.flush()
-    return True
+    res = True
+    for offset, s, text in [(0, "", "default"), (1, "-maxone", "maxone")][:(2 if algorithm == "global" else 1)]:
+        subprocess.run(["jellyfish", "merge", "-o", f"./bin/merged{s}.jf", f"./bin/converted{s}.jf", "./bin/original.jf"])
+        with open(f"./bin/merged_stats{s}.txt", "w") as f:
+            subprocess.run(["jellyfish", "stats", f"./bin/merged{s}.jf"], stdout=f)
+        with open(f"./bin/merged_stats{s}.txt", "r") as f:
+            for _ in range(4):
+                key, value = f.readline().split()
+                stats[3 + offset][key] = value
+        distinct_key = "Distinct:"
+        total_key = "Total:"
+        if stats[offset][distinct_key] != stats[2][distinct_key] or stats[offset][distinct_key] != stats[3 + offset][distinct_key]:
+            print("F")
+            print(f"Failed: k={k} M={text}: expected orginal_distinct_count={stats[2][distinct_key]}, result_distinct_count={stats[offset][distinct_key]} and merged_distinct_count={stats[3 + offset][distinct_key]} to be equal.")
+            res = False
+        elif offset == 0 and complements and stats[0][distinct_key] != stats[0][total_key] and masked_superstring == "":
+            print("W")
+            print(f"Warning: k={k} M={text}: number of masked k-mers={stats[0][total_key]} is not minimal possible (minimum is {stats[0][distinct_key]}).")
+        else:
+            print(".", end="")
+            sys.stdout.flush()
+    return res
 
 
 def main():

@@ -250,7 +250,7 @@ bool uint256_t::operator>=(const uint128_t & rhs) const{
 }
 
 bool uint256_t::operator>=(const uint256_t & rhs) const{
-    return ((*this > rhs) | (*this == rhs));
+    return ((*this > rhs) || (*this == rhs));
 }
 
 bool uint256_t::operator<=(const uint128_t & rhs) const{
@@ -258,7 +258,7 @@ bool uint256_t::operator<=(const uint128_t & rhs) const{
 }
 
 bool uint256_t::operator<=(const uint256_t & rhs) const{
-    return ((*this < rhs) | (*this == rhs));
+    return ((*this < rhs) || (*this == rhs));
 }
 
 uint256_t uint256_t::operator+(const uint128_t & rhs) const{
