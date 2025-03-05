@@ -78,8 +78,8 @@ Alternatively, you can install KmerCamel from Bioconda:
 ```
 kmercamel ms -k 31 -o ms.msfa yourfile.fa             # Compute MS with the default mask
 kmercamel msfa2ms -m mask.m -s superstring.s ms.msfa  # Extract superstring and mask
-bzip2 --best mask.txt
-xz -T1 -9 superstring.txt
+bzip2 --best mask.m
+xz -T1 -9 superstring.s
 ```
 
 For a super efficient compression of the superstring (often <2 bits / bp), you use some of the specialized tools based on statistical compression such as [GeCo3](https://github.com/cobilab/geco3) or [Jarvis3](https://github.com/cobilab/jarvis3).
@@ -165,5 +165,5 @@ See [Releases](https://github.com/OndrejSladky/kmercamel/releases).
 
 ## Contact
 
-[Ondrej Sladky](https://iuuk.mff.cuni.cz/~sladky/) \<ondra.sladky@gmail.com\>\
+[Ondrej Sladky](https://iuuk.mff.cuni.cz/~sladky/) \<ondra.sladky@gmail.com\>
 
