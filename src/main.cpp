@@ -31,7 +31,7 @@ int usage() {
     std::cerr << "    maskopt    - Optimize a given masked superstring." << std::endl;
     std::cerr << "    ms2mssep   - Split a masked superstring into a superstring and a mask." << std::endl;
     std::cerr << "    mssep2ms   - Join a masked superstring from a superstring and a mask." << std::endl;
-    std::cerr << "    ms2spss    - Compute rSPSS from a masked superstring." << std::endl;
+    std::cerr << "    ms2spss    - Compute rSPSS from a masked superstring (may be of much larger total length)." << std::endl;
     std::cerr << "    spss2ms    - Compute masked superstring corresponding to (r)SPSS." << std::endl;
     std::cerr << "    lowerbound - Compute the lower bound on masked superstring size of a k-mer set." << std::endl;
     std::cerr << std::endl;
@@ -55,10 +55,10 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -a STR   - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
 
     else if (subcommand == "maskopt")
-    std::cerr << "  -a STR   - the algorithm to be run [maxone (default), minone, minrun, approxminrun]" << std::endl;
+    std::cerr << "  -t STR   - the target mask type to be run [maxone (default), minone, minrun, approxminrun]" << std::endl;
 
     if (subcommand != "lowerbound" && subcommand != "ms2mssep")
-    std::cerr << "  -o FILE  - output, if not specified, the output is printed to stdout" << std::endl;
+    std::cerr << "  -o FILE  - output for the (minone) masked superstring; if not specified, printed to stdout" << std::endl;
     
     if (subcommand == "compute")
     std::cerr << "  -M FILE  - if given, print also ms with mask maximizing ones (only with global)" << std::endl;
@@ -256,7 +256,7 @@ int camel_optimize(int argc, char **argv) {
     bool complements = true;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "k:a:o:hu"))  != -1) {
+        while ((opt = getopt(argc, argv, "k:t:o:hu"))  != -1) {
             switch(opt) {
                 case 'o':
                     output.open(optarg);
@@ -265,7 +265,7 @@ int camel_optimize(int argc, char **argv) {
                 case  'k':
                     k = std::stoi(optarg);
                     break;
-                case  'a':
+                case  't':
                     algorithm = optarg;
                     break;
                 case  'u':

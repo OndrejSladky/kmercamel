@@ -10,7 +10,7 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
     Check if running superstring algorithm on given fasta file produces the same set of k-mers as the original one.
     """
     with open("./bin/kmercamel.fa", "w") as k_mers:
-        args = ["./kmercamel"] + (["maskopt"] if masked_superstring else (["compute"] + ([] if algorithm != "global" else ["-M", "./bin/kmercamel-maxone.fa"]))) +["-k", f"{k}", "-a", algorithm] + ([] if complements else ["-u"]) + [(masked_superstring if masked_superstring != "" else fasta_path)]
+        args = ["./kmercamel"] + (["maskopt"] if masked_superstring else (["compute"] + ([] if algorithm != "global" else ["-M", "./bin/kmercamel-maxone.fa"]))) +["-k", f"{k}", "-t" if masked_superstring else "-a", algorithm] + ([] if complements else ["-u"]) + [(masked_superstring if masked_superstring != "" else fasta_path)]
         subprocess.run(args, stdout=k_mers)
     
     for s in ["", "-maxone"]:
