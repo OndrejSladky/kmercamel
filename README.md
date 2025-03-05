@@ -1,5 +1,5 @@
 # KmerCamel🐫
-[![BioConda Install](https://anaconda.org/bioconda/kmercamel/badges/downloads.svg)](https://anaconda.org/bioconda/kmercamel)
+[![BioConda Install](https://anaconda.org/bioconda/kmercamel/badges/downloads.svg?style=flag&label=BioConda%20Install)](https://anaconda.org/bioconda/kmercamel)
 [![KmerCamel test](https://github.com/OndrejSladky/kmercamel/actions/workflows/ci.yml/badge.svg)](https://github.com/OndrejSladky/kmercamel/actions/)
 
 <!-- vim-markdown-toc GFM -->
