@@ -68,9 +68,9 @@ git clone --recursive https://github.com/OndrejSladky/kmercamel
 cd kmercamel && make
 ```
 
-Alternatively, you can install KmerCamel from Bioconda:
+Alternatively, you can install KmerCamel from [bioconda](https://bioconda.github.io/):
 ```
-   conda install kmercamel
+   conda install bioconda::kmercamel
 ```
 
 ### Compression for k-mer set storage
@@ -102,14 +102,14 @@ Examples of computing masked superstrings (`ms` subcommand):
 kmercamel ms -k 31 yourfile[.fa|.fa.gz] -o ms.msfa         # From a (gziped) fasta file, use "-" for stdin
 kmercamel ms -k 31 -u yourfile.fa -o ms.msfa               # Treat k-mer and its reverse complement as distinct
 kmercamel ms -k 31 -M maxonemask.m yourfile.fa -o ms.msfa  # Also store mask with maximum ones
-kmercamel ms -k 31 -a local yourfile.fa -o ms.msfa         # Use local instead of global for lower memory footprint (likely worse result)
+kmercamel ms -k 31 -a streaming yourfile.fa -o ms.msfa     # Use streaming instead of global for lower memory footprint (likely worse result)
 ```
 
 Examples of optimizing masks:
 ```
-kmercamel optimize -a maxone -k 31 ms.msfa -o ms-opt.msfa    # Maximize the number of 1s in the mask
-kmercamel optimize -a minone -k 31 ms.msfa -o ms-opt.msfa    # Minimize the number of 1s in the mask
-kmercamel optimize -a minrun -k 31 ms.msfa -o ms-opt.msfa    # Minimize the number of runs of consecutive 1s in the mask.
+kmercamel optimize -t maxone -k 31 ms.msfa -o ms-opt.msfa    # Maximize the number of 1s in the mask
+kmercamel optimize -t minone -k 31 ms.msfa -o ms-opt.msfa    # Minimize the number of 1s in the mask
+kmercamel optimize -t minrun -k 31 ms.msfa -o ms-opt.msfa    # Minimize the number of runs of consecutive 1s in the mask.
 ```
 
 Format conversions:
