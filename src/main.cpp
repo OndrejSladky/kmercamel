@@ -52,7 +52,7 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -k INT   - k-mer size [required; up to 127]" << std::endl;
 
     if (subcommand == "compute")
-    std::cerr << "  -a STR   - the algorithm to be run [global (default), globalAC, local, localAC, streaming]" << std::endl;
+    std::cerr << "  -a STR   - the algorithm to be run [global (default), streaming, local, globalAC (experimental), localAC (experimental)]" << std::endl;
 
     else if (subcommand == "maskopt")
     std::cerr << "  -t STR   - the target mask type to be run [maxone (default), minone, minrun, approxminrun]" << std::endl;
