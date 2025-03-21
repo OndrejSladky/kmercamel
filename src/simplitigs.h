@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cassert>
 #include "kmers.h"
 #include "parser.h"
 #include "local.h"

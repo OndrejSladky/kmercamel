@@ -161,7 +161,7 @@ overlapPath OverlapHamiltonianPath (kh_wrapper_t wrapper, kmer_t kmerType, std::
 
 
 void PrintSimplitigStart(simplitig_t simplitig, std::ostream& of, std::ostream *maskf, int k) {
-    int count = kmers_in_simplitig(simplitig, k);
+    size_t count = kmers_in_simplitig(simplitig, k);
     for (size_t i = 0; i < count; ++i) {
         char nucleotide = simplitig_at_index(simplitig, i);
         of << nucleotide;
