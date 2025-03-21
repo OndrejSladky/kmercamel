@@ -118,13 +118,13 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         if (!lower_bound) WriteName(path, algorithm, k, false, !complements, *of);
         if (maskf != nullptr) WriteName(path, algorithm, k, true, !complements, *maskf);
         if (algorithm == "global") {
-            auto kMerVec = kMersToVec(kMers, kmer_type);
+            auto simplitigs = get_simplitigs(kMers, wrapper, kmer_type, k, complements);
             wrapper.kh_destroy_set(kMers);
             /* Turn off the memory optimizations if optimize_memory is set to false. */
-            if(optimize_memory) PartialPreSort(kMerVec, k);
-            else MEMORY_REDUCTION_FACTOR = 1;
-            if (lower_bound) std::cout << LowerBoundLength(wrapper, kMerVec, k, complements);
-            else Global(wrapper, kMerVec, *of, maskf, k, complements);
+            // if(optimize_memory) PartialPreSort(kMerVec, k);
+            // else MEMORY_REDUCTION_FACTOR = 1;
+            if (lower_bound) std::cout << LowerBoundLength(wrapper, kmer_type, simplitigs, k, complements);
+            else Global(wrapper, kmer_type, simplitigs, *of, maskf, k, complements);
         }
         else Local(kMers, wrapper, kmer_type, *of, k, d_max, complements);
     } else {

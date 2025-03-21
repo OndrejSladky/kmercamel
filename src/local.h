@@ -13,8 +13,8 @@
 
 
 /// Find the right extension to the provided last k-mer from the kMers.
-/// This extension has k-d overlap with the given simplitig.
-/// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
+/// This extension has k-d overlap with the given kmer.
+/// Return the extension - that is the d chars extending the kmer - and the extending kMer.
 template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
 std::pair<kmer_t, kmer_t> RightExtension(kmer_t last, kh_S_t *kMers, kh_wrapper_t wrapper, int k, int d, bool complements) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
@@ -28,8 +28,8 @@ std::pair<kmer_t, kmer_t> RightExtension(kmer_t last, kh_S_t *kMers, kh_wrapper_
 }
 
 /// Find the left extension to the provided first k-mer from the kMers.
-/// This extension has k-d overlap with the given simplitig.
-/// Return the extension - that is the d chars extending the simplitig - and the extending kMer.
+/// This extension has k-d overlap with the given kmer.
+/// Return the extension - that is the d chars extending the kmer - and the extending kMer.
 template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
 std::pair<kmer_t, kmer_t> LeftExtension(kmer_t first, kh_S_t *kMers, kh_wrapper_t wrapper, int k, int d, bool complements) {
     // Try each of the {A, C, G, T}^d possible extensions of length d.
@@ -43,7 +43,6 @@ std::pair<kmer_t, kmer_t> LeftExtension(kmer_t first, kh_S_t *kMers, kh_wrapper_
 }
 
 /// Find the next generalized simplitig.
-/// Update the provided superstring and the mask.
 /// Also remove the used k-mers from kMers.
 /// If complements are true, it is expected that kMers only contain one k-mer from a complementary pair.
 template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
