@@ -201,8 +201,6 @@ void SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapPat
     }
 
 
-    // TODO: fix this
-
     simplitig_t simplitig = accessSimplitig(simplitigs, start);
     kmer_t last = simplitig_last(kmerType, simplitig, k);
 

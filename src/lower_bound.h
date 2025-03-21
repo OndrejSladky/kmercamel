@@ -9,10 +9,10 @@ size_t LowerBoundLength(kh_wrapper_t wrapper, kmer_t kmer_type, std::vector<simp
     auto cycle_cover = OverlapHamiltonianPath(wrapper, kmer_type, simplitigs, k, complements, true);
     size_t res = 0;
     for (auto &simplitig : simplitigs) {
-        res += simplitig.size();
+        res += simplitig.size() / (2 - complements);
     }
     for (auto &overlap : cycle_cover.second) {
-        res -= size_t(overlap);
+        res -= overlap;
     }
     return res / (1 + complements);
 }

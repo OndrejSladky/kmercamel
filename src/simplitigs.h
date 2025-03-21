@@ -82,7 +82,7 @@ simplitig_t next_simplitig(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t begin,  i
      // Maintain the first and last k-mer in the simplitig.
     kmer_t last = begin, first = begin;
     std::list<char> simplitig {};
-    for (int i = 0; i < k - 1; ++i) {
+    for (int i = 0; i < k; ++i) {
         simplitig.emplace_back(NucleotideAtIndex(last, k, i));
     }
     eraseKMer(kMers, wrapper, last, k, complements);

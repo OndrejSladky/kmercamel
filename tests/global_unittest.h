@@ -43,7 +43,7 @@ namespace {
     TEST(Global, SuperstringFromPath) {
         struct TestCase {
             overlapPath path;
-            std::vector<kmer_t> kMers;
+            std::vector<simplitig_t> kMers;
             int k;
             std::string wantResult;
             bool complements;
@@ -51,14 +51,21 @@ namespace {
         std::vector<TestCase> tests = {
                 {
                         {{2, 0, (size_t)-1}, {1, 2, (byte)-1}},
-                        std::vector<kmer_t>{KMerToNumber({"ACG"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
+                        std::vector<simplitig_t>{simplitig_from_string({"ACG"}), simplitig_from_string({"TAC"}), simplitig_from_string({"GGC"})},
                         3,
                         "TAcGgc",
                         false,
                 },
                 {
                         {{4, 3, 1, (size_t)-1, 5, (size_t)-1}, {1 ,2, 1, (byte)-1, 2, (byte)-1}},
-                        std::vector<kmer_t>{KMerToNumber({"GCC"}), KMerToNumber({"ACG"}), KMerToNumber({"TAC"})},
+                        std::vector<simplitig_t>{simplitig_from_string({"GCC"}), simplitig_from_string({"ACG"}), simplitig_from_string({"TAC"})},
+                        3,
+                        "GcCGta",
+                        true,
+                },
+                {
+                        {{3, 1, (size_t)-1, (size_t)-1}, {1, 1, (byte)-1, (byte)-1}},
+                        std::vector<simplitig_t>{simplitig_from_string({"GCC"}), simplitig_from_string({"TACG"})},
                         3,
                         "GcCGta",
                         true,
@@ -68,7 +75,7 @@ namespace {
         for (auto t : tests) {
             std::stringstream of;
 
-            SuperstringFromPath(wrapper, t.path, t.kMers, of, nullptr, t.k, t.complements);
+            SuperstringFromPath(wrapper, kmer_t(0), t.path, t.kMers, of, nullptr, t.k, t.complements);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
@@ -76,7 +83,7 @@ namespace {
 
     TEST(Global, OverlapHamiltonianPath) {
         struct TestCase {
-            std::vector<kmer_t> kMers;
+            std::vector<simplitig_t> kMers;
             overlapPath wantResult;
             int k;
             bool complements;
@@ -84,35 +91,42 @@ namespace {
         };
         std::vector<TestCase> tests = {
                 {
-                        {KMerToNumber({"AT"})},
+                        {simplitig_from_string({"AT"})},
                         {{(size_t)-1, (size_t)-1}, {(byte)-1, (byte)-1}},
                         2,
                         true,
                         false,
                 },
                 {
-                        {KMerToNumber({"ACG"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
+                        {simplitig_from_string({"ACG"}), simplitig_from_string({"TAC"}), simplitig_from_string({"GGC"})},
                         {{2, 0, (size_t)-1}, {1, 2, (byte)-1}},
                         3,
                         false,
                         false,
                 },
                 {
-                        {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"AACA"})},
+                        {simplitig_from_string({"ACAA"}), simplitig_from_string({"ATTT"}), simplitig_from_string({"AACA"})},
                         {{4, 3, 0, 5, (size_t)-1, (size_t)-1}, {2, 2, 3, 3, (byte)-1, (byte)-1}},
                         4,
                         true,
                         false,
                 },
                 {
-                        {KMerToNumber({"ACG"}), KMerToNumber({"CGT"}), KMerToNumber({"TAA"})},
+                        {simplitig_from_string({"ACG"}), simplitig_from_string({"CGT"}), simplitig_from_string({"TAA"})},
                         {{1, 2, 0}, {2, 1, 1}},
                         3,
                         false,
                         true,
                 },
                 {
-                        {KMerToNumber({"ACC"}), KMerToNumber({"CGG"})},
+                        {simplitig_from_string({"ACGT"}), simplitig_from_string({"TAA"})},
+                        {{1, 0}, {1, 1}},
+                        3,
+                        false,
+                        true,
+                },
+                {
+                        {simplitig_from_string({"ACC"}), simplitig_from_string({"CGG"})},
                         {{3, 2, 1, 0}, {2, 2, 0, 0}},
                         3,
                         true,
@@ -121,7 +135,7 @@ namespace {
         };
 
         for (auto t : tests) {
-            overlapPath got = OverlapHamiltonianPath(wrapper, t.kMers, t.k, t.complements, t.lower_bound);
+            overlapPath got = OverlapHamiltonianPath(wrapper, kmer_t(0), t.kMers, t.k, t.complements, t.lower_bound);
             EXPECT_EQ(t.wantResult.first, got.first);
             EXPECT_EQ(t.wantResult.second, got.second);
         }
@@ -131,22 +145,24 @@ namespace {
         struct TestCase {
             std::string wantResult;
             int k;
-            std::vector<kmer_t> input;
+            std::vector<simplitig_t> input;
             bool complements;
         };
         std::vector<TestCase> tests = {
-                {"TACgt", 3, {KMerToNumber({"CGT"}), KMerToNumber({"TAC"}), KMerToNumber({"ACG"})}, false},
-                {"ACgTtt", 3, {KMerToNumber({"CGT"}), KMerToNumber({"TTT"}), KMerToNumber({"ACG"})}, false},
-                {"TActt", 4, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"})}, false},
-                {"TActTaaGgac", 4, {KMerToNumber({"TACT"}), KMerToNumber({"ACTT"}), KMerToNumber({"GGAC"}), KMerToNumber({"TAAG"})}, false},
-                {"TTtcttttttttttttttttttttttttttga", 31, {KMerToNumber({"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}), KMerToNumber({"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"})}, false},
-                {"AtTTgtt", 4, {KMerToNumber({"ACAA"}), KMerToNumber({"ATTT"}), KMerToNumber({"AACA"})}, true},
+                {"TACgt", 3, {simplitig_from_string({"CGT"}), simplitig_from_string({"TAC"}), simplitig_from_string({"ACG"})}, false},
+                {"ACGT", 1, {simplitig_from_string({"ACGT"})}, false},
+                {"ACgTtt", 3, {simplitig_from_string({"CGT"}), simplitig_from_string({"TTT"}), simplitig_from_string({"ACG"})}, false},
+                {"ACgTtt", 3, {simplitig_from_string({"ACGT"}), simplitig_from_string({"TTT"})}, false},
+                {"TActt", 4, {simplitig_from_string({"TACT"}), simplitig_from_string({"ACTT"})}, false},
+                {"TActTaaGgac", 4, {simplitig_from_string({"TACT"}), simplitig_from_string({"ACTT"}), simplitig_from_string({"GGAC"}), simplitig_from_string({"TAAG"})}, false},
+                {"TTtcttttttttttttttttttttttttttga", 31, {simplitig_from_string({"TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTG"}), simplitig_from_string({"TTCTTTTTTTTTTTTTTTTTTTTTTTTTTGA"})}, false},
+                {"AtTTgtt", 4, {simplitig_from_string({"ACAA"}), simplitig_from_string({"ATTT"}), simplitig_from_string({"AACA"})}, true},
         };
 
         for (auto &&t : tests) {
             std::stringstream of;
 
-            Global(wrapper, t.input, of, nullptr, t.k, t.complements);
+            Global(wrapper, kmer_t(0), t.input, of, nullptr, t.k, t.complements);
 
             EXPECT_EQ(t.wantResult, of.str());
         }
