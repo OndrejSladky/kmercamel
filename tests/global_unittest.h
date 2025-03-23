@@ -8,38 +8,6 @@
 #include "gtest/gtest.h"
 typedef unsigned char byte;
 namespace {
-    TEST(Global, PartialPreSort) {
-        struct TestCase {
-            std::vector<kmer_t> kMers;
-            int k;
-            std::vector<kmer_t> wantResult;
-        };
-        std::vector<TestCase> tests = {
-                {
-                        {KMerToNumber({"GTA"}), KMerToNumber({"TAC"}), KMerToNumber({"GGC"})},
-                        3,
-                        {KMerToNumber({"GGC"}), KMerToNumber({"GTA"}), KMerToNumber({"TAC"})},
-                },
-                {
-                        {KMerToNumber({"TTTTTTTTTTTTT"}),KMerToNumber({"AAAAAAAAAAAAA"}),  KMerToNumber({"GCGCGCGCGCGCG"})},
-                        13,
-                        {KMerToNumber({"AAAAAAAAAAAAA"}), KMerToNumber({"GCGCGCGCGCGCG"}), KMerToNumber({"TTTTTTTTTTTTT"})},
-                },
-                {
-                    // Sorting is done only based on the first 11 chars.
-                        {KMerToNumber({"AAAAAAAAAAAAT"}),KMerToNumber({"AAAAAAAAAAAAA"})},
-                        13,
-                        {KMerToNumber({"AAAAAAAAAAAAT"}),KMerToNumber({"AAAAAAAAAAAAA"})},
-                },
-        };
-
-        for (auto t : tests) {
-            PartialPreSort(t.kMers, t.k);
-
-            EXPECT_EQ(t.wantResult, t.kMers);
-        }
-    }
-
     TEST(Global, SuperstringFromPath) {
         struct TestCase {
             overlapPath path;
@@ -75,9 +43,10 @@ namespace {
         for (auto t : tests) {
             std::stringstream of;
 
-            SuperstringFromPath(wrapper, kmer_t(0), t.path, t.kMers, of, nullptr, t.k, t.complements);
+            size_t gotLength = SuperstringFromPath(wrapper, kmer_t(0), t.path, t.kMers, of, nullptr, t.k, t.complements);
 
             EXPECT_EQ(t.wantResult, of.str());
+            EXPECT_EQ(t.wantResult.size(), gotLength);
         }
     }
 

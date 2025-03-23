@@ -93,34 +93,47 @@ template <typename kmer_t, typename kh_wrapper_t>
 int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, int d_max, std::ostream *of, std::ostream *maskf, bool complements, bool masks,
                     std::string algorithm, bool lower_bound) {
     if (masks) {
+        WriteLog("Started optimization of a masked superstring from '" + path + "'.");
         int ret = Optimize(wrapper, kmer_type, algorithm, path, *of, k, complements);
         if (ret) usage_subcommand("maskopt");
+        WriteLog("Finished optimization.");
         return ret;
     }
+
+    if (!lower_bound) WriteLog("Started computation of a masked superstring from '" + path + "'.");
+    else WriteLog("Started computation of a masked superstring length lower bound from '" + path + "'.");
 
     /* Handle streaming algorithm separately. */
     if (algorithm == "streaming") {
         WriteName(path, algorithm, k, false, !complements, *of);
         Streaming(wrapper, kmer_type, path, *of,  k , complements);
+        WriteLog("Finished masked superstring computation.");
     }
     /* Handle hash table based algorithms separately so that they consume less memory. */
     else if (algorithm == "global" || algorithm == "local") {
         auto *kMers = wrapper.kh_init_set();
         ReadKMers(kMers, wrapper, kmer_type, path, k, complements);
+
         if (!kh_size(kMers)) {
-            std::cerr << "Path '" << path << "' contains no k-mers." << std::endl;
+            std::cerr << "Path '" << path << "' contains no k-mers. Make sure that your file is a FASTA or gzipped FASTA." << std::endl;
             return usage_subcommand("compute");
         }
+        
+        WriteLog("Finished collecting k-mers: " + std::to_string(kh_size(kMers)) + " " + std::to_string(k) + "-mers.");
+        
         d_max = std::min(k - 1, d_max);
         if (!lower_bound) WriteName(path, algorithm, k, false, !complements, *of);
         if (maskf != nullptr) WriteName(path, algorithm, k, true, !complements, *maskf);
         if (algorithm == "global") {
             auto simplitigs = get_simplitigs(kMers, wrapper, kmer_type, k, complements);
+            WriteLog("Finished 1. part: simplitigs (" + std::to_string(simplitigs.size()) + " simplitigs).");
             wrapper.kh_destroy_set(kMers);
             if (lower_bound) std::cout << LowerBoundLength(wrapper, kmer_type, simplitigs, k, complements);
             else Global(wrapper, kmer_type, simplitigs, *of, maskf, k, complements);
+        } else {
+            Local(kMers, wrapper, kmer_type, *of, k, d_max, complements);
+            WriteLog("Finished masked superstring computation.");
         }
-        else Local(kMers, wrapper, kmer_type, *of, k, d_max, complements);
     } else {
         auto data = ReadFasta(path);
         if (data.empty()) {
@@ -141,6 +154,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
             std::cerr << "Algorithm '" << algorithm << "' not supported." << std::endl;
             return usage_subcommand("compute");
         }
+        WriteLog("Finished masked superstring computation.");
     }
     *of << std::endl;
     return 0;
@@ -401,7 +415,9 @@ int camel_split_ms(int argc, char **argv) {
         std::cerr << "Cannot have both superstring and mask redirected to stdout." << std::endl;
         return usage_subcommand(subcommand);
     }
+    WriteLog("Started splitting masked superstring '" + path + "'.");
     split_ms(*superstringf, *maskf, path);
+    WriteLog("Finished masked superstring splitting.");
     return 0;    
 }
 
@@ -460,7 +476,9 @@ int camel_join_ms(int argc, char **argv) {
         std::cerr << "Cannot have both superstring and mask redirected from stdin." << std::endl;
         return usage_subcommand(subcommand);
     }
+    WriteLog("Started masked superstring joining.");
     join_ms(*superstringf, *maskf, *of);
+    WriteLog("Finished masked superstring joining.");
     return 0;    
 }
 
@@ -509,7 +527,9 @@ int camel_ms_to_spss(int argc, char **argv) {
         std::cerr << "k must be positive." << std::endl;
         return usage_subcommand(subcommand);
     }
+    WriteLog("Started rSPSS computation from masked supertring '" + path + "'.");
     ms_to_spss(path, *of, k);
+    WriteLog("Finished computing a rSPSS representing the same set.");
     return 0;
 }
 
@@ -558,7 +578,9 @@ int camel_spss_to_ms(int argc, char **argv) {
         std::cerr << "k must be positive." << std::endl;
         return usage_subcommand(subcommand);
     }
+    WriteLog("Started masked superstring computation corresponding to (r)SPSS '" + path + "'.");
     spss_to_ms(path, *of, k);
+    WriteLog("Finished computing a masked superstring corresponding to the (r)SPSS.");
     return 0;
 }
 
