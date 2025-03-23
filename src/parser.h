@@ -12,6 +12,7 @@ KSEQ_INIT(gzFile, gzread)
 #include "kmers.h"
 #include "khash_utils.h"
 #include <chrono>
+#include <iomanip>
 #include <ctime>   
 
 
