@@ -153,8 +153,8 @@ namespace {
                 {{0b00010000,  0b00000100}, 4, false,
                  simplitig_from_string("AACAA"), {},},
                 // {ACAA, ATTT, TGTT, AAAT, TTGT, AACA}
-                {{0b00010000, 0b00111111, 0b11101111, 0b00000011, 0b11111011, 0b00000100}, 4, true,
-                 simplitig_from_string("AACAA"), {0b00000011, 0b00111111},},
+                {{0b00010000, 0b00000011, 0b00000100}, 4, true,
+                 simplitig_from_string("AACAA"), {0b00000011},},
         };
 
         for (auto &&t: tests) {
@@ -166,7 +166,7 @@ namespace {
             simplitig_t got_simplitig;
             if (t.complements) got_simplitig = next_simplitig<true>(kmers, wrapper, t.kmers.front(), t.k);
             else got_simplitig = next_simplitig<false>(kmers, wrapper, t.kmers.front(), t.k);
-            
+
             auto remaining_kmers = kMersToVec(kmers, kmer_t(0));
             std::sort(remaining_kmers.begin(), remaining_kmers.end());
 

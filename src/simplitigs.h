@@ -77,20 +77,31 @@ std::vector<simplitig_t> simplitigs_from_fasta(std::string &path, int k) {
 
 template <bool complements, typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
 inline kmer_t simplitig_right_rev_extension(kmer_t &forward, kmer_t &backward, kh_S_t *kMers, kh_wrapper_t &wrapper, int k) {
+    bool forward_direction = true;
+    if constexpr (!complements) {
+        forward_direction = (backward == kmer_t(-1));
+    }
     kmer_t mask = (kmer_t(1) << (k << 1)) - kmer_t(1);
     kmer_t forward_base = (forward << 2) & mask;
     kmer_t backward_base = backward >> 2;
     for (kmer_t ext = 0; ext < kmer_t(4); ++ext) {
-        kmer_t next_forward = forward_base | (3 ^ ext);
+        kmer_t next_forward = forward_base | (kmer_t(3) ^ ext);
         kmer_t next_backward = backward_base | (ext << (((k - 1) << 1)));
-        kmer_t canonical = next_forward;
+        kmer_t canonical;
         if constexpr (complements) {
             canonical = (next_forward <= next_backward) ? next_forward : next_backward;
+        } else {
+            canonical = (forward_direction) ? next_forward : next_backward;
         }
         auto key = wrapper.kh_get_from_set(kMers, canonical);
         if(key != kh_end(kMers)) {
-            backward = next_backward;
-            forward = next_forward;
+            if constexpr (complements) {
+                backward = next_backward;
+                forward = next_forward;
+            } else {
+                if (forward_direction) forward = next_forward;
+                else backward = next_backward;
+            }
             wrapper.kh_del_from_set(kMers, key);
             return ext;
         }
@@ -107,6 +118,9 @@ simplitig_t next_simplitig(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t begin, in
     kmer_t last = begin, first = begin;
     kmer_t last_complement = ReverseComplement(begin, k);
     kmer_t first_complement = last_complement;
+    if constexpr (!complements) {
+        first_complement = last_complement = kmer_t(-1);
+    }
     std::list<char> simplitig {};
     for (int i = 0; i < k; ++i) {
         simplitig.emplace_back(NucleotideAtIndex(last, k, i));
