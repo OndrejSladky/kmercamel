@@ -11,6 +11,9 @@ KSEQ_INIT(gzFile, gzread)
 
 #include "kmers.h"
 #include "khash_utils.h"
+#include <chrono>
+#include <iomanip>
+#include <ctime>   
 
 
 /// Fill the k-mer dictionary with k-mers from the given sequence.
@@ -91,6 +94,13 @@ void AssertEOF(kseq_t *seq, std::string message) {
     if (kseq_read(seq) >= 0) {
         throw std::invalid_argument(message);
     }
+}
+
+void WriteLog(const std::string message) {
+    auto snapshot = std::chrono::system_clock::now();
+    std::time_t time = std::chrono::system_clock::to_time_t(snapshot);
+    std::tm* time_tm = std::localtime(&time);
+    std::cerr << "[" << std::put_time(time_tm, "%H:%M:%S") << "] " << message << std::endl;
 }
 
 /// Print the fasta file header.

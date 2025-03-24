@@ -80,7 +80,7 @@ INIT_KHASH_WRAPPER(256)
 
 /// Determine whether the k-mer or its reverse complement is present.
 template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
-bool containsKMer(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t kMer, int k, bool complements) {
+inline bool containsKMer(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t kMer, int k, bool complements) {
     bool ret = wrapper.kh_get_from_set(kMers, kMer) != kh_end(kMers);
     if (complements) ret |= wrapper.kh_get_from_set(kMers, ReverseComplement(kMer, k )) != kh_end(kMers);
     return ret;

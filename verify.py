@@ -11,11 +11,11 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
     """
     with open("./bin/kmercamel.fa", "w") as k_mers:
         args = ["./kmercamel"] + (["maskopt"] if masked_superstring else (["compute"] + ([] if algorithm != "global" else ["-M", "./bin/kmercamel-maxone.fa"]))) +["-k", f"{k}", "-t" if masked_superstring else "-a", algorithm] + ([] if complements else ["-u"]) + [(masked_superstring if masked_superstring != "" else fasta_path)]
-        subprocess.run(args, stdout=k_mers)
+        subprocess.run(args, stdout=k_mers, stderr=subprocess.DEVNULL)
     
     for s in ["", "-maxone"]:
         with open(f"./bin/converted{s}.fa", "w") as converted:
-            subprocess.run(["./kmercamel", "ms2spss", "-k", f"{k}", f"./bin/kmercamel{s}.fa"], stdout=converted)
+            subprocess.run(["./kmercamel", "ms2spss", "-k", f"{k}", f"./bin/kmercamel{s}.fa"], stdout=converted, stderr=subprocess.DEVNULL)
 
     # in result; in result with maxone, in original sequence; in merged file; in merge file for maxone
     stats = [{}, {}, {}, {}, {}]
