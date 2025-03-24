@@ -163,7 +163,10 @@ namespace {
             int ret;
             for (auto &&kmer : t.kmers) wrapper.kh_put_to_set(kmers, kmer, &ret);
 
-            auto got_simplitig = next_simplitig(kmers, wrapper, t.kmers.front(), t.k, t.complements);
+            simplitig_t got_simplitig;
+            if (t.complements) got_simplitig = next_simplitig<true>(kmers, wrapper, t.kmers.front(), t.k);
+            else got_simplitig = next_simplitig<false>(kmers, wrapper, t.kmers.front(), t.k);
+            
             auto remaining_kmers = kMersToVec(kmers, kmer_t(0));
             std::sort(remaining_kmers.begin(), remaining_kmers.end());
 

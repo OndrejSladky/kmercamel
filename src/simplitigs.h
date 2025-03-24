@@ -75,45 +75,63 @@ std::vector<simplitig_t> simplitigs_from_fasta(std::string &path, int k) {
     return simplitigs;
 }
 
+template <bool complements, typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
+inline kmer_t simplitig_right_rev_extension(kmer_t &forward, kmer_t &backward, kh_S_t *kMers, kh_wrapper_t &wrapper, int k) {
+    kmer_t mask = (kmer_t(1) << (k << 1)) - kmer_t(1);
+    kmer_t forward_base = (forward << 2) & mask;
+    kmer_t backward_base = backward >> 2;
+    for (kmer_t ext = 0; ext < kmer_t(4); ++ext) {
+        kmer_t next_forward = forward_base | (3 ^ ext);
+        kmer_t next_backward = backward_base | (ext << (((k - 1) << 1)));
+        kmer_t canonical = next_forward;
+        if constexpr (complements) {
+            canonical = (next_forward <= next_backward) ? next_forward : next_backward;
+        }
+        auto key = wrapper.kh_get_from_set(kMers, canonical);
+        if(key != kh_end(kMers)) {
+            backward = next_backward;
+            forward = next_forward;
+            wrapper.kh_del_from_set(kMers, key);
+            return ext;
+        }
+    }
+    return -1;
+}
+
 /// Find the next simplitig.
 /// Also remove the used k-mers from kMers.
 /// If complements are true, it is expected that kMers only contain one k-mer from a complementary pair.
-template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
-simplitig_t next_simplitig(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t begin,  int k, bool complements) {
+template <bool complements, typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
+simplitig_t next_simplitig(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t begin, int k) {
      // Maintain the first and last k-mer in the simplitig.
     kmer_t last = begin, first = begin;
+    kmer_t last_complement = ReverseComplement(begin, k);
+    kmer_t first_complement = last_complement;
     std::list<char> simplitig {};
     for (int i = 0; i < k; ++i) {
         simplitig.emplace_back(NucleotideAtIndex(last, k, i));
     }
     eraseKMer(kMers, wrapper, last, k, complements);
     while (true) {
-        auto extension = RightExtension(last, kMers, wrapper, k, 1, complements);
-        kmer_t ext = extension.first;
+        kmer_t ext = simplitig_right_rev_extension<complements>(last, last_complement, kMers, wrapper, k);
         if (ext == kmer_t(-1)) {
             // No right extension found.
             break;
         } else {
             // Extend the simplitig to the right.
-            eraseKMer(kMers, wrapper, extension.second, k, complements);
-            simplitig.emplace_back(letters[(uint8_t)ext]);
-            last = extension.second;
+            simplitig.emplace_back(letters[3 ^ (uint8_t)ext]);
         }
     } 
     while(true) {
-        auto extension = LeftExtension(first, kMers,  wrapper, k, 1, complements);
-        kmer_t ext = extension.first;
+        kmer_t ext = simplitig_right_rev_extension<complements>(first_complement, first, kMers,  wrapper, k);
         if (ext == kmer_t(-1)) {
             // No left extension found.
             break;
         } else {
             // Extend the simplitig to the left.
-            eraseKMer(kMers, wrapper, extension.second, k, complements);
             simplitig.emplace_front(letters[(uint8_t)ext]);
-            first = extension.second;
         }
     }
-
     return simplitig_from_string(std::string(simplitig.begin(), simplitig.end()));
 }
 
@@ -125,7 +143,10 @@ std::vector<simplitig_t> get_simplitigs(kh_S_t *kMers, kh_wrapper_t wrapper, kme
         kmer_t begin = nextKMer(kMers, _, lastIndex);
         // No more k-mers.
         if (begin == kmer_t(-1)) return simplitigs;
-        simplitigs.emplace_back(next_simplitig(kMers, wrapper, begin, k, complements));
+        simplitig_t next;
+        if (complements) next = next_simplitig<true>(kMers, wrapper, begin, k);
+        else next = next_simplitig<false>(kMers, wrapper, begin, k);
+        simplitigs.emplace_back(next);
     }
     return simplitigs;
 }

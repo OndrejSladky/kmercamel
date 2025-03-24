@@ -15,7 +15,7 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
     
     for s in ["", "-maxone"]:
         with open(f"./bin/converted{s}.fa", "w") as converted:
-            subprocess.run(["./kmercamel", "ms2spss", "-k", f"{k}", f"./bin/kmercamel{s}.fa"], stdout=converted)
+            subprocess.run(["./kmercamel", "ms2spss", "-k", f"{k}", f"./bin/kmercamel{s}.fa"], stdout=converted, stderr=subprocess.DEVNULL)
 
     # in result; in result with maxone, in original sequence; in merged file; in merge file for maxone
     stats = [{}, {}, {}, {}, {}]
