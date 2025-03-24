@@ -76,7 +76,7 @@ std::vector<simplitig_t> simplitigs_from_fasta(std::string &path, int k) {
 }
 
 template <bool complements, typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
-inline kmer_t simplitig_right_rev_extension(kmer_t &forward, kmer_t &backward, kh_S_t *kMers, kh_wrapper_t &wrapper, int k) {
+inline uint8_t simplitig_right_rev_extension(kmer_t &forward, kmer_t &backward, kh_S_t *kMers, kh_wrapper_t &wrapper, int k) {
     bool forward_direction = true;
     if constexpr (!complements) {
         forward_direction = (backward == kmer_t(-1));
@@ -121,32 +121,44 @@ simplitig_t next_simplitig(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t begin, in
     if constexpr (!complements) {
         first_complement = last_complement = kmer_t(-1);
     }
-    std::list<char> simplitig {};
-    for (int i = 0; i < k; ++i) {
-        simplitig.emplace_back(NucleotideAtIndex(last, k, i));
+    // Assumes that the largest simplitig is in order of sqrt(n) to save some time resizing the vector.
+    size_t size_estimate = sqrt(kh_size(kMers)) * 2;
+    simplitig_t simplitig_front;
+    simplitig_t simplitig_back(2 * k);
+    simplitig_front.reserve(size_estimate);
+    simplitig_back.reserve(2 * k + size_estimate);
+    for (int i = 0; i < 2 * k; ++i) {
+        simplitig_back[2 * k - i - 1] = last & (kmer_t(1) << i);
     }
     eraseKMer(kMers, wrapper, last, k, complements);
     while (true) {
-        kmer_t ext = simplitig_right_rev_extension<complements>(last, last_complement, kMers, wrapper, k);
-        if (ext == kmer_t(-1)) {
+        uint8_t ext = simplitig_right_rev_extension<complements>(last, last_complement, kMers, wrapper, k);
+        if (ext == uint8_t(-1)) {
             // No right extension found.
             break;
         } else {
             // Extend the simplitig to the right.
-            simplitig.emplace_back(letters[3 ^ (uint8_t)ext]);
+
+            simplitig_back.push_back(!(ext & 2));
+            simplitig_back.push_back(!(ext & 1));
         }
     } 
     while(true) {
-        kmer_t ext = simplitig_right_rev_extension<complements>(first_complement, first, kMers,  wrapper, k);
-        if (ext == kmer_t(-1)) {
+        uint8_t ext = simplitig_right_rev_extension<complements>(first_complement, first, kMers,  wrapper, k);
+        if (ext == uint8_t(-1)) {
             // No left extension found.
             break;
         } else {
             // Extend the simplitig to the left.
-            simplitig.emplace_front(letters[(uint8_t)ext]);
+            simplitig_front.push_back(ext & 1);
+            simplitig_front.push_back(ext & 2);
         }
     }
-    return simplitig_from_string(std::string(simplitig.begin(), simplitig.end()));
+
+    std::reverse(simplitig_front.begin(), simplitig_front.end());
+    simplitig_front.reserve(simplitig_front.size() + simplitig_back.size());
+    for (bool b : simplitig_back) simplitig_front.push_back(b);
+    return simplitig_front;
 }
 
 template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
