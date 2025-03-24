@@ -23,12 +23,13 @@ def global_greedy(K):
 
 In the bidirectional model, we additionally always merge the reverse complements of `a` and `b`, while never merging two reverse complementary strings.
 
-To achieve high performance, the problem is split into two parts. In the first, we for each *k*-mer compute its successor
-without actually merging them, and we obtain the masked superstring in the second part.
+To achieve high performance, the problem is split into three parts.
+In the first step, we realize that first k-mers with overlap *k-1* are merged in no specific order, which corresponds to computing greedy simplitigs.
+In the second step, for each simplitig we compute its successor
+without actually merging them, and we obtain the masked superstring in the last step.
 To quickly find the two most overlapping *k*-mers, we, starting from the largest overlap length,
 create a map of prefixes to *k*-mers and then iterate over the suffixes.
-Since this map is quite memory demanding, we store at each time only a part of the *k*-mers and repeat the process that many times (which can be turned off).
-In order for this not to be as time-consuming, we first partially sort the *k*-mers using bucket sort.
+Since this map can be quite memory demanding for pan-genomes, we store at each time only a part of the *k*-mers and repeat the process that many times.
 
 The global greedy is implemented in the `global.h` file.
 
