@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cassert>
+#include <cmath>
 #include "kmers.h"
 #include "parser.h"
 #include "local.h"
@@ -122,7 +123,7 @@ simplitig_t next_simplitig(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t begin, in
         first_complement = last_complement = kmer_t(-1);
     }
     // Assumes that the largest simplitig is in order of sqrt(n) to save some time resizing the vector.
-    size_t size_estimate = sqrt(kh_size(kMers)) * 2;
+    size_t size_estimate = std::sqrt(kh_size(kMers)) * 2;
     simplitig_t simplitig_front;
     simplitig_t simplitig_back(2 * k);
     simplitig_front.reserve(size_estimate);
