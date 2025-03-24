@@ -11,8 +11,6 @@
   * [Compression for k-mer set storage](#compression-for-k-mer-set-storage)
   * [k-mer set indexing](#k-mer-set-indexing)
 * [Detailed instructions](#detailed-instructions)
-  * [Arguments](#arguments)
-  * [Converting k-mer set superstring representation to the (r)SPSS representations](#converting-k-mer-set-superstring-representation-to-the-rspss-representations)
 * [How it works](#how-it-works)
 * [How to test](#how-to-test)
 * [Issues](#issues)
