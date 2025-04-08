@@ -221,7 +221,6 @@ size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapP
 /// This runs in O(n k), where n is the number of k-mers.
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected not to contain both k-mer and its complement.
-/// Warning: this will destroy kMers.
 template <typename kmer_t, typename kh_wrapper_t>
 void Global(kh_wrapper_t wrapper, kmer_t kmerType, std::vector<simplitig_t> &simplitigs, std::ostream& of, std::ostream *maskf, int k, bool complements) {
     if (simplitigs.empty()) {
@@ -232,6 +231,3 @@ void Global(kh_wrapper_t wrapper, kmer_t kmerType, std::vector<simplitig_t> &sim
     size_t length = SuperstringFromPath(wrapper, kmerType, hamiltonianPath, simplitigs, of, maskf, k, complements);
     WriteLog("Finished 3. part: masked superstring (l=" + std::to_string(length) + ").");
 }
-
-// Undefine the access macro, so it does not interfere with other files.
-#undef access

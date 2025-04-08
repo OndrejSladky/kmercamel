@@ -60,7 +60,7 @@ simplitig_t simplitig_from_string(std::string sequence) {
     return ret;
 }
 
-std::vector<simplitig_t> simplitigs_from_fasta(std::string &path, int k) {
+std::vector<simplitig_t> simplitigs_from_fasta(std::string &path) {
     std::vector<simplitig_t> simplitigs;
     
     gzFile fp = OpenFile(path);

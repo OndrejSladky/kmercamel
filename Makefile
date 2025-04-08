@@ -23,9 +23,11 @@ mask-verify:
 
 
 verify: verify.py kmercamel
+	./verify.py --simplitigs --k 31 $(DATA)/simplitigs-k31.fa
 	./verify.py $(DATA)/spneumoniae.fa
 
 quick-verify: verify.py kmercamel
+	./verify.py --simplitigs --k 31 $(DATA)/simplitigs-k31.fa
 	./verify.py --quick $(DATA)/spneumoniae.fa
 
 cpptest: kmercameltest kmercameltest-large kmercameltest-extra-large

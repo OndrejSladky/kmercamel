@@ -5,12 +5,12 @@ import os
 import argparse
 
 
-def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, masked_superstring: str) -> bool:
+def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, masked_superstring: str, assume_simplitigs: bool) -> bool:
     """
     Check if running superstring algorithm on given fasta file produces the same set of k-mers as the original one.
     """
     with open("./bin/kmercamel.fa", "w") as k_mers:
-        args = ["./kmercamel"] + (["maskopt"] if masked_superstring else (["compute"] + ([] if algorithm != "global" else ["-M", "./bin/kmercamel-maxone.fa"]))) +["-k", f"{k}", "-t" if masked_superstring else "-a", algorithm] + ([] if complements else ["-u"]) + [(masked_superstring if masked_superstring != "" else fasta_path)]
+        args = ["./kmercamel"] + (["maskopt"] if masked_superstring else (["compute"] + ([] if algorithm != "global" else ["-M", "./bin/kmercamel-maxone.fa"]))) +["-k", f"{k}", "-t" if masked_superstring else "-a", algorithm] + ([] if complements else ["-u"]) + (["-S"] if assume_simplitigs else []) + [(masked_superstring if masked_superstring != "" else fasta_path)]
         subprocess.run(args, stdout=k_mers, stderr=subprocess.DEVNULL)
     
     for s in ["", "-maxone"]:
@@ -70,25 +70,31 @@ def main():
                                      "as the original sequence")
     parser.add_argument("path", help="path to the fasta file on which ./kmers is verified")
     parser.add_argument("--quick", help="if set do not check for full range of k", action="store_true")
+    parser.add_argument("--simplitigs", help="if set assume inputs are simplitigs and verify global with this assumtion", action="store_true")
     parser.add_argument("--superstring_path", help="the path to the masked superstring to test masks")
     parser.add_argument("--k", help="the value of k for mask verification")
     args = parser.parse_args()
 
     success = True
-    if args.superstring_path is None:
+    if args.simplitigs:
+        print(f"Testing global from simplitigs:")
+        k = int(args.k)
+        success &= verify_instance(args.path, k, "global", True, "", True)
+        print("")
+    elif args.superstring_path is None:
         # Do the tests on superstring algoritms.
         for a in ["global", "local", "globalAC", "localAC", "streaming"]:
             print(f"Testing {a}:")
             for complements in [True, False]:
-                for k in ( ([5, 8, 12] if a not in ["local", "global"] else [5, 8, 12, 17, 31, 32, 51, 63, 127]) if args.quick else range(2, 128)):
-                    success &= verify_instance(args.path, k, a, complements, "")
+                for k in ( ([5, 8, 12] if a not in ["local", "global", "streaming"] else [5, 8, 12, 17, 31, 32, 51, 63, 127]) if args.quick else range(2, 128)):
+                    success &= verify_instance(args.path, k, a, complements, "", False)
                 print("")
     else:
         k = int(args.k)
         # Do the tests on mask optimization.
         for a in ["runs", "ones", "zeros", "runsapprox"]:
             print(f"Testing {a}:")
-            success &= verify_instance(args.path, k, a, True, args.superstring_path)
+            success &= verify_instance(args.path, k, a, True, args.superstring_path, False)
             print("")
 
     # Print status.
