@@ -5,6 +5,7 @@
 #include "version.h"
 #include "ac/global_ac.h"
 #include "global.h"
+#include "global_sparse.h"
 #include "local.h"
 #include "ac/local_ac.h"
 #include "parser.h"
@@ -87,6 +88,7 @@ int usage_subcommand(std::string subcommand) {
 }
 
 constexpr int MAX_K = 127;
+constexpr int SIMPLITIG_RATIO_THRESHOLD = 5;
 
 void Version() {
     std::cerr << VERSION << std::endl;
@@ -117,6 +119,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
     else if (algorithm == "global" || algorithm == "local") {
 
         auto *kMers = wrapper.kh_init_set();
+        size_t kmer_count;
         if (!assume_simplitigs) {
             ReadKMers(kMers, wrapper, kmer_type, path, k, complements);
 
@@ -124,8 +127,8 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
                 std::cerr << "Path '" << path << "' contains no k-mers. Make sure that your file is a FASTA or gzipped FASTA." << std::endl;
                 return usage_subcommand("compute");
             }
-            
-            WriteLog("Finished collecting k-mers: " + std::to_string(kh_size(kMers)) + " " + std::to_string(k) + "-mers.");
+            kmer_count = kh_size(kMers);
+            WriteLog("Finished collecting k-mers: " + std::to_string(kmer_count) + " " + std::to_string(k) + "-mers.");
         }
         
         d_max = std::min(k - 1, d_max);
@@ -140,7 +143,11 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
                 simplitigs = simplitigs_from_fasta(path);
             }
             WriteLog("Finished 1. part: simplitigs (" + std::to_string(simplitigs.size()) + " simplitigs).");
-            if (lower_bound) std::cout << LowerBoundLength(wrapper, kmer_type, simplitigs, k, complements);
+            if (!lower_bound && !assume_simplitigs && simplitigs.size() * SIMPLITIG_RATIO_THRESHOLD >= kmer_count) {
+               auto kMerVec = simplitigs_to_kmer_vec(kmer_type, simplitigs, k, kmer_count);
+               GlobalSparse(wrapper, kMerVec, *of, maskf, k, complements);
+            }
+            else if (lower_bound) std::cout << LowerBoundLength(wrapper, kmer_type, simplitigs, k, complements);
             else Global(wrapper, kmer_type, simplitigs, *of, maskf, k, complements);
         } else {
             Local(kMers, wrapper, kmer_type, *of, k, d_max, complements);
