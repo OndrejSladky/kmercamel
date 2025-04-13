@@ -45,7 +45,7 @@ To compute masked superstrings takes about 4-6s / 1M k-mers, which means about 3
 All algorithms can be used to either work in the unidirectional model or in the bidirectional model
 (i.e. treat $k$-mer and its reverse complement as the same; in this case either of them appears in the result).
 
-Additionally, KmerCamel🐫 can optimize the mask of the superstring via the `optimize`subcommand. The implemented mask optimization algorithms are the following:
+Additionally, KmerCamel🐫 can optimize the mask of the superstring via the `optimize` subcommand. The implemented mask optimization algorithms are the following:
 - Minimize the number of 1s in the mask.
 - Maximize the number of 1s in the mask.
 - Minimize the number of runs of 1s in the mask.
@@ -98,17 +98,19 @@ fmsi index -p ms-opt.msfa                                          # Create a k-
 
 Examples of computing masked superstrings (`ms` subcommand):
 ```
-kmercamel ms -k 31 yourfile[.fa|.fa.gz] -o ms.msfa         # From a (gziped) fasta file, use "-" for stdin
-kmercamel ms -k 31 -u yourfile.fa -o ms.msfa               # Treat k-mer and its reverse complement as distinct
-kmercamel ms -k 31 -M maxonemask.m yourfile.fa -o ms.msfa  # Also store mask with maximum ones
-kmercamel ms -k 31 -a streaming yourfile.fa -o ms.msfa     # Use streaming instead of global for lower memory footprint (likely worse result)
+kmercamel ms -k 31 -o ms.msfa yourfile[.fa|.fa.gz]         # From a (gziped) fasta file, use "-" for stdin
+kmercamel ms -k 31 -o ms.msfa -u yourfile.fa               # Treat k-mer and its reverse complement as distinct
+kmercamel ms -k 31 -o ms.msfa -M maxonemask.m yourfile.fa  # Also store mask with maximum ones
+kmercamel ms -k 31 -o ms.msfa -a streaming yourfile.fa     # Use streaming instead of global for lower memory footprint (likely worse result)
 ```
+If the input file are simplitigs (or eulertigs), the execution can be significantly speeded up by adding the `-S` flag.
+However, note that if `-S` is used with matchtigs, it may result it unnecessarily long outputs, while using it for unitigs may lead to slow down for certain inputs.
 
 Examples of optimizing masks:
 ```
-kmercamel optimize -t maxone -k 31 ms.msfa -o ms-opt.msfa    # Maximize the number of 1s in the mask
-kmercamel optimize -t minone -k 31 ms.msfa -o ms-opt.msfa    # Minimize the number of 1s in the mask
-kmercamel optimize -t minrun -k 31 ms.msfa -o ms-opt.msfa    # Minimize the number of runs of consecutive 1s in the mask.
+kmercamel optimize -t maxone -o ms-opt.msfa -k 31 ms.msfa    # Maximize the number of 1s in the mask
+kmercamel optimize -t minone -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of 1s in the mask
+kmercamel optimize -t minrun -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of runs of consecutive 1s in the mask.
 ```
 
 Format conversions:
