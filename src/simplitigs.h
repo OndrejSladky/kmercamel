@@ -38,6 +38,32 @@ kmer_t kmer_at_simplitig_index(kmer_t kmer_type, simplitig_t &simplitig, int k, 
     return ret;
 }
 
+template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
+void fill_kmers(kh_S_t kmers, kh_wrapper_t wrapper, kmer_t kmer_type, std::vector<simplitig_t> simplitigs, int k) {
+    for (auto simplitig : simplitigs) {
+        auto simplitig_kmers = kmers_in_simplitig(simplitig, k);
+        for (size_t i = 0; i < simplitig_kmers; ++i) {
+            auto kmer = kmer_at_simplitig_index(kmer_type, simplitig, k, i);
+            int ret;
+            wrapper.kh_put_to_set(kmers, kmer, &ret);
+        }
+    }
+}
+
+template <typename kmer_t>
+std::vector<kmer_t> simplitigs_to_kmer_vec(kmer_t kmer_type, std::vector<simplitig_t> simplitigs, int k, size_t length_estimate) {
+    std::vector<kmer_t> result;
+    result.reserve(length_estimate);
+    for (auto simplitig : simplitigs) {
+        auto simplitig_kmers = kmers_in_simplitig(simplitig, k);
+        for (size_t i = 0; i < simplitig_kmers; ++i) {
+            auto kmer = kmer_at_simplitig_index(kmer_type, simplitig, k, i);
+            result.push_back(kmer);
+        }
+    }
+    return result;
+}
+
 
 template <typename kmer_t>
 kmer_t simplitig_first(kmer_t kmer_type, simplitig_t &simplitig, int k) {
@@ -60,7 +86,7 @@ simplitig_t simplitig_from_string(std::string sequence) {
     return ret;
 }
 
-std::vector<simplitig_t> simplitigs_from_fasta(std::string &path, int k) {
+std::vector<simplitig_t> simplitigs_from_fasta(std::string &path) {
     std::vector<simplitig_t> simplitigs;
     
     gzFile fp = OpenFile(path);
