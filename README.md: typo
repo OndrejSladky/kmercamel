@@ -22,7 +22,7 @@
 
 ## Introduction
 
-KmerCamel🐫 is a tool for efficiently representing a set of k-mers a [masked superstring](https://doi.org/10.1101/2023.02.01.526717).
+KmerCamel🐫 is a tool for efficiently representing a set of k-mers by a [masked superstring](https://doi.org/10.1101/2023.02.01.526717).
 
 It is based on the following paper:
 
