@@ -27,12 +27,16 @@
 // Use 128-bit integers for extra large k-mers to allow for larger k.
 KHASH_SET_INIT_INT256(S256)
 KHASH_MAP_INIT_INT256(P256, size_t)
+KHASH_MAP_INIT_INT256(Q256, uint8_t)
 // Use 128-bit integers for large k-mers to allow for larger k.
 KHASH_SET_INIT_INT128(S128)
 KHASH_MAP_INIT_INT128(P128, size_t)
+KHASH_MAP_INIT_INT128(Q128, uint8_t)
 // Use 64-bits integers for small k-mers for faster operations and less memory usage.
 KHASH_SET_INIT_INT64(S64)
 KHASH_MAP_INIT_INT64(P64, size_t)
+KHASH_MAP_INIT_INT64(Q64, uint8_t)
+
 
 #define INIT_KHASH_WRAPPER(type) \
     struct kmer_dict##type##_t { \
@@ -71,6 +75,15 @@ KHASH_MAP_INIT_INT64(P64, size_t)
         }                        \
         inline void kh_resize_map(kh_P##type##_t *map, khint_t size) { \
             kh_resize_P##type(map, size); \
+        }                        \
+        inline kh_Q##type##_t *kh_init_freq_map() { \
+            return kh_init_Q##type(); \
+        }                         \
+        inline khint_t kh_get_from_freq_map(kh_Q##type##_t *map, kmer##type##_t key) { \
+            return kh_get_Q##type(map, key); \
+        }                        \
+        inline khint_t kh_put_to_freq_map(kh_Q##type##_t *map, kmer##type##_t key, int *ret) { \
+            return kh_put_Q##type(map, key, ret); \
         }                        \
     };
 

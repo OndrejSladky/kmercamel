@@ -73,6 +73,9 @@ int usage_subcommand(std::string subcommand) {
 
     if (subcommand == "compute" || subcommand == "maskopt" || subcommand == "lowerbound")
     std::cerr << "  -u       - treat k-mer and its reverse complement as distinct" << std::endl;
+    
+    if (subcommand == "compute")
+    std::cerr << "  -z INT   - minimum frequency to consider k-mer; default 1" << std::endl;
 
     if (subcommand == "mssep2ms") {
     std::cerr << "  -m FILE  - input file with mask" << std::endl;
@@ -97,7 +100,7 @@ void Version() {
 /// Run KmerCamel with the given parameters.
 template <typename kmer_t, typename kh_wrapper_t>
 int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, int d_max, std::ostream *of, std::ostream *maskf, bool complements, bool masks,
-                    std::string algorithm, bool lower_bound, bool assume_simplitigs) {
+                    std::string algorithm, bool lower_bound, bool assume_simplitigs, uint16_t min_frequency) {
     if (masks) {
         WriteLog("Started optimization of a masked superstring from '" + path + "'.");
         int ret = Optimize(wrapper, kmer_type, algorithm, path, *of, k, complements);
@@ -112,7 +115,8 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
     /* Handle streaming algorithm separately. */
     if (algorithm == "streaming") {
         WriteName(path, algorithm, k, false, !complements, *of);
-        Streaming(wrapper, kmer_type, path, *of,  k , complements);
+        if (min_frequency == 1) Streaming(wrapper, kmer_type, path, *of,  k , complements);
+        else StreamingFiltered(wrapper, kmer_type, path, *of,  k , complements, min_frequency);
         WriteLog("Finished masked superstring computation.");
     }
     /* Handle hash table based algorithms separately so that they consume less memory. */
@@ -198,8 +202,9 @@ int camel_compute(int argc, char **argv) {
     bool d_set = false;
     bool assume_simplitigs = false;
     int opt;
+    uint16_t min_frequency = 1;
     try {
-        while ((opt = getopt(argc, argv, "k:d:a:o:huxM:S"))  != -1) {
+        while ((opt = getopt(argc, argv, "k:d:a:o:huxM:Sz:"))  != -1) {
             switch(opt) {
                 case 'o':
                     output.open(optarg);
@@ -231,6 +236,9 @@ int camel_compute(int argc, char **argv) {
                 case 'h':
                     usage_subcommand(subcommand);
                     return 0;
+                case 'z':
+                    min_frequency = std::stoi(optarg);
+                    break;
                 default:
                     return usage_subcommand(subcommand);
             }
@@ -263,13 +271,16 @@ int camel_compute(int argc, char **argv) {
     } else if (assume_simplitigs && algorithm != "global") {
         std::cerr << "Optimization for the input being simplitigs is possible only with global." << std::endl;
         return usage_subcommand(subcommand);
+    } else if (min_frequency >= 256 || min_frequency < 1) {
+        std::cerr << "Minimum frequency '-z' must be between 1 and 255." << std::endl;
+        return usage_subcommand(subcommand);
     }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency);
     }
 }
 
@@ -327,11 +338,11 @@ int camel_optimize(int argc, char **argv) {
         return usage_subcommand(subcommand);
     }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, true, algorithm, false, false);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, true, algorithm, false, false, 1);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, true, algorithm, false, false);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, true, algorithm, false, false, 1);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, true, algorithm, false, false);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, true, algorithm, false, false, 1);
     }
 }
 
@@ -379,11 +390,11 @@ int camel_lowerbound(int argc, char **argv) {
         return usage_subcommand(subcommand);
     }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, false, "global", true, false);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, false, "global", true, false, 1);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, false, "global", true, false);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, false, "global", true, false, 1);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, false, "global", true, false);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, false, "global", true, false, 1);
     }
 }
 
