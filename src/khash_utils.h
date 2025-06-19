@@ -76,6 +76,9 @@ KHASH_MAP_INIT_INT64(Q64, uint8_t)
         inline void kh_resize_map(kh_P##type##_t *map, khint_t size) { \
             kh_resize_P##type(map, size); \
         }                        \
+        inline void kh_destroy_freq_map(kh_Q##type##_t *map) { \
+            kh_destroy_Q##type(map); \
+        }                        \
         inline kh_Q##type##_t *kh_init_freq_map() { \
             return kh_init_Q##type(); \
         }                         \
@@ -135,6 +138,26 @@ std::vector<kmer_t> kMersToVec(kh_S_t *kMers, [[maybe_unused]] kmer_t _) {
     }
     return res;
 }
+
+/// Construct a vector of the k-mer set in an arbitrary order.
+template <typename kmer_t, typename kh_Q_t>
+std::vector<kmer_t> kMersToVecFiltered(kh_Q_t *kMers, [[maybe_unused]] kmer_t _, uint16_t min_frequency) {
+    std::vector<kmer_t> res;
+    for (auto i = kh_begin(kMers); i != kh_end(kMers); ++i) {
+        if (!kh_exist(kMers, i) || ((uint16_t)kh_val(kMers, i)) + 1 < min_frequency) continue;
+        res.push_back(kh_key(kMers, i));
+    }
+    return res;
+}
+
+template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
+void kMersFromVec(kh_S_t *kMers, kh_wrapper_t wrapper, std::vector<kmer_t> &kMerVec) {
+    for (kmer_t kMer : kMerVec) {
+        int ret;
+        wrapper.kh_put_to_set(kMers, kMer, &ret);
+    }
+}
+
 
 /// Add an interval with given index to the given k-mer.
 ///

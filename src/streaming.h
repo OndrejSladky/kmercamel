@@ -99,6 +99,7 @@ void StreamingFiltered(kh_wrapper_t wrapper, kmer_t kmer_type, std::string &path
         }
     }
 
+    wrapper.kh_destroy_freq_map(kMers);
     kseq_destroy(seq);
     gzclose(fp);
 }

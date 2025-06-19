@@ -75,7 +75,7 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -u       - treat k-mer and its reverse complement as distinct" << std::endl;
     
     if (subcommand == "compute")
-    std::cerr << "  -z INT   - minimum frequency to consider k-mer; default 1" << std::endl;
+    std::cerr << "  -z INT   - minimum frequency to represent a k-mer; default 1" << std::endl;
 
     if (subcommand == "mssep2ms") {
     std::cerr << "  -m FILE  - input file with mask" << std::endl;
@@ -125,7 +125,11 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         auto *kMers = wrapper.kh_init_set();
         size_t kmer_count;
         if (!assume_simplitigs) {
-            ReadKMers(kMers, wrapper, kmer_type, path, k, complements);
+            if (min_frequency == 1) {
+                ReadKMers(kMers, wrapper, kmer_type, path, k, complements);
+            } else {
+                ReadKMersFiltered(kMers, wrapper, kmer_type, path, k, complements, min_frequency);
+            }
 
             if (!kh_size(kMers)) {
                 std::cerr << "Path '" << path << "' contains no k-mers. Make sure that your file is a FASTA or gzipped FASTA." << std::endl;
