@@ -51,7 +51,7 @@ namespace {
                 {1, false, 4, "CAGT"},
                 {1, false, 5, "CATG"},
                 {1, false, 6, "CA"},
-                {1, false, 11, "C"},
+                {1, false, 10, "C"},
         };
 
         for (auto t : tests) {

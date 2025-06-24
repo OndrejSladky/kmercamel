@@ -77,7 +77,7 @@ namespace {
                 {4, true, 2, 3},
                 {1, false, 5, 4},
                 {1, false, 6, 2},
-                {1, false, 11, 1},
+                {1, false, 10, 1},
         };
 
         for (auto &t: tests) {
