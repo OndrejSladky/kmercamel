@@ -278,6 +278,9 @@ int camel_compute(int argc, char **argv) {
     } else if (min_frequency >= 256 || min_frequency < 1) {
         std::cerr << "Minimum frequency '-z' must be between 1 and 255." << std::endl;
         return usage_subcommand(subcommand);
+    } else if (min_frequency != 1 && assume_simplitigs) {
+        std::cerr << "Inputting simplitigs is not compatible with frequency filterring." << std::endl;
+        return usage_subcommand(subcommand); 
     }
     if (k < 32) {
         return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency);
