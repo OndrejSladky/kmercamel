@@ -75,19 +75,21 @@ void StreamingFiltered(kh_wrapper_t wrapper, kmer_t kmer_type, std::string &path
             kMer |= c;
             kMer &= mask;
             auto rc = ReverseComplement(kMer, k);
-            auto canonical = std::min(kMer, rc);
-            if (i < firstIndex) continue;
+            auto canonical = complements ? std::min(kMer, rc) : kMer;
 
             auto ptr = wrapper.kh_get_from_freq_map(kMers, canonical);
             bool contained = ptr != kh_end(kMers);
             uint16_t count = 0;
-            if (contained) {
-                count = kh_val(kMers, ptr);
-                kh_value(kMers, ptr) = (uint8_t) std::min(255, count + 1);
-            } else {
-                int ret;
-                ptr = wrapper.kh_put_to_freq_map(kMers, kMer, &ret);
-                kh_value(kMers, ptr) = 0;
+            if (i >= firstIndex) {
+                if (contained) {
+                    count = kh_val(kMers, ptr);
+                    count++;
+                    kh_value(kMers, ptr) = (uint8_t)std::min((uint16_t)255, count);                
+                } else {
+                    int ret;
+                    ptr = wrapper.kh_put_to_freq_map(kMers, canonical, &ret);
+                    kh_value(kMers, ptr) = 0;
+                }
             }
 
             if (count + 1 == min_frequency) {
