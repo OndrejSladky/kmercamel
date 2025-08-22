@@ -48,6 +48,42 @@ void AddKMers(kh_S_t *kMers, kh_wrapper_t wrapper, [[maybe_unused]] kmer_t _, si
     }
 }
 
+/// Fill the k-mer dictionary with k-mers from the given sequence and their frequencies.
+/// If complements is true, always add the canonical k-mers.
+template <typename kmer_t, typename kh_Q_t, typename kh_wrapper_t>
+void AddKMersWithFrequencies(kh_Q_t *kMers, kh_wrapper_t wrapper, [[maybe_unused]] kmer_t _, size_t sequence_length,
+              const char* sequence, int64_t k, bool complements) {
+    int64_t currentLength = 0;
+    kmer_t currentKMer = 0, reverseComplement = 0;
+    kmer_t mask = (((kmer_t) 1) <<  (2 * k) ) - 1;
+    kmer_t shift = 2 * (k - 1);
+    for (size_t i = 0; i < sequence_length; ++i) {
+        auto data = nucleotideToInt[(uint8_t)sequence[i]];
+        if (data >= 4) {
+            // Restart if "N"-like nucleotide.
+            currentKMer = reverseComplement = 0;
+            currentLength = 0;
+            continue;
+        }
+        currentKMer = ((currentKMer << 2) | data) & mask;
+        reverseComplement = (reverseComplement >> 2) | ((kmer_t(3 ^ data)) << shift);
+        if (++currentLength >= k) {
+            // Add the canonical k-mer to the dictionary.
+            kmer_t canonical = ((!complements) || currentKMer < reverseComplement) ? currentKMer : reverseComplement;
+            auto ptr = wrapper.kh_get_from_freq_map(kMers, canonical);
+            bool contained = ptr != kh_end(kMers);
+            if (contained) {
+                uint16_t count = kh_val(kMers, ptr);
+                kh_value(kMers, ptr) = (uint8_t) std::min(255, count + 1);
+            } else {
+                int ret;
+                ptr = wrapper.kh_put_to_freq_map(kMers, canonical, &ret);
+                kh_value(kMers, ptr) = 0;
+            }
+        }
+    }
+}
+
 /// Return a file/stdin for reading.
 gzFile OpenFile(std::string &path) {
     FILE *in_stream;
@@ -80,6 +116,30 @@ void ReadKMers(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t _, std::string &path,
     kseq_destroy(seq);
     gzclose(fp);
 }
+
+/// Load a dictionary of k-mers from a fasta file.
+/// If complements is true, add the canonical k-mers.
+template <typename kmer_t, typename kh_S_t, typename kh_wrapper_t>
+void ReadKMersFiltered(kh_S_t *kMers, kh_wrapper_t wrapper, kmer_t _, std::string &path, int k, bool complements,
+               uint16_t min_frequency) {
+    gzFile fp = OpenFile(path);
+    kseq_t *seq = kseq_init(fp);
+    
+    auto kMersFrequencies = wrapper.kh_init_freq_map();
+
+    while (kseq_read(seq) >= 0) {
+        AddKMersWithFrequencies(kMersFrequencies, wrapper, _, seq->seq.l, seq->seq.s, k, complements);
+    }
+
+
+    auto kMersVec = kMersToVecFiltered(kMersFrequencies, _, min_frequency);
+    wrapper.kh_destroy_freq_map(kMersFrequencies);
+    kMersFromVec(kMers, wrapper, kMersVec);
+
+    kseq_destroy(seq);
+    gzclose(fp);
+}
+
 
 /// Read the masked superstring from the given path and return it wrapped as a kseq_t.
 kseq_t* ReadMaskedSuperstring(std::string &path) {

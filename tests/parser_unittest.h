@@ -60,6 +60,33 @@ namespace {
 
             EXPECT_EQ(t.wantResultSize, kh_size(kMers));
         }
+    }
+    TEST(Parser, ReadKMersFiltered) {
+        std::string path = std::filesystem::current_path();
+        path += "/tests/testdata/test.fa";
+        struct TestCase {
+            int k;
+            bool complements;
+            uint16_t min_frequency;
+            size_t wantResultSize;
+        };
+        std::vector<TestCase> tests = {
+                {3, true, 2, 6},
+                {3, false, 2, 5},
+                {3, true, 3, 2},
+                {4, true, 2, 3},
+                {1, false, 5, 4},
+                {1, false, 6, 2},
+                {1, false, 10, 1},
+        };
+
+        for (auto &t: tests) {
+            auto kMers  = wrapper.kh_init_set();
+
+            ReadKMersFiltered(kMers, wrapper, kmer_t (0), path, t.k, t.complements, t.min_frequency);
+
+            EXPECT_EQ(t.wantResultSize, kh_size(kMers));
+        }
 
     }
 #endif
