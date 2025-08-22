@@ -99,6 +99,7 @@ fmsi index -p ms-opt.msfa                                          # Create a k-
 Examples of computing masked superstrings (`ms` subcommand):
 ```
 kmercamel ms -k 31 -o ms.msfa yourfile[.fa|.fa.gz]         # From a (gziped) fasta file, use "-" for stdin
+kmercamel ms -k 31 -o ms.msfa -z 2 yourfile.fa             # Represent only k-mers appearing at least z=2 times
 kmercamel ms -k 31 -o ms.msfa -u yourfile.fa               # Treat k-mer and its reverse complement as distinct
 kmercamel ms -k 31 -o ms.msfa -M maxonemask.m yourfile.fa  # Also store mask with maximum ones
 kmercamel ms -k 31 -o ms.msfa -a streaming yourfile.fa     # Use streaming instead of global for lower memory footprint (likely worse result)
