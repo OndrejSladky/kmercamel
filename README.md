@@ -45,7 +45,7 @@ To compute masked superstrings takes about 4-6s / 1M k-mers, which means about 3
 All algorithms can be used to either work in the unidirectional model or in the bidirectional model
 (i.e. treat $k$-mer and its reverse complement as the same; in this case either of them appears in the result).
 
-Additionally, KmerCamel🐫 can optimize the mask of the superstring via the `optimize` subcommand. The implemented mask optimization algorithms are the following:
+Additionally, KmerCamel🐫 can optimize the mask of the superstring via the `maskopt` subcommand. The implemented mask optimization algorithms are the following:
 - Minimize the number of 1s in the mask.
 - Maximize the number of 1s in the mask.
 - Minimize the number of runs of 1s in the mask.
@@ -75,8 +75,8 @@ Alternatively, you can install KmerCamel from [bioconda](https://bioconda.github
 ### Compression for k-mer set storage
 
 ```
-kmercamel ms -k 31 -o ms.msfa yourfile.fa             # Compute MS with the default mask
-kmercamel msfa2ms -m mask.m -s superstring.s ms.msfa  # Extract superstring and mask
+kmercamel compute -k 31 -o ms.msfa yourfile.fa         # Compute MS with the default mask
+kmercamel ms2mssep -m mask.m -s superstring.s ms.msfa  # Extract superstring and mask
 bzip2 --best mask.m
 xz -T1 -9 superstring.s
 ```
@@ -88,43 +88,41 @@ For a super efficient compression of the superstring (often <2 bits / bp), you u
 
 Example with [FMSI](https://github.com/OndrejSladky/fmsi/activity?ref=main):
 ```
-kmercamel ms -k 31 -o ms.msfa -M maxonemask.m yourfile.fa          # Compute MS and the maxone mask
-kmercamel msfa2ms -m /dev/null -s superstring.s ms.msfa            # Extract superstring
-kmercamel ms2msfa -m maxonemask.m -s superstring.s -o ms-opt.msfa  # Combine with maxone mask
+kmercamel compute -k 31 -o /dev/null -M mas-opt.msfa yourfile.fa   # Compute MS and the maxone mask
 fmsi index -p ms-opt.msfa                                          # Create a k-mer index
 ```
 
 ## Detailed instructions
 
-Examples of computing masked superstrings (`ms` subcommand):
+Examples of computing masked superstrings (`compute` subcommand):
 ```
-kmercamel ms -k 31 -o ms.msfa yourfile[.fa|.fa.gz]         # From a (gziped) fasta file, use "-" for stdin
-kmercamel ms -k 31 -o ms.msfa -z 2 yourfile.fa             # Represent only k-mers appearing at least z=2 times
-kmercamel ms -k 31 -o ms.msfa -u yourfile.fa               # Treat k-mer and its reverse complement as distinct
-kmercamel ms -k 31 -o ms.msfa -M maxonemask.m yourfile.fa  # Also store mask with maximum ones
-kmercamel ms -k 31 -o ms.msfa -a streaming yourfile.fa     # Use streaming instead of global for lower memory footprint (likely worse result)
+kmercamel compute -k 31 -o ms.msfa yourfile[.fa|.fa.gz]            # From a (gziped) fasta file, use "-" for stdin
+kmercamel compute -k 31 -o ms.msfa -z 2 yourfile.fa                # Represent only k-mers appearing at least z=2 times
+kmercamel compute -k 31 -o ms.msfa -u yourfile.fa                  # Treat k-mer and its reverse complement as distinct
+kmercamel compute -k 31 -o ms.msfa -M ms-maxone.msfa yourfile.fa   # Also store MS with maximum ones
+kmercamel compute -k 31 -o ms.msfa -a streaming yourfile.fa        # Use streaming instead of global for lower memory footprint (likely worse result)
 ```
 If the input file are simplitigs (or eulertigs), the execution can be significantly speeded up by adding the `-S` flag.
 However, note that if `-S` is used with matchtigs, it may result it unnecessarily long outputs, while using it for unitigs may lead to slow down for certain inputs.
 
 Examples of optimizing masks:
 ```
-kmercamel optimize -t maxone -o ms-opt.msfa -k 31 ms.msfa    # Maximize the number of 1s in the mask
-kmercamel optimize -t minone -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of 1s in the mask
-kmercamel optimize -t minrun -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of runs of consecutive 1s in the mask.
+kmercamel maskopt -t maxone -o ms-opt.msfa -k 31 ms.msfa    # Maximize the number of 1s in the mask
+kmercamel maskopt -t minone -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of 1s in the mask
+kmercamel maskopt -t minrun -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of runs of consecutive 1s in the mask.
 ```
 
 Format conversions:
 ```
-kmercamel ms2msfa -m dataset.m -s dataset.s -o dataset.msfa  # M and S -> mask-cased MS in msfa
-kmercamel msfa2ms -m dataset.m -s dataset.s dataset.msfa     # Mask-cased MS -> M and S
-kmercamel spss2msfa -k 31 -o dataset.msfa dataset.rspss      # rSPSS/general fasta to its corresponding MS
-kmercamel msfa2spss -k 31 -o dataset.fa dataset.fa           # Splitting MS in msfa into rSPSS in fa
+kmercamel mssep2ms -m dataset.m -s dataset.s -o dataset.msfa  # M and S -> mask-cased MS in msfa
+kmercamel ms2mssep -m dataset.m -s dataset.s dataset.msfa     # Mask-cased MS -> M and S
+kmercamel spss2ms -k 31 -o dataset.msfa dataset.rspss         # rSPSS/general fasta to its corresponding MS
+kmercamel ms2spss -k 31 -o dataset.rspss dataset.msfa              # Splitting MS in msfa into rSPSS in fa
 ```
 
 Compute lower bound on the minimum possible superstring length of a k-mer set:
 ```
-./kmercamel lowerbound -p -k 31 yourfile.fa
+./kmercamel lowerbound -k 31 yourfile.fa
 ```
 
 To view all options for a particular subcommand, run `kmercamel <subcommand> -h`.
