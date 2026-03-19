@@ -38,8 +38,10 @@ void PartialPreSort(std::vector<kmer_t> &vals, int k) {
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected to contain only one k-mer from a complement pair.
 /// Moreover, if so, the resulting Hamiltonian path contains two superstrings which are reverse complements of one another.
+/// If lower_bound is set to true, return a shortest cycle cover instead.
 template <typename kmer_t, typename kh_wrapper_t>
-overlapPath OverlapHamiltonianPathSparse (kh_wrapper_t wrapper, std::vector<kmer_t> &kMers, int k, bool complements) {
+overlapPath OverlapHamiltonianPathSparse (kh_wrapper_t wrapper, std::vector<kmer_t> &kMers, int k, bool complements,
+                                         bool lower_bound = false) {
     size_t n = kMers.size();
     size_t kMersCount = n * (1 + complements);
     size_t batchSize = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
@@ -91,7 +93,7 @@ overlapPath OverlapHamiltonianPathSparse (kh_wrapper_t wrapper, std::vector<kmer
                             // k-mers are complementary
                            ((i + n) % (2 * n) == j \
                            // forms a cycle
-                           || (accessFirstLast(first, last, i, n) == j) \
+                           || (!lower_bound && accessFirstLast(first, last, i, n) == j) \
                            // k-mer is already used
                            || prefixForbidden[j])) {
                         size_t new_j = next[j - from];

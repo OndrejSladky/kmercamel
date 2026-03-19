@@ -151,10 +151,11 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
                 simplitigs = simplitigs_from_fasta(path);
             }
             WriteLog("Finished 1. part: simplitigs (" + std::to_string(simplitigs.size()) + " simplitigs).");
-            if (!lower_bound && !assume_simplitigs && simplitigs.size() * SIMPLITIG_RATIO_THRESHOLD >= kmer_count) {
+            if (!assume_simplitigs && simplitigs.size() * SIMPLITIG_RATIO_THRESHOLD >= kmer_count) {
                auto kMerVec = simplitigs_to_kmer_vec(kmer_type, simplitigs, k, kmer_count);
                PartialPreSort(kMerVec, k);
-               GlobalSparse(wrapper, kMerVec, *of, maskf, k, complements);
+               if (!lower_bound) GlobalSparse(wrapper, kMerVec, *of, maskf, k, complements);
+               else std::cout << LowerBoundLengthSparse(wrapper, kMerVec, k, complements);
             }
             else if (lower_bound) std::cout << LowerBoundLength(wrapper, kmer_type, simplitigs, k, complements);
             else Global(wrapper, kmer_type, simplitigs, *of, maskf, k, complements);
