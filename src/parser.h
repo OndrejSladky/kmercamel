@@ -170,8 +170,8 @@ void WriteName(const std::string &dataset, const std::string &algorithm, const i
     of << "k=" << k << " ";
     of << "alg=" << algorithm << " ";
     of << "mask=";
-    if (maxone) of << "maxone ";
-    else of << "minone ";
+    if (maxone) of << "max-one ";
+    else of << "min-one ";
     of << "mode=";
     if (unidirectional) of << "unidirectional";
     else of << "bidirectional";

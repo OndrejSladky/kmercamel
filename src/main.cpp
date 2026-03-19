@@ -53,23 +53,23 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -k INT   - k-mer size [required; up to 127]" << std::endl;
 
     if (subcommand == "compute")
-    std::cerr << "  -a STR   - the algorithm to be run [global (default), streaming, local, globalAC (experimental), localAC (experimental)]" << std::endl;
+    std::cerr << "  -a STR   - the algorithm to be run [greedy (default), streaming, local-greedy, greedy-ac (experimental), local-greedy-ac (experimental)]" << std::endl;
 
     else if (subcommand == "maskopt")
-    std::cerr << "  -t STR   - the target mask type to be run [maxone (default), minone, minrun, approxminrun]" << std::endl;
+    std::cerr << "  -t STR   - the target mask type to be run [max-one (default), min-one, min-run, approx-min-run]" << std::endl;
 
     if (subcommand != "lowerbound" && subcommand != "ms2mssep")
-    std::cerr << "  -o FILE  - output for the (minone) masked superstring; if not specified, printed to stdout" << std::endl;
+    std::cerr << "  -o FILE  - output for the (min-one) masked superstring; if not specified, printed to stdout" << std::endl;
     
     if (subcommand == "compute")
-    std::cerr << "  -M FILE  - if given, print also ms with mask maximizing ones (only with global)" << std::endl;
+    std::cerr << "  -M FILE  - if given, print also ms with mask maximizing ones (only with greedy)" << std::endl;
 
     
     if (subcommand == "compute" || subcommand == "lowerbound")
-    std::cerr << "  -S       - optimize for the input being correctly computed simplitigs (only with global)" << std::endl;
+    std::cerr << "  -S       - optimize for the input being correctly computed simplitigs (only with greedy)" << std::endl;
 
     if (subcommand == "compute")
-    std::cerr << "  -d INT   - d_max for local algorithm; default 5" << std::endl;
+    std::cerr << "  -d INT   - d_max for local-greedy; default 5" << std::endl;
 
     if (subcommand == "compute" || subcommand == "maskopt" || subcommand == "lowerbound")
     std::cerr << "  -u       - treat k-mer and its reverse complement as distinct" << std::endl;
@@ -92,6 +92,27 @@ int usage_subcommand(std::string subcommand) {
 
 constexpr int MAX_K = 127;
 constexpr int SIMPLITIG_RATIO_THRESHOLD = 5;
+
+// For backward compatibility
+static std::string normalize_compute_algorithm(const std::string &algorithm) {
+    if (algorithm == "global") return "greedy";
+    if (algorithm == "local") return "local-greedy";
+    if (algorithm == "globalAC") return "greedy-ac";
+    if (algorithm == "localAC") return "local-greedy-ac";
+    if (algorithm == "localgreedy") return "local-greedy";
+    if (algorithm == "greedyAC") return "greedy-ac";
+    if (algorithm == "localgreedyAC") return "local-greedy-ac";
+    return algorithm;
+}
+
+// For backward compatibility
+static std::string normalize_maskopt_algorithm(const std::string &algorithm) {
+    if (algorithm == "maxone") return "max-one";
+    if (algorithm == "minone") return "min-one";
+    if (algorithm == "minrun") return "min-run";
+    if (algorithm == "approxminrun") return "approx-min-run";
+    return algorithm;
+}
 
 void Version() {
     std::cerr << VERSION << std::endl;
@@ -120,7 +141,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         WriteLog("Finished masked superstring computation.");
     }
     /* Handle hash table based algorithms separately so that they consume less memory. */
-    else if (algorithm == "global" || algorithm == "local") {
+    else if (algorithm == "greedy" || algorithm == "local-greedy") {
 
         auto *kMers = wrapper.kh_init_set();
         size_t kmer_count;
@@ -142,7 +163,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         d_max = std::min(k - 1, d_max);
         if (!lower_bound) WriteName(path, algorithm, k, false, !complements, *of);
         if (maskf != nullptr) WriteName(path, algorithm, k, true, !complements, *maskf);
-        if (algorithm == "global") {
+        if (algorithm == "greedy") {
             std::vector<simplitig_t> simplitigs;
             if (!assume_simplitigs) {
                 simplitigs = get_simplitigs(kMers, wrapper, kmer_type, k, complements);
@@ -174,10 +195,10 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
 
         auto kMers = ConstructKMers(data, k, complements);
         WriteName(path, algorithm, k, false, !complements, *of);
-        if (algorithm == "globalAC") {
+        if (algorithm == "greedy-ac") {
             GlobalAC(kMers, *of, complements);
         }
-        else if (algorithm == "localAC") {
+        else if (algorithm == "local-greedy-ac") {
             LocalAC(kMers, *of, k, d_max, complements);
         }
         else {
@@ -203,7 +224,7 @@ int camel_compute(int argc, char **argv) {
     std::ostream *of = &std::cout;
     std::ofstream maskOutput;
     std::ostream *maskf = nullptr;
-    std::string algorithm = "global";
+    std::string algorithm = "greedy";
     bool complements = true;
     bool d_set = false;
     bool assume_simplitigs = false;
@@ -252,6 +273,7 @@ int camel_compute(int argc, char **argv) {
     } catch (std::invalid_argument&) {
         return usage_subcommand(subcommand);
     }
+    algorithm = normalize_compute_algorithm(algorithm);
     if (path.empty()) {
         std::cerr << "Required positional parameter path to the file not set." << std::endl;
         return usage_subcommand(subcommand);
@@ -265,17 +287,17 @@ int camel_compute(int argc, char **argv) {
     } else if (d_max < 0) {
         std::cerr << "d must be non-negative." << std::endl;
         return usage_subcommand(subcommand);
-    } else if (k > MAX_K && (algorithm == "local" || algorithm == "global")) {
+    } else if (k > MAX_K && (algorithm == "local-greedy" || algorithm == "greedy")) {
         std::cerr << "k > " << MAX_K << " not supported for the algorithm '" + algorithm + "'. Use the  AC version of the algorithm instead." << std::endl;
         return usage_subcommand(subcommand);
-    } else if (d_set && (algorithm == "globalAC" || algorithm == "global" || algorithm == "streaming")) {
+    } else if (d_set && (algorithm == "greedy-ac" || algorithm == "greedy" || algorithm == "streaming")) {
         std::cerr << "Unsupported argument d for algorithm '" + algorithm + "'." << std::endl;
         return usage_subcommand(subcommand);
-    } else if (maskf != nullptr && algorithm != "global") {
-        std::cerr << "Outputting mask maximizing number of ones is possible only with global. For other algorithms, use separately kmercamel optimize." << std::endl;
+    } else if (maskf != nullptr && algorithm != "greedy") {
+        std::cerr << "Outputting mask maximizing number of ones is possible only with greedy. For other algorithms, use separately kmercamel optimize." << std::endl;
         return usage_subcommand(subcommand);
-    } else if (assume_simplitigs && algorithm != "global") {
-        std::cerr << "Optimization for the input being simplitigs is possible only with global." << std::endl;
+    } else if (assume_simplitigs && algorithm != "greedy") {
+        std::cerr << "Optimization for the input being simplitigs is possible only with greedy." << std::endl;
         return usage_subcommand(subcommand);
     } else if (min_frequency >= 256 || min_frequency < 1) {
         std::cerr << "Minimum frequency '-z' must be between 1 and 255." << std::endl;
@@ -303,7 +325,7 @@ int camel_optimize(int argc, char **argv) {
     int k = 0;
     std::ofstream output;
     std::ostream *of = &std::cout;
-    std::string algorithm = "maxone";
+    std::string algorithm = "max-one";
     bool complements = true;
     int opt;
     try {
@@ -332,6 +354,7 @@ int camel_optimize(int argc, char **argv) {
     } catch (std::invalid_argument&) {
         return usage_subcommand(subcommand);
     }
+    algorithm = normalize_maskopt_algorithm(algorithm);
     if (path.empty()) {
         std::cerr << "Required positional parameter path to the file not set." << std::endl;
         return usage_subcommand(subcommand);
@@ -341,9 +364,6 @@ int camel_optimize(int argc, char **argv) {
         return usage_subcommand(subcommand);
     } else if (k < 0) {
         std::cerr << "k must be positive." << std::endl;
-        return usage_subcommand(subcommand);
-    } else if (k > MAX_K && (algorithm == "local" || algorithm == "global")) {
-        std::cerr << "k > " << MAX_K << " not supported for the algorithm '" + algorithm + "'. Use the  AC version of the algorithm instead." << std::endl;
         return usage_subcommand(subcommand);
     }
     if (k < 32) {
@@ -414,11 +434,11 @@ int camel_lowerbound(int argc, char **argv) {
         return usage_subcommand(subcommand);
     }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, false, "global", true, assume_simplitigs, min_frequency);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, false, "greedy", true, assume_simplitigs, min_frequency);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, false, "global", true, assume_simplitigs, min_frequency);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, false, "greedy", true, assume_simplitigs, min_frequency);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, false, "global", true, assume_simplitigs, min_frequency);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, false, "greedy", true, assume_simplitigs, min_frequency);
     }
 }
 
