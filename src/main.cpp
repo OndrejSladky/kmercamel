@@ -152,6 +152,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
             }
             WriteLog("Finished 1. part: simplitigs (" + std::to_string(simplitigs.size()) + " simplitigs).");
             if (!assume_simplitigs && simplitigs.size() * SIMPLITIG_RATIO_THRESHOLD >= kmer_count) {
+               WriteLog("2. part: Number of simplitigs over threshold, computing directly from k-mers.");
                auto kMerVec = simplitigs_to_kmer_vec(kmer_type, simplitigs, k, kmer_count);
                PartialPreSort(kMerVec, k);
                if (!lower_bound) GlobalSparse(wrapper, kMerVec, *of, maskf, k, complements);
