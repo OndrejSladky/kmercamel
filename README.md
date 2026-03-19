@@ -111,7 +111,6 @@ Examples of optimizing masks:
 kmercamel maskopt -t max-one -o ms-opt.msfa -k 31 ms.msfa    # Maximize the number of 1s in the mask
 kmercamel maskopt -t min-one -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of 1s in the mask
 kmercamel maskopt -t min-run -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of runs of consecutive 1s in the mask
-kmercamel maskopt -t approx-min-run -o ms-opt.msfa -k 31 ms.msfa    # Faster approximate min-run
 ```
 
 Format conversions:
