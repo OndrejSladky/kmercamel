@@ -65,7 +65,7 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -M FILE  - if given, print also ms with mask maximizing ones (only with global)" << std::endl;
 
     
-    if (subcommand == "compute")
+    if (subcommand == "compute" || subcommand == "lowerbound")
     std::cerr << "  -S       - optimize for the input being correctly computed simplitigs (only with global)" << std::endl;
 
     if (subcommand == "compute")
@@ -74,7 +74,7 @@ int usage_subcommand(std::string subcommand) {
     if (subcommand == "compute" || subcommand == "maskopt" || subcommand == "lowerbound")
     std::cerr << "  -u       - treat k-mer and its reverse complement as distinct" << std::endl;
     
-    if (subcommand == "compute")
+    if (subcommand == "compute" || subcommand == "lowerbound")
     std::cerr << "  -z INT   - minimum frequency to represent a k-mer; default 1" << std::endl;
 
     if (subcommand == "mssep2ms") {
@@ -151,10 +151,12 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
                 simplitigs = simplitigs_from_fasta(path);
             }
             WriteLog("Finished 1. part: simplitigs (" + std::to_string(simplitigs.size()) + " simplitigs).");
-            if (!lower_bound && !assume_simplitigs && simplitigs.size() * SIMPLITIG_RATIO_THRESHOLD >= kmer_count) {
+            if (!assume_simplitigs && simplitigs.size() * SIMPLITIG_RATIO_THRESHOLD >= kmer_count) {
+               WriteLog("2. part: Number of simplitigs over threshold, computing directly from k-mers.");
                auto kMerVec = simplitigs_to_kmer_vec(kmer_type, simplitigs, k, kmer_count);
                PartialPreSort(kMerVec, k);
-               GlobalSparse(wrapper, kMerVec, *of, maskf, k, complements);
+               if (!lower_bound) GlobalSparse(wrapper, kMerVec, *of, maskf, k, complements);
+               else std::cout << LowerBoundLengthSparse(wrapper, kMerVec, k, complements);
             }
             else if (lower_bound) std::cout << LowerBoundLength(wrapper, kmer_type, simplitigs, k, complements);
             else Global(wrapper, kmer_type, simplitigs, *of, maskf, k, complements);
@@ -363,20 +365,29 @@ int camel_lowerbound(int argc, char **argv) {
     int k = 0;
     std::ostream *of = &std::cout;
     bool complements = true;
+    bool assume_simplitigs = false;
+    uint16_t min_frequency = 1;
     int opt;
     try {
-        while ((opt = getopt(argc, argv, "k:hux"))  != -1) {
+        while ((opt = getopt(argc, argv, "k:huxSz:"))  != -1) {
             switch(opt) {
                 case  'k':
                     k = std::stoi(optarg);
                     break;
                 case 'u':
                     complements = false;
+                    break;
                 case 'h':
                     usage_subcommand(subcommand);
                     return 0;
                 case 'x':
                     std::cerr << "Warning: The parameter -x currently has no effect due to the improvement in the underlying algorithm." <<std::endl;
+                    break;
+                case 'S':
+                    assume_simplitigs = true;
+                    break;
+                case 'z':
+                    min_frequency = std::stoi(optarg);
                     break;
                 default:
                     return usage_subcommand(subcommand);
@@ -395,13 +406,19 @@ int camel_lowerbound(int argc, char **argv) {
     } else if (k < 0) {
         std::cerr << "k must be positive." << std::endl;
         return usage_subcommand(subcommand);
+    } else if (min_frequency >= 256 || min_frequency < 1) {
+        std::cerr << "Minimum frequency '-z' must be between 1 and 255." << std::endl;
+        return usage_subcommand(subcommand);
+    } else if (min_frequency != 1 && assume_simplitigs) {
+        std::cerr << "Inputting simplitigs is not compatible with frequency filterring." << std::endl;
+        return usage_subcommand(subcommand);
     }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, false, "global", true, false, 1);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, 0, of, nullptr, complements, false, "global", true, assume_simplitigs, min_frequency);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, false, "global", true, false, 1);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, 0, of, nullptr, complements, false, "global", true, assume_simplitigs, min_frequency);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, false, "global", true, false, 1);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, 0, of, nullptr, complements, false, "global", true, assume_simplitigs, min_frequency);
     }
 }
 
