@@ -31,22 +31,22 @@ namespace {
                 {
                     {KMerToNumber({"ACG"}), KMerToNumber({"CGT"}), KMerToNumber({"TAA"})},
                     3, false, true,
-                    ">superstring reoptimized=minone\nACgTaacgt\n"
+                    ">superstring reoptimized=min-one\nACgTaacgt\n"
                 },
                 {
                     {KMerToNumber({"ACG"}), KMerToNumber({"CGT"}), KMerToNumber({"TAA"})},
                     3, false, false,
-                    ">superstring reoptimized=maxone\nACgTaACgt\n"
+                    ">superstring reoptimized=max-one\nACgTaACgt\n"
                 },
                 {
                     {KMerToNumber({"ACG"}), KMerToNumber({"TAA"})},
                     3, true, true,
-                    ">superstring reoptimized=minone\nAcgTaacgt\n"
+                    ">superstring reoptimized=min-one\nAcgTaacgt\n"
                 },
                 {
                     {KMerToNumber({"ACG"}), KMerToNumber({"TAA"})},
                     3, true, false,
-                    ">superstring reoptimized=maxone\nACgTaACgt\n"
+                    ">superstring reoptimized=max-one\nACgTaACgt\n"
                 },
         };
 
@@ -86,7 +86,7 @@ namespace {
                         },
                         2, false, false,
                         "/tests/testdata/runstest.fa",
-                        ">superstring reoptimized=minrun\nacgcgttACGtATt\n"
+                        ">superstring reoptimized=min-run\nacgcgttACGtATt\n"
                 },
                 {
                         {
@@ -98,7 +98,7 @@ namespace {
                         },
                         2, false, true,
                         "/tests/testdata/runstest.fa",
-                        ">superstring reoptimized=approxminrun\nACgCGTtACGtATt\n"
+                        ">superstring reoptimized=approx-min-run\nACgCGTtACGtATt\n"
                 },
                 {
                         {
@@ -108,7 +108,7 @@ namespace {
                         },
                         3, true, false,
                         "/tests/testdata/runstest2.fa",
-                        ">superstring reoptimized=minrun\nACTAGta\n"
+                        ">superstring reoptimized=min-run\nACTAGta\n"
                 },
         };
 

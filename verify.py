@@ -10,21 +10,21 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
     Check if running superstring algorithm on given fasta file produces the same set of k-mers as the original one.
     """
     with open("./bin/kmercamel.fa", "w") as k_mers:
-        args = ["./kmercamel"] + (["maskopt"] if masked_superstring else (["compute"] + ([] if algorithm != "global" else ["-M", "./bin/kmercamel-maxone.fa"]))) +["-k", f"{k}", "-t" if masked_superstring else "-a", algorithm] + ([] if complements else ["-u"]) + (["-S"] if assume_simplitigs else []) + [(masked_superstring if masked_superstring != "" else fasta_path)]
+        args = ["./kmercamel"] + (["maskopt"] if masked_superstring else (["compute"] + ([] if algorithm != "greedy" else ["-M", "./bin/kmercamel-max-one.fa"]))) +["-k", f"{k}", "-t" if masked_superstring else "-a", algorithm] + ([] if complements else ["-u"]) + (["-S"] if assume_simplitigs else []) + [(masked_superstring if masked_superstring != "" else fasta_path)]
         subprocess.run(args, stdout=k_mers, stderr=subprocess.DEVNULL)
     
-    for s in ["", "-maxone"]:
+    for s in ["", "-max-one"]:
         with open(f"./bin/converted{s}.fa", "w") as converted:
             subprocess.run(["./kmercamel", "ms2spss", "-k", f"{k}", f"./bin/kmercamel{s}.fa"], stdout=converted, stderr=subprocess.DEVNULL)
 
-    # in result; in result with maxone, in original sequence; in merged file; in merge file for maxone
+    # in result; in result with max-one, in original sequence; in merged file; in merge file for max-one
     stats = [{}, {}, {}, {}, {}]
     runs = [
         (0, "./bin/converted.fa", "converted", complements),
         (2, fasta_path, "original", complements),
     ]
-    if algorithm == "global":
-        runs.append((1, "./bin/converted-maxone.fa", "converted-maxone", complements))
+    if algorithm == "greedy":
+        runs.append((1, "./bin/converted-max-one.fa", "converted-max-one", complements))
     for i, path, result, pass_complements in runs:
         args = ["jellyfish", "count", "-m", f"{k}", "-s", "100M", "-o", f"./bin/{result}.jf", path]
         if pass_complements:
@@ -38,7 +38,7 @@ def verify_instance(fasta_path: str, k: int, algorithm: str, complements: bool, 
                 stats[i][key] = value
     # Count k-mers on merged file.
     res = True
-    for offset, s, text in [(0, "", "default"), (1, "-maxone", "maxone")][:(2 if algorithm == "global" else 1)]:
+    for offset, s, text in [(0, "", "default"), (1, "-max-one", "max-one")][:(2 if algorithm == "greedy" else 1)]:
         subprocess.run(["jellyfish", "merge", "-o", f"./bin/merged{s}.jf", f"./bin/converted{s}.jf", "./bin/original.jf"])
         with open(f"./bin/merged_stats{s}.txt", "w") as f:
             subprocess.run(["jellyfish", "stats", f"./bin/merged{s}.jf"], stdout=f)
@@ -70,23 +70,23 @@ def main():
                                      "as the original sequence")
     parser.add_argument("path", help="path to the fasta file on which ./kmers is verified")
     parser.add_argument("--quick", help="if set do not check for full range of k", action="store_true")
-    parser.add_argument("--simplitigs", help="if set assume inputs are simplitigs and verify global with this assumtion", action="store_true")
+    parser.add_argument("--simplitigs", help="if set assume inputs are simplitigs and verify greedy with this assumtion", action="store_true")
     parser.add_argument("--superstring_path", help="the path to the masked superstring to test masks")
     parser.add_argument("--k", help="the value of k for mask verification")
     args = parser.parse_args()
 
     success = True
     if args.simplitigs:
-        print(f"Testing global from simplitigs:")
+        print(f"Testing greedy from simplitigs:")
         k = int(args.k)
-        success &= verify_instance(args.path, k, "global", True, "", True)
+        success &= verify_instance(args.path, k, "greedy", True, "", True)
         print("")
     elif args.superstring_path is None:
         # Do the tests on superstring algoritms.
-        for a in ["global", "local", "globalAC", "localAC", "streaming"]:
+        for a in ["greedy", "local-greedy", "greedy-ac", "local-greedy-ac", "streaming"]:
             print(f"Testing {a}:")
             for complements in [True, False]:
-                for k in ( ([5, 8, 12] if a not in ["local", "global", "streaming"] else [5, 8, 12, 17, 31, 32, 51, 63, 127]) if args.quick else range(2, 128)):
+                for k in ( ([5, 8, 12] if a not in ["local-greedy", "greedy", "streaming"] else [5, 8, 12, 17, 31, 32, 51, 63, 127]) if args.quick else range(2, 128)):
                     success &= verify_instance(args.path, k, a, complements, "", False)
                 print("")
     else:

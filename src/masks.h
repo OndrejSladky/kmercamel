@@ -44,7 +44,7 @@ void OptimizeOnes(kseq_t* masked_superstring, std::ostream &of, kh_S_t *kMers, k
     kmer_t currentKMer = 0, reverseComplement = 0;
     kmer_t mask = ((kmer_t(1)) << (2 * k)) - 1;
     kmer_t shift = 2 * (k - 1);
-    ReprintSequenceHeader(masked_superstring, minimize ? "minone" : "maxone", of);
+    ReprintSequenceHeader(masked_superstring, minimize ? "min-one" : "max-one", of);
     uint8_t ms_validation = 0;
     for (size_t i = 0; i < masked_superstring->seq.l; ++i) {
         auto data = nucleotideToInt[(uint8_t) masked_superstring->seq.s[i]];
@@ -231,7 +231,7 @@ void OptimizeRuns(kh_wrapper_t wrapper, kmer_t _, kseq_t* masked_superstring, kh
         else intervalsSet[i] = mappedSize == 0 ? false : (glp_get_col_prim(lp, intervalMapping[i] + 1) > 0.5);
     }
 
-    ReprintSequenceHeader(masked_superstring, approximate ? "approxminrun" : "minrun", of);
+    ReprintSequenceHeader(masked_superstring, approximate ? "approx-min-run" : "min-run", of);
     ReadWriteIntervals(intervals, kMers, wrapper, _, intervalsForKMer, masked_superstring, k, complements, of, intervalsSet);
     of << std::endl;
 }
@@ -242,13 +242,13 @@ int Optimize(kh_wrapper_t wrapper, kmer_t _, std::string &algorithm, std::string
     auto *kMers = wrapper.kh_init_set();
     AddKMers(kMers, wrapper, _, masked_superstring->seq.l, masked_superstring->seq.s, k, complements, true);
 
-    if (algorithm == "maxone") {
+    if (algorithm == "max-one") {
         OptimizeOnes(masked_superstring, of, kMers, wrapper, _, k, complements, false);
-    } else if (algorithm == "minone") {
+    } else if (algorithm == "min-one") {
         OptimizeOnes(masked_superstring, of, kMers,  wrapper, _,k, complements, true);
-    } else if (algorithm == "minrun") {
+    } else if (algorithm == "min-run") {
         OptimizeRuns(wrapper, _, masked_superstring, kMers, of, k, complements, false);
-    } else if (algorithm == "approxminrun") {
+    } else if (algorithm == "approx-min-run") {
         OptimizeRuns(wrapper, _,masked_superstring, kMers, of, k, complements, true);
     } else {
         std::cerr << "Algorithm '" + algorithm + "' not recognized." << std::endl;

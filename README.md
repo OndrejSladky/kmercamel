@@ -45,10 +45,11 @@ To compute masked superstrings takes about 4-6s / 1M k-mers, which means about 3
 All algorithms can be used to either work in the unidirectional model or in the bidirectional model
 (i.e. treat $k$-mer and its reverse complement as the same; in this case either of them appears in the result).
 
-Additionally, KmerCamel🐫 can optimize the mask of the superstring via the `maskopt` subcommand. The implemented mask optimization algorithms are the following:
-- Minimize the number of 1s in the mask.
-- Maximize the number of 1s in the mask.
-- Minimize the number of runs of 1s in the mask.
+Additionally, KmerCamel🐫 can optimize the mask of the superstring via the `maskopt` subcommand. The implemented mask optimization targets (flag `-t`) are the following:
+- Minimize the number of 1s in the mask (`min-one`).
+- Maximize the number of 1s in the mask (`max-one`).
+- Minimize the number of runs of 1s in the mask (`min-run`).
+- Approximate minimization of runs (`approx-min-run`).
 
 ## Prerequisites
 
@@ -88,7 +89,7 @@ For a super efficient compression of the superstring (often <2 bits / bp), you u
 
 Example with [FMSI](https://github.com/OndrejSladky/fmsi/activity?ref=main):
 ```
-kmercamel compute -k 31 -o /dev/null -M mas-opt.msfa yourfile.fa   # Compute MS and the maxone mask
+kmercamel compute -k 31 -o /dev/null -M mas-opt.msfa yourfile.fa   # Compute MS and the max-one mask
 fmsi index -p ms-opt.msfa                                          # Create a k-mer index
 ```
 
@@ -99,17 +100,18 @@ Examples of computing masked superstrings (`compute` subcommand):
 kmercamel compute -k 31 -o ms.msfa yourfile[.fa|.fa.gz]            # From a (gziped) fasta file, use "-" for stdin
 kmercamel compute -k 31 -o ms.msfa -z 2 yourfile.fa                # Represent only k-mers appearing at least z=2 times
 kmercamel compute -k 31 -o ms.msfa -u yourfile.fa                  # Treat k-mer and its reverse complement as distinct
-kmercamel compute -k 31 -o ms.msfa -M ms-maxone.msfa yourfile.fa   # Also store MS with maximum ones
-kmercamel compute -k 31 -o ms.msfa -a streaming yourfile.fa        # Use streaming instead of global for lower memory footprint (likely worse result)
+kmercamel compute -k 31 -o ms.msfa -M ms-max-one.msfa yourfile.fa   # Also store MS with maximum ones
+kmercamel compute -k 31 -o ms.msfa -a streaming yourfile.fa        # Use streaming instead of greedy for lower memory footprint (likely worse result)
 ```
 If the input file are simplitigs (or eulertigs), the execution can be significantly speeded up by adding the `-S` flag.
 However, note that if `-S` is used with matchtigs, it may result it unnecessarily long outputs, while using it for unitigs may lead to slow down for certain inputs.
 
 Examples of optimizing masks:
 ```
-kmercamel maskopt -t maxone -o ms-opt.msfa -k 31 ms.msfa    # Maximize the number of 1s in the mask
-kmercamel maskopt -t minone -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of 1s in the mask
-kmercamel maskopt -t minrun -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of runs of consecutive 1s in the mask.
+kmercamel maskopt -t max-one -o ms-opt.msfa -k 31 ms.msfa    # Maximize the number of 1s in the mask
+kmercamel maskopt -t min-one -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of 1s in the mask
+kmercamel maskopt -t min-run -o ms-opt.msfa -k 31 ms.msfa    # Minimize the number of runs of consecutive 1s in the mask
+kmercamel maskopt -t approx-min-run -o ms-opt.msfa -k 31 ms.msfa    # Faster approximate min-run
 ```
 
 Format conversions:
@@ -127,7 +129,7 @@ Compute lower bound on the minimum possible superstring length of a k-mer set:
 
 To view all options for a particular subcommand, run `kmercamel <subcommand> -h`.
 
-Additionally, KmerCamel🐫 experimentally implements both algorithms in their Aho-Corasick automaton versions. To use them, add `AC` to the algorithm name.
+Additionally, KmerCamel🐫 experimentally implements both algorithms in their Aho-Corasick automaton versions (`greedy-ac`, `local-greedy-ac`).
 Note that they are much slower than the original versions, but they can handle arbitrarily large *k*s.
 
 ## How it works
