@@ -98,9 +98,10 @@ fmsi index -p ms-opt.msfa                                          # Create a k-
 Examples of computing masked superstrings (`compute` subcommand):
 ```
 kmercamel compute -k 31 -o ms.msfa yourfile[.fa|.fa.gz]            # From a (gziped) fasta file, use "-" for stdin
+kmercamel compute -k 31 -o ms.msfa -S simplitigs.fa                # Faster computation from maximal simplitigs (e.g., Eulertigs)
 kmercamel compute -k 31 -o ms.msfa -z 2 yourfile.fa                # Represent only k-mers appearing at least z=2 times
 kmercamel compute -k 31 -o ms.msfa -u yourfile.fa                  # Treat k-mer and its reverse complement as distinct
-kmercamel compute -k 31 -o ms.msfa -M ms-max-one.msfa yourfile.fa   # Also store MS with maximum ones
+kmercamel compute -k 31 -o ms.msfa -M ms-max-one.msfa yourfile.fa  # Also store MS with maximum ones
 kmercamel compute -k 31 -o ms.msfa -a streaming yourfile.fa        # Use streaming instead of greedy for lower memory footprint (likely worse result)
 ```
 If the input file are simplitigs (or eulertigs), the execution can be significantly speeded up by adding the `-S` flag.
@@ -118,12 +119,14 @@ Format conversions:
 kmercamel mssep2ms -m dataset.m -s dataset.s -o dataset.msfa  # M and S -> mask-cased MS in msfa
 kmercamel ms2mssep -m dataset.m -s dataset.s dataset.msfa     # Mask-cased MS -> M and S
 kmercamel spss2ms -k 31 -o dataset.msfa dataset.rspss         # rSPSS/general fasta to its corresponding MS
-kmercamel ms2spss -k 31 -o dataset.rspss dataset.msfa              # Splitting MS in msfa into rSPSS in fa
+kmercamel ms2spss -k 31 -o dataset.rspss dataset.msfa         # Splitting MS in msfa into rSPSS in fa
 ```
 
 Compute lower bound on the minimum possible superstring length of a k-mer set:
 ```
-./kmercamel lowerbound -k 31 yourfile.fa
+./kmercamel lowerbound -k 31 yourfile.fa        # Print the lower bound.
+./kmercamel lowerbound -k 31 -S simplitigs.fa   # Computation of lower bound faster directly from maximal simplitigs.
+./kmercamel lowerbound -k 31 -z 2 yourfile.fa   # Filter k-mer with fewer occurrences than 2
 ```
 
 To view all options for a particular subcommand, run `kmercamel <subcommand> -h`.
