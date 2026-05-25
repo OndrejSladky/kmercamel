@@ -96,7 +96,7 @@ namespace {
                 },
                 {
                         {simplitig_from_string({"ACC"}), simplitig_from_string({"CGG"})},
-                        {{3, 2, 1, 0}, {2, 2, 0, 0}},
+                        {{3, 2, 0, 1}, {2, 2, 0, 2}},
                         3,
                         true,
                         true,
