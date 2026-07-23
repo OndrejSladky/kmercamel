@@ -91,7 +91,7 @@ overlapPath OverlapHamiltonianPathSparse (kh_wrapper_t wrapper, std::vector<kmer
                     previous = j = kh_val(prefixes, suffix_key);
                     while (j != size_t(-1) && \
                             // k-mers are complementary
-                           ((i + n) % (2 * n) == j \
+                           ((!lower_bound && (i + n) % (2 * n) == j) \
                            // forms a cycle
                            || (!lower_bound && accessFirstLast(first, last, i, n) == j) \
                            // k-mer is already used
