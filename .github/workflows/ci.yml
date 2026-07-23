@@ -12,6 +12,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Remove stale untrusted tap
+      run: brew untap aws/tap || true
     - name: glpk
       run: sudo apt install glpk-utils libglpk-dev glpk-doc
     - name: make
