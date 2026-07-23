@@ -22,12 +22,10 @@ jobs:
       run: make cpptest
 
   build_with_unittests_macos:
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
     - uses: actions/checkout@v3
-    - name: Remove stale untrusted tap
-      run: brew untap aws/tap || true
     - name: glpk
       run: brew install glpk
     - name: make
