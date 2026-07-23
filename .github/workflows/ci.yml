@@ -22,7 +22,7 @@ jobs:
       run: make cpptest
 
   build_with_unittests_macos:
-    runs-on: macos-15
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v3
