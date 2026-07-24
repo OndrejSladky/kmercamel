@@ -34,22 +34,22 @@ See [supplementary materials](https://github.com/karel-brinda/masked-superstring
 The computation of masked superstring using KmerCamel🐫 is done in two steps -
 first a superstring is computed with its default mask and then its mask can be optimized.
 
-The computation of the masked superstring works as follows. KmerCamel🐫 reads an input FASTA file (optionally `gzip`ed), retrieves the associated k-mers (with supported $k$ up to 127), and outputs
-a fasta file with a single record - a masked-cased superstring, which is in the nucleotide alphabet with case of the letters determining the mask symbols.
-KmerCamel🐫 implements two different algorithms for computing the superstring:
-global greedy and local greedy. Global greedy produces more compact superstrings and therefore is the default option,
-but local greedy requires less memory and hence can be more suitable in use cases where memory is the main limitation.
+KmerCamel🐫 implements in the `compute` subcommand the BIGREEDY algorithm for masked superstring computation that operates in two different regimes:
+- Either, it reads an input FASTA file (optionally `gzip`ed), retrieves the associated $k$-mers, and computes masked superstrings by first internally computing simplitigs and then merging these on the largest overlap.
+- Or, providing the `-S` param, it inputs a FASTA file with repetition-free SPSS, such as unitigs or simplitigs (optionally `gzip`ed), with each unitig/simplitig on a separate line. The algorithm then skips the initial compute-heavy part of computing simplitigs and proceeds by merging the provided unitigs/simplitigs.
 
-To compute masked superstrings takes about 4-6s / 1M k-mers, which means about 3h to compute masked superstrings for the human genome. The memory consumption on human genome is about 115 GB.
-
+KmerCamel🐫 supports all $k < 128$ and in the first regime, it enables $k$-mer filtering by minimum threshold frequency (`-z` param).
+In both regimes, KmerCamel🐫 outputs a fasta file with a single record - a masked-cased superstring, which is in the nucleotide alphabet with case of the letters determining the mask symbols. The default masks are min-ones (minimize the number of ones) and max-one masks can be computed with the `-M` param. Additionally, masks of computed masked superstring can be optimized with the `maskopt` subcommand.
 All algorithms can be used to either work in the unidirectional model or in the bidirectional model
 (i.e. treat $k$-mer and its reverse complement as the same; in this case either of them appears in the result).
 
-Additionally, KmerCamel🐫 can optimize the mask of the superstring via the `maskopt` subcommand. The implemented mask optimization targets (flag `-t`) are the following:
-- Minimize the number of 1s in the mask (`min-one`).
-- Maximize the number of 1s in the mask (`max-one`).
-- Minimize the number of runs of 1s in the mask (`min-run`).
-- Approximate minimization of runs (`approx-min-run`).
+
+To compute masked superstrings from scratch usually takes about 0.2-1.0s / 1M k-mers, but depends on the exact dataset; in particular about 30min to compute masked superstrings for the human genome. The memory consumption on human genome is about 36 GB.
+Unless the provided unitigs/simplitigs are nearly isolated $k$-mers, it is faster to compute masked superstrings from unitigs/simplitigs. Computation from simplitigs is faster proportionally to the cummulative length of the representations.
+
+
+KmerCamel🐫 also supports computation of lower-bounds for the shortest possible length of representating a particular $k$-mer set and conversions to SPSS; see detailed usage below. 
+
 
 ## Prerequisites
 
@@ -82,8 +82,9 @@ bzip2 --best mask.m
 xz -T1 -9 superstring.s
 ```
 
-For a super efficient compression of the superstring (often <2 bits / bp), you use some of the specialized tools based on statistical compression such as [GeCo3](https://github.com/cobilab/geco3) or [Jarvis3](https://github.com/cobilab/jarvis3).
+For a super-efficient compression of the superstring (often <2 bits / bp), you use some of the specialized tools based on statistical compression such as [GeCo3](https://github.com/cobilab/geco3) or [Jarvis3](https://github.com/cobilab/jarvis3).
 
+If the masked superstrings are to be computed from simplitigs/unitigs, change the first line to `kmercamel compute -k 31 -o ms.msfa -S simplitigs.fa`.
 
 ### k-mer set indexing
 
@@ -97,15 +98,15 @@ fmsi index -p ms-opt.msfa                                          # Create a k-
 
 Examples of computing masked superstrings (`compute` subcommand):
 ```
-kmercamel compute -k 31 -o ms.msfa yourfile[.fa|.fa.gz]            # From a (gziped) fasta file, use "-" for stdin
-kmercamel compute -k 31 -o ms.msfa -S simplitigs.fa                # Faster computation from maximal simplitigs (e.g., Eulertigs)
-kmercamel compute -k 31 -o ms.msfa -z 2 yourfile.fa                # Represent only k-mers appearing at least z=2 times
-kmercamel compute -k 31 -o ms.msfa -u yourfile.fa                  # Treat k-mer and its reverse complement as distinct
-kmercamel compute -k 31 -o ms.msfa -M ms-max-one.msfa yourfile.fa  # Also store MS with maximum ones
-kmercamel compute -k 31 -o ms.msfa -a streaming yourfile.fa        # Use streaming instead of greedy for lower memory footprint (likely worse result)
+kmercamel compute -k 31 -o ms.msfa yourfile[.fa|.fa.gz]              # From a (gziped) fasta file, use "-" for stdin
+kmercamel compute -k 31 -o ms.msfa -S simplitigs.fa                  # Faster computation from simplitigs/unitigs.
+kmercamel compute -k 31 -o ms.msfa -z 2 yourfile.fa                  # Represent only k-mers appearing at least z=2 times
+kmercamel compute -k 31 -o ms.msfa -u yourfile.fa                    # Treat k-mer and its reverse complement as distinct
+kmercamel compute -k 31 -o ms.msfa -M ms-max-one.msfa yourfile.fa    # Also store MS with maximum ones
+kmercamel compute -k 31 -o ms.msfa -a [streaming|local] yourfile.fa  # Use a different algorithm instead of BIGREEDY (`greedy`); likely results in longer superstrings
 ```
 If the input file are simplitigs (or eulertigs), the execution can be significantly speeded up by adding the `-S` flag.
-However, note that if `-S` is used with matchtigs, it may result it unnecessarily long outputs, while using it for unitigs may lead to slow down for certain inputs.
+However, note that if `-S` is used with matchtigs (SPSS with repetitions), it may result it unnecessarily long outputs. The output will still be correct, but the default masks are not guaranteed to be min-one.
 
 Examples of optimizing masks:
 ```
@@ -132,7 +133,7 @@ Compute lower bound on the minimum possible superstring length of a k-mer set:
 To view all options for a particular subcommand, run `kmercamel <subcommand> -h`.
 
 Additionally, KmerCamel🐫 experimentally implements both algorithms in their Aho-Corasick automaton versions (`greedy-ac`, `local-greedy-ac`).
-Note that they are much slower than the original versions, but they can handle arbitrarily large *k*s.
+Note that they are much slower than the original versions, but they can handle arbitrarily large $k$s.
 
 ## How it works
 
