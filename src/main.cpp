@@ -66,7 +66,7 @@ int usage_subcommand(std::string subcommand) {
 
     
     if (subcommand == "compute" || subcommand == "lowerbound")
-    std::cerr << "  -S       - optimize for the input being correctly computed simplitigs (only with greedy)" << std::endl;
+    std::cerr << "  -S       - optimize for the input being pre-computed simplitigs or unitigs (only with greedy)" << std::endl;
 
     if (subcommand == "compute")
     std::cerr << "  -d INT   - d_max for local-greedy; default 5" << std::endl;
