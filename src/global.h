@@ -147,7 +147,7 @@ void PrintSimplitigStart(simplitig_t &simplitig, std::ostream& of, std::ostream 
 /// If reverse complements are considered and the overlapPath path contains two paths which are reverse complements of one another,
 /// return only one of them.
 template <typename kmer_t, typename kh_wrapper_t >
-size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapPath &hamiltonianPath, const std::vector<simplitig_t> &simplitigs, std::ostream& of, std::ostream *maskf, const int k, const bool complements) {
+size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapPath &hamiltonianPath, const std::vector<simplitig_t> &simplitigs, std::ostream& of, std::ostream *maskf, const int k, const bool complements, std::ostream *alignmentf = nullptr) {
     size_t kMersCount = simplitigs.size() * (1 + complements);
     auto edgeFrom = hamiltonianPath.first;
     auto overlaps = hamiltonianPath.second;
@@ -171,6 +171,7 @@ size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapP
     kmer_t last = simplitig_last(kmerType, simplitig, k);
 
     PrintSimplitigStart(simplitig, of, maskf, k);
+    if (alignmentf != nullptr) (*alignmentf) << std::string(kmers_in_simplitig(simplitig, k), '0');
     size_t length = simplitig.size() / 2;
 
     // Move from the first k-mer to the last which has no successor.
@@ -181,6 +182,12 @@ size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapP
         std::string unmaskedNucleotides = NumberToKMer(BitPrefix(last, k-1, k-1-overlapLength), k-1-overlapLength);
         std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
         of << unmaskedNucleotides;
+        if (alignmentf != nullptr) {
+            // Mark the incoming sequence's first k-mer only at a full k-1 overlap.
+            (*alignmentf) << std::string(k - 1 - overlapLength, '0')
+                          << (overlapLength == k - 1 ? '1' : '0')
+                          << std::string(kmers_in_simplitig(simplitig, k) - 1, '0');
+        }
         // If provided, output also mask maximizing ones.
         if (maskf != nullptr) for (int j = 0; j < k - overlapLength - 1; ++j) {
             kmer_t current = simplitig_first(kmerType, simplitig, k);
@@ -206,6 +213,7 @@ size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapP
     if (maskf != nullptr) {
         (*maskf) << unmaskedNucleotides << std::endl;
     }
+    if (alignmentf != nullptr) (*alignmentf) << std::string(k - 1, '0') << std::endl;
     return length;
 }
 
@@ -215,12 +223,12 @@ size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapP
 /// If complements are provided, treat k-mer and its complement as identical.
 /// If this is the case, k-mers are expected not to contain both k-mer and its complement.
 template <typename kmer_t, typename kh_wrapper_t>
-void Global(kh_wrapper_t wrapper, kmer_t kmerType, std::vector<simplitig_t> &simplitigs, std::ostream& of, std::ostream *maskf, int k, bool complements) {
+void Global(kh_wrapper_t wrapper, kmer_t kmerType, std::vector<simplitig_t> &simplitigs, std::ostream& of, std::ostream *maskf, int k, bool complements, std::ostream *alignmentf = nullptr) {
     if (simplitigs.empty()) {
         throw std::invalid_argument("input cannot be empty");
     }
     auto hamiltonianPath = OverlapHamiltonianPath(wrapper, kmerType, simplitigs, k, complements);
     WriteLog("Finished 2. part: Hamiltonian path.");
-    size_t length = SuperstringFromPath(wrapper, kmerType, hamiltonianPath, simplitigs, of, maskf, k, complements);
+    size_t length = SuperstringFromPath(wrapper, kmerType, hamiltonianPath, simplitigs, of, maskf, k, complements, alignmentf);
     WriteLog("Finished 3. part: masked superstring (l=" + std::to_string(length) + ").");
 }
