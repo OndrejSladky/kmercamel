@@ -79,6 +79,9 @@ For a super-efficient compression of the superstring (often <2 bits / bp), you u
 
 If the masked superstrings are to be computed from simplitigs/unitigs, change the first line to `kmercamel compute -k 31 -o ms.msfa -S simplitigs.fa`.
 
+Add `-A alignment.txt` with `-S` to save an alignment mask as a single line of `0`/`1` characters (without a FASTA header), with one character per superstring base. A `1` marks the start of an incoming simplitig/unitig joined by an overlap of exactly `k-1` bases; all other positions are `0`. To recover the input sequences, split each uppercase run of the default masked superstring before every alignment `1`, then extend each piece by the next `k-1` superstring bases and uppercase it. Sequences may be reordered and reverse complemented (use `-u` to preserve orientation). Use the default mask for reconstruction, rather than the max-one mask from `-M`.
+
+
 ### k-mer set indexing
 
 Example with [FMSI](https://github.com/OndrejSladky/fmsi/activity?ref=main):

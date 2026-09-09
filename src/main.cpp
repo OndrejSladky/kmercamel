@@ -69,6 +69,9 @@ int usage_subcommand(std::string subcommand) {
     std::cerr << "  -S       - optimize for the input being pre-computed simplitigs or unitigs (only with greedy)" << std::endl;
 
     if (subcommand == "compute")
+    std::cerr << "  -A FILE  - output binary alignment mask marking k-1 overlap joins (requires -S)" << std::endl;
+
+    if (subcommand == "compute")
     std::cerr << "  -d INT   - d_max for local-greedy; default 5" << std::endl;
 
     if (subcommand == "compute" || subcommand == "maskopt" || subcommand == "lowerbound")
@@ -121,7 +124,7 @@ void Version() {
 /// Run KmerCamel with the given parameters.
 template <typename kmer_t, typename kh_wrapper_t>
 int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, int d_max, std::ostream *of, std::ostream *maskf, bool complements, bool masks,
-                    std::string algorithm, bool lower_bound, bool assume_simplitigs, uint16_t min_frequency) {
+                    std::string algorithm, bool lower_bound, bool assume_simplitigs, uint16_t min_frequency, std::ostream *alignmentf = nullptr) {
     if (masks) {
         WriteLog("Started optimization of a masked superstring from '" + path + "'.");
         int ret = Optimize(wrapper, kmer_type, algorithm, path, *of, k, complements);
@@ -180,7 +183,7 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
                else std::cout << LowerBoundLengthSparse(wrapper, kMerVec, k, complements);
             }
             else if (lower_bound) std::cout << LowerBoundLength(wrapper, kmer_type, simplitigs, k, complements);
-            else Global(wrapper, kmer_type, simplitigs, *of, maskf, k, complements);
+            else Global(wrapper, kmer_type, simplitigs, *of, maskf, k, complements, alignmentf);
         } else {
             Local(kMers, wrapper, kmer_type, *of, k, d_max, complements);
             WriteLog("Finished masked superstring computation.");
@@ -208,6 +211,10 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         WriteLog("Finished masked superstring computation.");
     }
     *of << std::endl;
+    if (alignmentf != nullptr && !*alignmentf) {
+        std::cerr << "Failed to write alignment output." << std::endl;
+        return 1;
+    }
     return 0;
 }
 
@@ -224,6 +231,9 @@ int camel_compute(int argc, char **argv) {
     std::ostream *of = &std::cout;
     std::ofstream maskOutput;
     std::ostream *maskf = nullptr;
+    std::ofstream alignmentOutput;
+    std::string alignmentPath;
+    bool alignment_set = false;
     std::string algorithm = "greedy";
     bool complements = true;
     bool d_set = false;
@@ -231,7 +241,7 @@ int camel_compute(int argc, char **argv) {
     int opt;
     uint16_t min_frequency = 1;
     try {
-        while ((opt = getopt(argc, argv, "k:d:a:o:huxM:Sz:"))  != -1) {
+        while ((opt = getopt(argc, argv, "k:d:a:o:huxM:Sz:A:"))  != -1) {
             switch(opt) {
                 case 'o':
                     output.open(optarg);
@@ -256,6 +266,10 @@ int camel_compute(int argc, char **argv) {
                 case 'M':
                     maskOutput.open(optarg);
                     maskf = &maskOutput;
+                    break;
+                case 'A':
+                    alignmentPath = optarg;
+                    alignment_set = true;
                     break;
                 case 'S':
                     assume_simplitigs = true;
@@ -306,12 +320,23 @@ int camel_compute(int argc, char **argv) {
         std::cerr << "Inputting simplitigs is not compatible with frequency filterring." << std::endl;
         return usage_subcommand(subcommand); 
     }
+    if (alignment_set && !assume_simplitigs) {
+        std::cerr << "Alignment output '-A' requires '-S'." << std::endl;
+        return usage_subcommand(subcommand);
+    }
+    if (alignment_set) {
+        alignmentOutput.open(alignmentPath);
+        if (!alignmentOutput) {
+            std::cerr << "Cannot open alignment output '" << alignmentPath << "'." << std::endl;
+            return 1;
+        }
+    }
     if (k < 32) {
-        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency);
+        return kmercamel(kmer_dict64_t(), kmer64_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency, alignment_set ? &alignmentOutput : nullptr);
     } else if (k < 64) {
-        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency);
+        return kmercamel(kmer_dict128_t(), kmer128_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency, alignment_set ? &alignmentOutput : nullptr);
     } else {
-        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency);
+        return kmercamel(kmer_dict256_t(), kmer256_t(0), path, k, d_max, of, maskf, complements, false, algorithm, false, assume_simplitigs, min_frequency, alignment_set ? &alignmentOutput : nullptr);
     }
 }
 
