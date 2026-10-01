@@ -43,6 +43,8 @@ template <typename kmer_t, typename kh_wrapper_t>
 overlapPath OverlapHamiltonianPathSparse (kh_wrapper_t wrapper, std::vector<kmer_t> &kMers, int k, bool complements,
                                          bool lower_bound = false) {
     size_t n = kMers.size();
+    size_t sequences_remaining = n;
+    size_t total_length = n * static_cast<size_t>(k);
     size_t kMersCount = n * (1 + complements);
     size_t batchSize = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
     std::vector<size_t> edgeFrom(kMersCount, -1);
@@ -106,6 +108,11 @@ overlapPath OverlapHamiltonianPathSparse (kh_wrapper_t wrapper, std::vector<kmer
                     if (j == size_t(-1)) {
                         continue;
                     }
+                    // A merge and its reverse complement represent one sequence join.
+                    if (!lower_bound) {
+                        --sequences_remaining;
+                        total_length -= d;
+                    }
                     std::vector<std::pair<size_t, size_t>> new_edges({{i, j}});
                     // Add also the edge between complementary k-mers in the opposite direction.
                     if (complements) new_edges.emplace_back((j + n) % kMersCount, (i + n) % kMersCount);
@@ -122,6 +129,11 @@ overlapPath OverlapHamiltonianPathSparse (kh_wrapper_t wrapper, std::vector<kmer
                     next[previous - from] = next[j - from];
                 }
         }
+        if (!lower_bound) {
+            WriteLog(std::to_string(d) + "-overlaps finished, " +
+                     std::to_string(sequences_remaining) + " sequences remain, total length " +
+                     std::to_string(total_length) + ".");
+        }
     }
 
     wrapper.kh_destroy_map(prefixes);
@@ -136,6 +148,7 @@ overlapPath OverlapHamiltonianPathSparse (kh_wrapper_t wrapper, std::vector<kmer
 /// return only one of them.
 template <typename kmer_t, typename kh_wrapper_t >
 size_t SuperstringFromPathSparse(kh_wrapper_t wrapper, const overlapPath &hamiltonianPath, const std::vector<kmer_t> &kMers, std::ostream& of, std::ostream *maskf, const int k, const bool complements) {
+    MaskStatistics min_stats, max_stats;
     size_t kMersCount = kMers.size() * (1 + complements);
     auto edgeFrom = hamiltonianPath.first;
     auto overlaps = hamiltonianPath.second;
@@ -160,6 +173,8 @@ size_t SuperstringFromPathSparse(kh_wrapper_t wrapper, const overlapPath &hamilt
     kmer_t last = access(kMers, start);
     of << letters[(uint64_t)BitPrefix(access(kMers, start), k, 1)];
     if (maskf != nullptr) (*maskf) << Masked(NucleotideAtIndex(last, k, 0), true);
+    min_stats.Add(true);
+    max_stats.Add(true);
     size_t length = k;
 
     // Move from the first k-mer to the last which has no successor.
@@ -171,6 +186,7 @@ size_t SuperstringFromPathSparse(kh_wrapper_t wrapper, const overlapPath &hamilt
             std::string unmaskedNucleotides = NumberToKMer(BitPrefix(last, k-1, k-1-overlapLength), k-1-overlapLength);
             std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
             of << unmaskedNucleotides;
+            min_stats.Add(false, unmaskedNucleotides.size());
         }
         // If provided, output also mask maximizing ones.
         if (maskf != nullptr) for (int j = 0; j < k - overlapLength; ++j) {
@@ -179,12 +195,15 @@ size_t SuperstringFromPathSparse(kh_wrapper_t wrapper, const overlapPath &hamilt
             last = BitSuffix(last, k);
             if (containsKMer(kMersDict, wrapper, last, k, complements)) {
                 (*maskf) << Masked(NucleotideAtIndex(last, k, 0), true);
+                max_stats.Add(true);
             } else {
                 (*maskf) << Masked(NucleotideAtIndex(last, k, 0), false);
+                max_stats.Add(false);
             }
         }
         last = access(kMers, edgeFrom[start]);
         of << letters[(uint64_t)BitPrefix(access(kMers, edgeFrom[start]), k, 1)];
+        min_stats.Add(true);
         start = edgeFrom[start];
     }
 
@@ -198,6 +217,8 @@ size_t SuperstringFromPathSparse(kh_wrapper_t wrapper, const overlapPath &hamilt
         (*maskf) << std::endl;
     }
 
+    WriteSuperstringLog(length, "min-one", min_stats);
+    if (maskf != nullptr) WriteSuperstringLog(length, "max-one", max_stats);
     return length;
 }
 
@@ -214,8 +235,7 @@ void GlobalSparse(kh_wrapper_t wrapper, std::vector<kmer_t> &kMers, std::ostream
     }
     auto hamiltonianPath = OverlapHamiltonianPathSparse(wrapper, kMers, k, complements);
     WriteLog("Finished 2. part: Hamiltonian path.");
-    size_t length = SuperstringFromPathSparse(wrapper, hamiltonianPath, kMers, of, maskf, k, complements);
-    WriteLog("Finished 3. part: masked superstring (l=" + std::to_string(length) + ").");
+    SuperstringFromPathSparse(wrapper, hamiltonianPath, kMers, of, maskf, k, complements);
 }
 
 // Undefine the access macro, so it does not interfere with other files.

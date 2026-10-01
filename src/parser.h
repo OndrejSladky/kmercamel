@@ -163,6 +163,28 @@ void WriteLog(const std::string message) {
     std::cerr << "[" << std::put_time(time_tm, "%H:%M:%S") << "] " << message << std::endl;
 }
 
+/// Accumulate mask statistics without storing the output sequence.
+struct MaskStatistics {
+    size_t ones = 0;
+    size_t runs = 0;
+    bool previous_one = false;
+
+    void Add(bool one, size_t count = 1) {
+        if (count == 0) return;
+        if (one) {
+            ones += count;
+            if (!previous_one) ++runs;
+        }
+        previous_one = one;
+    }
+};
+
+void WriteSuperstringLog(size_t length, const std::string &mask, const MaskStatistics &stats) {
+    WriteLog("Finished 3. part: masked superstring (l=" + std::to_string(length) +
+             ", mask=" + mask + ", ones=" + std::to_string(stats.ones) +
+             ", runs=" + std::to_string(stats.runs) + ").");
+}
+
 /// Print the fasta file header.
 void WriteName(const std::string &dataset, const std::string &algorithm, const int k, const bool maxone, const bool unidirectional, std::ostream &of) {
     of << ">maskedsuperstring ";

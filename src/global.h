@@ -44,6 +44,9 @@ template <typename kmer_t, typename kh_wrapper_t>
 overlapPath OverlapHamiltonianPath (kh_wrapper_t wrapper, kmer_t kmerType, std::vector<simplitig_t> &simplitigs, int k, bool complements,
                                     bool lower_bound = false) {
     size_t n = simplitigs.size();
+    size_t sequences_remaining = n;
+    size_t total_length = 0;
+    for (const auto &simplitig : simplitigs) total_length += simplitig.size() / 2;
     size_t kMersCount = n * (1 + complements);
     size_t batchSize = kMersCount / MEMORY_REDUCTION_FACTOR + 1;
     std::vector<size_t> edgeFrom(kMersCount, -1);
@@ -107,6 +110,11 @@ overlapPath OverlapHamiltonianPath (kh_wrapper_t wrapper, kmer_t kmerType, std::
                     if (j == size_t(-1)) {
                         continue;
                     }
+                    // A merge and its reverse complement represent one sequence join.
+                    if (!lower_bound) {
+                        --sequences_remaining;
+                        total_length -= d;
+                    }
                     std::vector<std::pair<size_t, size_t>> new_edges({{i, j}});
                     // Add also the edge between complementary k-mers in the opposite direction.
                     if (complements) new_edges.emplace_back((j + n) % kMersCount, (i + n) % kMersCount);
@@ -122,6 +130,11 @@ overlapPath OverlapHamiltonianPath (kh_wrapper_t wrapper, kmer_t kmerType, std::
                     }
                     next[previous - from] = next[j - from];
                 }
+        }
+        if (!lower_bound) {
+            WriteLog(std::to_string(d) + "-overlaps finished, " +
+                     std::to_string(sequences_remaining) + " sequences remain, total length " +
+                     std::to_string(total_length) + ".");
         }
     }
 
@@ -148,6 +161,7 @@ void PrintSimplitigStart(simplitig_t &simplitig, std::ostream& of, std::ostream 
 /// return only one of them.
 template <typename kmer_t, typename kh_wrapper_t >
 size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapPath &hamiltonianPath, const std::vector<simplitig_t> &simplitigs, std::ostream& of, std::ostream *maskf, const int k, const bool complements) {
+    MaskStatistics min_stats, max_stats;
     size_t kMersCount = simplitigs.size() * (1 + complements);
     auto edgeFrom = hamiltonianPath.first;
     auto overlaps = hamiltonianPath.second;
@@ -171,6 +185,8 @@ size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapP
     kmer_t last = simplitig_last(kmerType, simplitig, k);
 
     PrintSimplitigStart(simplitig, of, maskf, k);
+    min_stats.Add(true, kmers_in_simplitig(simplitig, k));
+    max_stats.Add(true, kmers_in_simplitig(simplitig, k));
     size_t length = simplitig.size() / 2;
 
     // Move from the first k-mer to the last which has no successor.
@@ -181,6 +197,7 @@ size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapP
         std::string unmaskedNucleotides = NumberToKMer(BitPrefix(last, k-1, k-1-overlapLength), k-1-overlapLength);
         std::transform(unmaskedNucleotides.begin(), unmaskedNucleotides.end(), unmaskedNucleotides.begin(), tolower);
         of << unmaskedNucleotides;
+        min_stats.Add(false, unmaskedNucleotides.size());
         // If provided, output also mask maximizing ones.
         if (maskf != nullptr) for (int j = 0; j < k - overlapLength - 1; ++j) {
             kmer_t current = simplitig_first(kmerType, simplitig, k);
@@ -189,12 +206,16 @@ size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapP
             last = BitSuffix(last, k);
             if (containsKMer(kMersDict, wrapper, last, k, complements)) {
                 (*maskf) << Masked(NucleotideAtIndex(last, k, 0), true);
+                max_stats.Add(true);
             } else {
                 (*maskf) << Masked(NucleotideAtIndex(last, k, 0), false);
+                max_stats.Add(false);
             }
         }
         last = simplitig_last(kmerType, simplitig, k);
         PrintSimplitigStart(simplitig, of, maskf, k);
+        min_stats.Add(true, kmers_in_simplitig(simplitig, k));
+        max_stats.Add(true, kmers_in_simplitig(simplitig, k));
         start = edgeFrom[start];
     }
 
@@ -206,6 +227,8 @@ size_t SuperstringFromPath(kh_wrapper_t wrapper, kmer_t kmerType, const overlapP
     if (maskf != nullptr) {
         (*maskf) << unmaskedNucleotides << std::endl;
     }
+    WriteSuperstringLog(length, "min-one", min_stats);
+    if (maskf != nullptr) WriteSuperstringLog(length, "max-one", max_stats);
     return length;
 }
 
@@ -221,6 +244,5 @@ void Global(kh_wrapper_t wrapper, kmer_t kmerType, std::vector<simplitig_t> &sim
     }
     auto hamiltonianPath = OverlapHamiltonianPath(wrapper, kmerType, simplitigs, k, complements);
     WriteLog("Finished 2. part: Hamiltonian path.");
-    size_t length = SuperstringFromPath(wrapper, kmerType, hamiltonianPath, simplitigs, of, maskf, k, complements);
-    WriteLog("Finished 3. part: masked superstring (l=" + std::to_string(length) + ").");
+    SuperstringFromPath(wrapper, kmerType, hamiltonianPath, simplitigs, of, maskf, k, complements);
 }

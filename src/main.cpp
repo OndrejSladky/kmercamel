@@ -130,7 +130,8 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
         return ret;
     }
 
-    if (!lower_bound) WriteLog("Started computation of a masked superstring from '" + path + "'.");
+    if (!lower_bound) WriteLog("Started computation of a masked superstring from '" + path +
+                              "' (starting from " + (assume_simplitigs ? "simplitigs" : "k-mers") + ").");
     else WriteLog("Started computation of a masked superstring length lower bound from '" + path + "'.");
 
     /* Handle streaming algorithm separately. */
@@ -171,7 +172,10 @@ int kmercamel(kh_wrapper_t wrapper, kmer_t kmer_type, std::string path, int k, i
             } else {
                 simplitigs = simplitigs_from_fasta(path);
             }
-            WriteLog("Finished 1. part: simplitigs (" + std::to_string(simplitigs.size()) + " simplitigs).");
+            size_t simplitigs_length = 0;
+            for (const auto &simplitig : simplitigs) simplitigs_length += simplitig.size() / 2;
+            WriteLog("Finished 1. part: simplitigs (" + std::to_string(simplitigs.size()) +
+                     " simplitigs, l=" + std::to_string(simplitigs_length) + ").");
             if (!assume_simplitigs && simplitigs.size() * SIMPLITIG_RATIO_THRESHOLD >= kmer_count) {
                WriteLog("2. part: Number of simplitigs over threshold, computing directly from k-mers.");
                auto kMerVec = simplitigs_to_kmer_vec(kmer_type, simplitigs, k, kmer_count);
